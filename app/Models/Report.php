@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\HasTeamFilters;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * Report Model
+ * 
+ * Stores generated reports with configuration and file storage
+ */
+class Report extends Model
+{
+    use HasFactory, HasTeamFilters;
+
+    protected $fillable = [
+        'team_id',
+        'title',
+        'type', // truck_sensors, tire_condition, load_cycle, fuel, engine_parts, maintenance, custom
+        'status', // pending, completed, failed
+        'file_path',
+        'file_size',
+        'format', // pdf, csv, xlsx
+        'filters', // JSON with report filters
+        'generated_by',
+        'generated_at',
+        'expires_at',
+    ];
+
+    protected $casts = [
+        'filters' => 'json',
+        'generated_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
+     * Get the team this report belongs to
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Get the user who generated this report
+     */
+    public function generatedBy()
+    {
+        return $this->belongsTo(User::class, 'generated_by');
+    }
+
+    /**
+     * Check if report is still available
+     */
+    public function isAvailable(): bool
+    {
+        if ($this->status !== 'completed') {
+            return false;
+        }
+
+        if ($this->expires_at && $this->expires_at->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Mark report as completed
+     */
+    public function markCompleted($filePath, $fileSize = null)
+    {
+        return $this->update([
+            'status' => 'completed',
+            'file_path' => $filePath,
+            'file_size' => $fileSize,
+            'generated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Mark report as failed
+     */
+    public function markFailed()
+    {
+        return $this->update([
+            'status' => 'failed',
+        ]);
+    }
+}

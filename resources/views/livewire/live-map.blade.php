@@ -1,0 +1,524 @@
+<div>
+<div>
+    <div class="container mx-auto py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Left: Map and controls -->
+            <div class="w-full space-y-6">
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h1 class="text-2xl font-bold text-white">Live Fleet Tracking</h1>
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <button wire:click="toggleMachines" class="px-4 py-2 min-w-[9rem] rounded-lg transition-colors {{ $showMachines ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600' }} text-white text-sm">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    Machines {{ $showMachines ? '(On)' : '(Off)' }}
+                                </span>
+                            </button>
+                            <button wire:click="toggleGeofences" class="px-4 py-2 min-w-[9rem] rounded-lg transition-colors {{ $showGeofences ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600' }} text-white text-sm">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"></path>
+                                    </svg>
+                                    Geofences {{ $showGeofences ? '(On)' : '(Off)' }}
+                                </span>
+                            </button>
+                            <!-- Action Buttons moved here -->
+                            <a href="{{ route('fleet.route-planning') }}" class="px-4 py-2 min-w-[9rem] text-sm bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg transition-all font-medium flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Plan New Route
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 mb-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Map Style</label>
+                            <div class="flex gap-2">
+                                <button wire:click="changeMapStyle('osm')" class="flex-1 px-3 py-2 rounded-lg {{ $mapStyle === 'osm' ? 'bg-amber-600' : 'bg-gray-700 hover:bg-gray-600' }} text-white text-sm transition-colors">
+                                    Standard
+                                </button>
+                                <button wire:click="changeMapStyle('satellite')" class="flex-1 px-3 py-2 rounded-lg {{ $mapStyle === 'satellite' ? 'bg-amber-600' : 'bg-gray-700 hover:bg-gray-600' }} text-white text-sm transition-colors">
+                                    Satellite
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Filter by Status</label>
+                            <select wire:model.live="selectedStatus" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500">
+                                <option value="">All Machines</option>
+                                <option value="active">Active Only</option>
+                                <option value="idle">Idle Only</option>
+                                <option value="maintenance">Maintenance Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div class="bg-green-600 bg-opacity-20 rounded-lg p-2 border border-green-600">
+                            <p class="text-green-400 text-xs font-semibold">ACTIVE</p>
+                            <p class="text-green-300 text-lg font-bold">{{ $machineStatuses['active'] ?? 0 }}</p>
+                        </div>
+                        <div class="bg-blue-600 bg-opacity-20 rounded-lg p-2 border border-blue-600">
+                            <p class="text-blue-400 text-xs font-semibold">IDLE</p>
+                            <p class="text-blue-300 text-lg font-bold">{{ $machineStatuses['idle'] ?? 0 }}</p>
+                        </div>
+                        <div class="bg-red-600 bg-opacity-20 rounded-lg p-2 border border-red-600">
+                            <p class="text-red-400 text-xs font-semibold">MAINT</p>
+                            <p class="text-red-300 text-lg font-bold">{{ $machineStatuses['maintenance'] ?? 0 }}</p>
+                        </div>
+                    </div>
+                    <div wire:ignore id="map" class="w-full" style="height:36rem;" class="h-[36rem] rounded-lg shadow-lg bg-gray-900"></div>
+                    <div id="map-toast" class="hidden fixed top-4 right-4 z-50 pointer-events-none">
+                        <div class="bg-amber-600 text-white px-4 py-2 rounded shadow-lg text-sm message"></div>
+                    </div>
+                    <div id="map-loading" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50" style="display:none;">
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">🗺️</div>
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+                            <h3 class="text-xl font-semibold text-white mt-4 mb-2">Loading map...</h3>
+                            <p class="text-gray-400 mb-2">Fetching live fleet and geofence data.</p>
+                            <ul class="text-sm text-gray-500 mb-4 space-y-1">
+                                <li>• If loading takes too long, check your connection</li>
+                                <li>• Refresh the page if the map does not appear</li>
+                                <li>• Data will update in real time once loaded</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Map Toast and Loading Indicator (overlay, always present) removed: handled inside map card -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let map = null;
+        let markers = {};
+        let geofencePolygons = {};
+        let currentLayer = null;
+        let layers = {};
+        let initRetryCount = 0;
+        const MAX_INIT_RETRIES = 50;
+
+        let machinesData = @json($machines);
+        let geofencesData = @json($geofences);
+        let mapStyleData = @js($mapStyle);
+        let showMachinesData = @js($showMachines);
+        let showGeofencesData = @js($showGeofences);
+
+        function debugLog(...args) {
+            if (window && window.console) {
+                console.log('[LiveMap Debug]', ...args);
+            }
+        }
+
+        function initMap() {
+            try {
+                debugLog('initMap called');
+                if (typeof L === 'undefined') {
+                    initRetryCount++;
+                    debugLog('Leaflet not loaded yet, retry', initRetryCount);
+                    if (initRetryCount > MAX_INIT_RETRIES) {
+                        console.error('Leaflet failed to load after maximum retries');
+                        showError('Map library failed to load. Please refresh the page.');
+                        return;
+                    }
+                    setTimeout(initMap, 100);
+                    return;
+                }
+
+                if (map !== null) {
+                    debugLog('Removing existing map instance');
+                    map.remove();
+                    map = null;
+                }
+                if (window.L && window.L.DomUtil && window.L.DomUtil.get('map') && window.L.DomUtil.get('map')._leaflet_id) {
+                    window.L.DomUtil.get('map')._leaflet_id = null;
+                }
+
+                const loadingEl = document.getElementById('map-loading');
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+
+                debugLog('Map center:', {{ $centerLat }}, {{ $centerLng }}, 'Zoom:', {{ $zoomLevel }});
+                map = L.map('map').setView([{{ $centerLat }}, {{ $centerLng }}], {{ $zoomLevel }});
+                debugLog('Map initialized:', map);
+                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                });
+                
+                // Esri World Imagery (satellite) - free to use
+                const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics',
+                    maxZoom: 19
+                });
+
+                let tileErrorCount = 0;
+                function fallbackToOSM() {
+                    debugLog('Fallback to OSM due to satellite tile loading errors');
+                    if (map.hasLayer(satelliteLayer)) {
+                        map.removeLayer(satelliteLayer);
+                    }
+                    osmLayer.addTo(map);
+                    currentLayer = 'osm';
+                    showToast('Satellite tiles failed to load. Switched to standard view.');
+                }
+                
+                satelliteLayer.on('tileerror', function() {
+                    tileErrorCount++;
+                    if (tileErrorCount > 5) {
+                        fallbackToOSM();
+                    }
+                });
+
+                layers = {
+                    osm: osmLayer,
+                    satellite: satelliteLayer
+                };
+
+                const initialLayer = layers[mapStyleData] ? mapStyleData : 'osm';
+                if (initialLayer !== mapStyleData) {
+                    console.warn('Unknown map style requested, defaulting to standard view.');
+                }
+                debugLog('Adding initial layer:', initialLayer);
+                layers[initialLayer].addTo(map);
+                currentLayer = initialLayer;
+
+                debugLog('Adding map controls');
+                L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                debugLog('Machines data:', machinesData.length, 'items');
+                debugLog('Show machines:', showMachinesData);
+                debugLog('Geofences data:', geofencesData.length, 'items');
+                debugLog('Show geofences:', showGeofencesData);
+                
+                debugLog('Adding machine markers');
+                addMachineMarkers();
+                debugLog('Adding geofences');
+                addGeofences();
+
+                // Listen for Livewire events
+                window.addEventListener('map-updated', (event) => {
+                    debugLog('Livewire map-updated event received', event.detail);
+                    updateMap(event.detail[0] || event.detail);
+                });
+
+                debugLog('Map initialization complete');
+            } catch (error) {
+                console.error('Map initialization error:', error);
+                showError('Error initializing map: ' + error.message);
+            }
+        }
+        function showToast(message) {
+            const toast = document.getElementById('map-toast');
+            if (!toast) return;
+            const messageEl = toast.querySelector('.message');
+            if (!messageEl) return;
+            messageEl.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 4000);
+        }
+        function showError(message) {
+            const loadingEl = document.getElementById('map-loading');
+            if (loadingEl) {
+                loadingEl.innerHTML = '<div class="text-center"><svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg><p class="text-white text-lg mb-2">Map Loading Error</p><p class="text-gray-400 text-sm">' + message + '</p><button onclick="location.reload()" class="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg">Refresh Page</button></div>';
+            }
+        }
+        function handleTileError(layerKey, fallbackKey) {
+            console.error(layerKey + ' tiles failed to load; falling back to ' + fallbackKey);
+            if (!map || !layers[fallbackKey]) return;
+            if (layers[layerKey] && map.hasLayer(layers[layerKey])) {
+                map.removeLayer(layers[layerKey]);
+            }
+            layers[fallbackKey].addTo(map);
+            currentLayer = fallbackKey;
+            showToast('Satellite tiles failed to load. Switched to standard view.');
+        }
+        function addMachineMarkers() {
+            debugLog('addMachineMarkers called - showMachinesData:', showMachinesData, 'machinesData.length:', machinesData.length);
+            if (!showMachinesData || !map) {
+                debugLog('Skipping machine markers - showMachinesData:', showMachinesData, 'map:', !!map);
+                return;
+            }
+
+            machinesData.forEach(machine => {
+                try {
+                    if (!machine.last_location_latitude || !machine.last_location_longitude) {
+                        debugLog('Skipping machine - no coordinates:', machine.name);
+                        return;
+                    }
+
+                    const lat = parseFloat(machine.last_location_latitude);
+                    const lng = parseFloat(machine.last_location_longitude);
+                    
+                    if (isNaN(lat) || isNaN(lng)) {
+                        console.warn('Invalid coordinates for machine:', machine.name, 'lat:', lat, 'lng:', lng);
+                        return;
+                    }
+
+                    debugLog('Adding machine marker:', machine.name, 'at', lat, lng);
+
+                    const statusColor = {
+                        'active': '#10b981',
+                        'idle': '#3b82f6',
+                        'maintenance': '#ef4444'
+                    }[machine.status] || '#6b7280';
+
+                    const statusIcon = L.divIcon({
+                        html: `
+                            <div class="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm" style="background-color: ${statusColor}; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"/>
+                                </svg>
+                            </div>
+                        `,
+                        iconSize: [32, 32],
+                        className: 'machine-marker'
+                    });
+
+                    const marker = L.marker([lat, lng], { icon: statusIcon })
+                        .bindPopup(`
+                            <div class="p-3 min-w-max">
+                                <p class="font-bold text-gray-900">${machine.name}</p>
+                                <p class="text-sm text-gray-700">${machine.manufacturer || 'Unknown'} ${machine.model || ''}</p>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    <span class="inline-block px-2 py-1 rounded text-white" style="background-color: ${statusColor};">
+                                        ${machine.status.toUpperCase()}
+                                    </span>
+                                </p>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    Serial: ${machine.serial_number || 'N/A'}
+                                </p>
+                                <p class="text-xs text-gray-600">
+                                    Capacity: ${machine.capacity ? machine.capacity + ' tons' : 'N/A'}
+                                </p>
+                                <a href="/fleet/${machine.id}" class="text-blue-600 hover:underline text-xs mt-2 inline-block">
+                                    View Details →
+                                </a>
+                            </div>
+                        `)
+                        .addTo(map);
+
+                    markers[machine.id] = marker;
+                    debugLog('Machine marker added successfully:', machine.name);
+                } catch (error) {
+                    console.error('Error adding marker for machine:', machine.name, error);
+                }
+            });
+            debugLog('Total markers added:', Object.keys(markers).length);
+        }
+
+        function addGeofences() {
+            debugLog('addGeofences called - showGeofencesData:', showGeofencesData, 'geofencesData.length:', geofencesData.length);
+            if (!showGeofencesData || !map) {
+                debugLog('Skipping geofences - showGeofencesData:', showGeofencesData, 'map:', !!map);
+                return;
+            }
+
+            geofencesData.forEach(geofence => {
+                try {
+                    if (!geofence.coordinates || geofence.coordinates.length < 3) {
+                        debugLog('Skipping geofence - invalid coordinates:', geofence.name, geofence.coordinates);
+                        return;
+                    }
+
+                    const latlngs = geofence.coordinates
+                        .map(coord => {
+                            // Handle both array [lat, lng] and object {lat, lng} formats
+                            const lat = parseFloat(coord.lat !== undefined ? coord.lat : coord[0]);
+                            const lng = parseFloat(coord.lng !== undefined ? coord.lng : coord[1]);
+                            return [lat, lng];
+                        })
+                        .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
+                    
+                    debugLog('Geofence latlngs:', geofence.name, latlngs);
+                    
+                    if (latlngs.length < 3) {
+                        console.warn('Not enough valid coordinates for geofence:', geofence.name);
+                        return;
+                    }
+
+                    const polygon = L.polygon(latlngs, {
+                        color: '#3b82f6',
+                        weight: 2,
+                        opacity: 0.7,
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.1,
+                        className: 'geofence-polygon'
+                    })
+                        .bindPopup(`
+                            <div class="p-3">
+                                <p class="font-bold text-gray-900">${geofence.name}</p>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    Area: ~${((latlngs.length * 50) / 1000).toFixed(2)} sq km
+                                </p>
+                            </div>
+                        `)
+                        .addTo(map);
+
+                    geofencePolygons[geofence.id] = polygon;
+                    debugLog('Geofence added successfully:', geofence.name);
+                } catch (error) {
+                    console.error('Error adding geofence:', geofence.name, error);
+                }
+            });
+            debugLog('Total geofences added:', Object.keys(geofencePolygons).length);
+        }
+
+        function clearMarkers() {
+            if (!map) return;
+            Object.values(markers).forEach(marker => {
+                try {
+                    if (map.hasLayer(marker)) {
+                        map.removeLayer(marker);
+                    }
+                } catch (error) {
+                    console.error('Error removing marker:', error);
+                }
+            });
+            markers = {};
+        }
+
+        function clearGeofences() {
+            if (!map) return;
+            Object.values(geofencePolygons).forEach(polygon => {
+                try {
+                    if (map.hasLayer(polygon)) {
+                        map.removeLayer(polygon);
+                    }
+                } catch (error) {
+                    console.error('Error removing geofence:', error);
+                }
+            });
+            geofencePolygons = {};
+        }
+
+        function updateMap(data) {
+            debugLog('updateMap called with data:', data);
+            
+            if (!map) {
+                debugLog('Map not initialized yet, skipping update');
+                return;
+            }
+            
+            // Handle map style changes
+            if (data.mapStyle && data.mapStyle !== currentLayer) {
+                if (layers[data.mapStyle] && layers[currentLayer]) {
+                    debugLog('Switching map style from', currentLayer, 'to', data.mapStyle);
+                    try {
+                        // Remove current layer if it exists on the map
+                        if (map.hasLayer(layers[currentLayer])) {
+                            map.removeLayer(layers[currentLayer]);
+                        }
+                        
+                        // Add new layer if it's not already on the map
+                        if (!map.hasLayer(layers[data.mapStyle])) {
+                            layers[data.mapStyle].addTo(map);
+                        }
+                        
+                        currentLayer = data.mapStyle;
+                        tileErrorCount = 0; // Reset error count on manual switch
+                        showToast('Map style changed to ' + (data.mapStyle === 'satellite' ? 'Satellite' : 'Standard'));
+                    } catch (error) {
+                        console.error('Error changing map style:', error);
+                        showToast('Failed to change map style');
+                        // Try to restore a working layer
+                        if (!map.hasLayer(layers['osm']) && !map.hasLayer(layers['satellite'])) {
+                            layers['osm'].addTo(map);
+                            currentLayer = 'osm';
+                        }
+                    }
+                } else {
+                    console.warn('Map style change requested but layer not available, keeping current layer.');
+                }
+            }
+            
+            // Handle machines update
+            if (data.machines !== undefined) {
+                try {
+                    clearMarkers();
+                    if (Array.isArray(data.machines) && data.machines.length > 0) {
+                        machinesData = data.machines;
+                        showMachinesData = true;
+                        addMachineMarkers();
+                    } else {
+                        machinesData = [];
+                        showMachinesData = false;
+                    }
+                } catch (error) {
+                    console.error('Error updating machines:', error);
+                }
+            }
+            
+            // Handle geofences update
+            if (data.geofences !== undefined) {
+                try {
+                    clearGeofences();
+                    if (Array.isArray(data.geofences) && data.geofences.length > 0) {
+                        geofencesData = data.geofences;
+                        showGeofencesData = true;
+                        addGeofences();
+                    } else {
+                        geofencesData = [];
+                        showGeofencesData = false;
+                    }
+                } catch (error) {
+                    console.error('Error updating geofences:', error);
+                }
+            }
+        }
+
+        initMap();
+    });
+    </script>
+
+    <style>
+    #map {
+        width: 100%;
+        height: 100%;
+        min-height: 50rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        background: #111827;
+    }
+    .leaflet-popup-content {
+        font-family: inherit;
+        margin: 0;
+        padding: 0;
+    }
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+        background-color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .machine-marker {
+        filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+    }
+    .geofence-polygon:hover {
+        fill-opacity: 0.2 !important;
+    }
+    .leaflet-control-zoom {
+        background-color: rgba(31, 41, 55, 0.9) !important;
+        border: 1px solid rgba(107, 114, 128, 0.5) !important;
+        border-radius: 8px !important;
+    }
+    .leaflet-control-zoom a {
+        color: white !important;
+        background-color: rgba(55, 65, 81, 0.8) !important;
+        border-bottom: 1px solid rgba(107, 114, 128, 0.5) !important;
+    }
+    .leaflet-control-zoom a:hover {
+        background-color: rgba(75, 85, 99, 0.9) !important;
+    }
+    .leaflet-control-zoom a.leaflet-disabled {
+        background-color: rgba(31, 41, 55, 0.5) !important;
+        color: rgba(156, 163, 175, 0.5) !important;
+    }
+    </style>
+</div>
+</div>

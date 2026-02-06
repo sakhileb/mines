@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Providers;
+
+use App\Services\Integration\IntegrationService;
+use Illuminate\Support\ServiceProvider;
+
+class IntegrationServiceProvider extends ServiceProvider
+{
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        $this->app->singleton(IntegrationService::class, function ($app) {
+            return new IntegrationService();
+        });
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        // Register any manufacturer services that are available
+        // These will be loaded on demand by the IntegrationService
+    }
+}

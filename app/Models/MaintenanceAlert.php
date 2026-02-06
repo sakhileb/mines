@@ -1,0 +1,163 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasTeamFilters;
+
+class MaintenanceAlert extends Model
+{
+    use HasFactory, HasTeamFilters;
+
+    protected $fillable = [
+        'team_id',
+        'machine_id',
+        'maintenance_schedule_id',
+        'alert_type',
+        'title',
+        'message',
+        'severity',
+        'status',
+        'triggered_at',
+        'acknowledged_at',
+        'acknowledged_by',
+        'resolved_at',
+        'resolved_by',
+        'notes',
+    ];
+
+    protected $casts = [
+        'triggered_at' => 'datetime',
+        'acknowledged_at' => 'datetime',
+        'resolved_at' => 'datetime',
+    ];
+
+    /**
+     * Relationships
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    public function machine(): BelongsTo
+    {
+        return $this->belongsTo(Machine::class);
+    }
+
+    public function maintenanceSchedule(): BelongsTo
+    {
+        return $this->belongsTo(MaintenanceSchedule::class);
+    }
+
+    public function acknowledgedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by');
+    }
+
+    public function resolvedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
+    }
+
+    /**
+     * Scopes
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function scopeCritical($query)
+    {
+        return $query->where('severity', 'critical');
+    }
+
+    public function scopeUnacknowledged($query)
+    {
+        return $query->whereNull('acknowledged_at');
+    }
+
+    public function scopeUnresolved($query)
+    {
+        return $query->whereNull('resolved_at');
+    }
+
+    public function scopeAlertType($query, string $type)
+    {
+        return $query->where('alert_type', $type);
+    }
+
+    public function scopeSeverity($query, string $severity)
+    {
+        return $query->where('severity', $severity);
+    }
+
+    /**
+     * Acknowledge the alert
+     */
+    public function acknowledge(User $user): void
+    {
+        $this->update([
+            'acknowledged_at' => now(),
+            'acknowledged_by' => $user->id,
+        ]);
+    }
+
+    /**
+     * Resolve the alert
+     */
+    public function resolve(User $user, ?string $notes = null): void
+    {
+        $this->update([
+            'status' => 'resolved',
+            'resolved_at' => now(),
+            'resolved_by' => $user->id,
+            'notes' => $notes ?? $this->notes,
+        ]);
+    }
+
+    /**
+     * Get age of alert in hours
+     */
+    public function getAgeHoursAttribute(): float
+    {
+        return $this->triggered_at->diffInHours(now());
+    }
+
+    /**
+     * Check if alert is stale (unacknowledged for > 24 hours)
+     */
+    public function getIsStaleAttribute(): bool
+    {
+        return !$this->acknowledged_at && $this->age_hours > 24;
+    }
+
+    /**
+     * Get priority score (for sorting)
+     */
+    public function getPriorityScoreAttribute(): int
+    {
+        $score = 0;
+
+        // Severity weight
+        $score += match($this->severity) {
+            'critical' => 100,
+            'warning' => 50,
+            'info' => 10,
+            default => 0,
+        };
+
+        // Age weight (older = higher priority)
+        $score += min($this->age_hours, 48);
+
+        // Unacknowledged weight
+        if (!$this->acknowledged_at) {
+            $score += 30;
+        }
+
+        return $score;
+    }
+}

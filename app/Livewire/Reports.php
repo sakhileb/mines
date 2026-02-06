@@ -1,0 +1,173 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\Report;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
+
+class Reports extends Component
+{
+    use WithPagination;
+
+    public $search = '';
+    public $sortBy = 'created_at';
+    public $sortDirection = 'desc';
+    public $selectedType = 'all';
+    public $selectedStatus = 'all';
+    public $showDeleteConfirm = false;
+    public $deleteReportId = null;
+
+    protected $reportTypes = [
+        'production' => 'Production Summary',
+        'fleet_utilization' => 'Fleet Utilization',
+        'maintenance_schedule' => 'Maintenance Schedule',
+        'fuel_consumption' => 'Fuel Consumption',
+        'material_tracking' => 'Material Tracking',
+        'downtime_analysis' => 'Downtime Analysis',
+    ];
+
+    public function mount()
+    {
+        $this->sortBy = 'created_at';
+        $this->sortDirection = 'desc';
+    }
+
+    public function getReports()
+    {
+        $team = Auth::user()->currentTeam;
+        
+        if (!$team) {
+            return collect();
+        }
+
+        $searchTerm = trim($this->search);
+        
+        return Report::where('team_id', $team->id)
+            ->when($searchTerm, function ($query) use ($searchTerm) {
+                $query->where('title', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            })
+            ->when($this->selectedType !== 'all', function ($query) {
+                $query->where('type', $this->selectedType);
+            })
+            ->when($this->selectedStatus !== 'all', function ($query) {
+                $query->where('status', $this->selectedStatus);
+            })
+            ->orderBy($this->sortBy, $this->sortDirection)
+            ->paginate(10);
+    }
+
+    public function setSortBy($column)
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    public function deleteReport($reportId)
+    {
+        // Validate report ID
+        if (!is_numeric($reportId)) {
+            $this->dispatch('notify', type: 'error', message: 'Invalid report ID');
+            return;
+        }
+        
+        $team = Auth::user()->currentTeam;
+        $report = Report::where('team_id', $team->id)->find($reportId);
+
+        if (!$report) {
+            $this->dispatch('notify', type: 'error', message: 'Report not found or access denied');
+            $this->showDeleteConfirm = false;
+            return;
+        }
+        
+        try {
+            // Delete associated files if they exist
+            if ($report->file_path && \Storage::exists($report->file_path)) {
+                \Storage::delete($report->file_path);
+            }
+            
+            $report->delete();
+            
+            \Log::info('User deleted report', [
+                'user_id' => Auth::id(),
+                'report_id' => $reportId,
+                'report_type' => $report->type,
+            ]);
+            
+            $this->dispatch('notify', type: 'success', message: 'Report deleted successfully');
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete report', [
+                'user_id' => Auth::id(),
+                'report_id' => $reportId,
+                'error' => $e->getMessage(),
+            ]);
+            
+            $this->dispatch('notify', type: 'error', message: 'Failed to delete report');
+        }
+
+        $this->showDeleteConfirm = false;
+        $this->deleteReportId = null;
+    }
+
+    public function confirmDelete($reportId)
+    {
+        $this->deleteReportId = $reportId;
+        $this->showDeleteConfirm = true;
+    }
+
+    public function cancelDelete()
+    {
+        $this->showDeleteConfirm = false;
+        $this->deleteReportId = null;
+    }
+
+    public function downloadReport($reportId)
+    {
+        // Validate report ID
+        if (!is_numeric($reportId)) {
+            $this->dispatch('notify', type: 'error', message: 'Invalid report ID');
+            return;
+        }
+        
+        $team = Auth::user()->currentTeam;
+        $report = Report::where('team_id', $team->id)->find($reportId);
+
+        if (!$report) {
+            $this->dispatch('notify', type: 'error', message: 'Report not found or access denied');
+            return;
+        }
+        
+        if ($report->status !== 'completed') {
+            $this->dispatch('notify', type: 'warning', message: 'Report is not ready for download');
+            return;
+        }
+        
+        // Prevent path traversal attacks
+        if ($report->file_path && !str_contains($report->file_path, '..')) {
+            if (\Storage::exists($report->file_path)) {
+                \Log::info('User downloaded report', [
+                    'user_id' => Auth::id(),
+                    'report_id' => $reportId,
+                ]);
+                
+                return \Storage::download($report->file_path, $report->title . '.' . $report->format);
+            }
+        }
+        
+        $this->dispatch('notify', type: 'error', message: 'Report file not found');
+    }
+
+    public function render()
+    {
+        return view('livewire.reports', [
+            'reports' => $this->getReports(),
+            'reportTypes' => $this->reportTypes,
+        ]);
+    }
+}

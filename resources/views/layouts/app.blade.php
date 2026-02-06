@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="user-id" content="{{ Auth::id() }}">
+        <meta name="team-id" content="{{ Auth::user()->current_team_id ?? Auth::user()->team_id }}">
+        @php($machines = $machines ?? [])
+
+        <title>{{ config('app.name', 'Mines') }}</title>
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23f59e0b' rx='15'/><path d='M20 45 L20 30 L35 37 L35 52 L20 45 M35 52 L50 45 L50 60 L35 67 L35 52 M50 60 L65 53 L65 68 L50 75 L50 60 M35 37 L50 30 L50 45 L35 52 L35 37 M50 45 L65 38 L65 53 L50 60 L50 45 M50 30 L65 23 L80 30 L65 38 L50 30' fill='%231e293b' stroke='%231e293b' stroke-width='2'/></svg>">
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <!-- Leaflet CSS for maps -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+        <!-- Styles -->
+        @livewireStyles
+        @stack('styles')
+        
+        <!-- Map Container Fixes -->
+        <style>
+            /* Ensure map containers are visible and have proper z-index */
+            .leaflet-container {
+                background: #1f2937 !important;
+                z-index: auto !important;
+                height: 100% !important;
+                width: 100% !important;
+            }
+            
+            /* Fix map tiles visibility */
+            .leaflet-tile-pane {
+                z-index: 2;
+            }
+            
+            /* Ensure map controls are visible */
+            .leaflet-control-container {
+                z-index: 1000;
+            }
+            
+            /* Fix for dark theme */
+            .leaflet-container a {
+                color: #3b82f6;
+            }
+            
+            /* Make map pane visible */
+            .leaflet-pane {
+                z-index: auto;
+            }
+        </style>
+    </head>
+    <body class="font-sans antialiased bg-gray-900 text-gray-100">
+        <x-banner />
+        
+        <!-- Notification System -->
+        <div x-data="{ 
+            notifications: [],
+            addNotification(type, message) {
+                const id = Date.now();
+                this.notifications.push({ id, type, message });
+                setTimeout(() => {
+                    this.removeNotification(id);
+                }, 5000);
+            },
+            removeNotification(id) {
+                this.notifications = this.notifications.filter(n => n.id !== id);
+            }
+        }"
+        @notify.window="addNotification($event.detail.type, $event.detail.message)"
+        class="fixed top-4 right-4 z-[10000] space-y-2 max-w-md">
+            <template x-for="notification in notifications" :key="notification.id">
+                <div 
+                    x-show="true"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-x-8"
+                    x-transition:enter-end="opacity-100 transform translate-x-0"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100 transform translate-x-0"
+                    x-transition:leave-end="opacity-0 transform translate-x-8"
+                    class="relative rounded-lg shadow-2xl p-4 flex items-start gap-3 backdrop-blur-sm"
+                    :class="{
+                        'bg-green-600/90 border border-green-500': notification.type === 'success',
+                        'bg-red-600/90 border border-red-500': notification.type === 'error',
+                        'bg-yellow-600/90 border border-yellow-500': notification.type === 'warning',
+                        'bg-blue-600/90 border border-blue-500': notification.type === 'info'
+                    }">
+                    <!-- Icon -->
+                    <div class="flex-shrink-0">
+                        <template x-if="notification.type === 'success'">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </template>
+                        <template x-if="notification.type === 'error'">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </template>
+                        <template x-if="notification.type === 'warning'">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </template>
+                        <template x-if="notification.type === 'info'">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </template>
+                    </div>
+                    
+                    <!-- Message -->
+                    <div class="flex-1 text-white font-medium" x-text="notification.message"></div>
+                    
+                    <!-- Close Button -->
+                    <button 
+                        @click="removeNotification(notification.id)"
+                        class="flex-shrink-0 text-white hover:text-gray-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </template>
+        </div>
+
+        <!-- Flash Messages Handler -->
+        @if (session('success'))
+            <div x-data x-init="$dispatch('notify', { type: 'success', message: '{{ session('success') }}' })"></div>
+        @endif
+        @if (session('error'))
+            <div x-data x-init="$dispatch('notify', { type: 'error', message: '{{ session('error') }}' })"></div>
+        @endif
+        @if (session('warning'))
+            <div x-data x-init="$dispatch('notify', { type: 'warning', message: '{{ session('warning') }}' })"></div>
+        @endif
+        @if (session('info'))
+            <div x-data x-init="$dispatch('notify', { type: 'info', message: '{{ session('info') }}' })"></div>
+        @endif
+        @if ($errors->any())
+            @foreach ($errors->all() as $error)
+                <div x-data x-init="$dispatch('notify', { type: 'error', message: '{{ $error }}' })"></div>
+            @endforeach
+        @endif
+        
+        <!-- Global Loading Bar -->
+        <div 
+            x-data="{ loading: false }"
+            x-init="
+                Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
+                    loading = true;
+                });
+                Livewire.hook('commit.pooling', () => { loading = false; });
+            "
+            x-show="loading"
+            x-transition:enter="transition-opacity duration-200"
+            x-transition:leave="transition-opacity duration-200"
+            class="fixed top-0 left-0 right-0 z-[9999]"
+            style="display: none;"
+        >
+            <div class="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-shimmer" style="background-size: 200% 100%;"></div>
+        </div>
+
+        <!-- Global Loading Overlay (for longer operations) -->
+        <div 
+            x-data="{ loading: false }"
+            x-init="
+                Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
+                    setTimeout(() => { loading = true; }, 500);
+                });
+                Livewire.hook('commit.pooling', () => { loading = false; });
+            "
+            x-show="loading"
+            x-transition:enter="transition-all duration-300 ease-out"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition-all duration-200 ease-in"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center"
+            style="display: none;"
+        >
+            <div class="bg-slate-800 rounded-xl p-8 shadow-2xl flex flex-col items-center gap-4 transform transition-all duration-300">
+                <div class="relative">
+                    <svg class="animate-spin h-16 w-16 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>\n                    <div class="absolute inset-0 rounded-full animate-ping bg-blue-500 opacity-20"></div>
+                </div>
+                <p class="text-white font-medium text-lg">Processing...</p>
+                <p class="text-gray-400 text-sm">Please wait a moment</p>
+            </div>
+        </div>
+
+        <div class="min-h-screen flex">
+            <!-- Sidebar Navigation -->
+            @livewire('sidebar')
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col">
+                <!-- Top Navigation -->
+                @livewire('navbar')
+
+                <!-- Page Content -->
+                <main class="flex-1 overflow-auto bg-gray-900">
+                    <div class="p-6 page-transition">
+                        {{ $slot }}
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        @stack('modals')
+
+        @livewireScripts
+        
+        <!-- Leaflet JS for maps -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        @stack('scripts')
+        
+        <!-- Alpine is bundled via Vite in resources/js/app.js; avoid double-loading CDN version -->
+    </body>
+</html>

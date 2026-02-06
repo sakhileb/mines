@@ -1,0 +1,27 @@
+# Deny all access to root directory - redirect to public
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Prevent directory browsing
+Options -Indexes
+
+# Deny access to sensitive files and folders
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "(^composer\.|^package\.|^phpunit\.|\.env|artisan)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect sensitive directories
+RedirectMatch 403 ^/\.git
+RedirectMatch 403 ^/storage/
+RedirectMatch 403 ^/vendor/
+RedirectMatch 403 ^/bootstrap/
+RedirectMatch 403 ^/database/
+RedirectMatch 403 ^/tests/

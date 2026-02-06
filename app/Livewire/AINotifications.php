@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\AIPredictiveAlert;
+use Livewire\Component;
+use Livewire\Attributes\On;
+
+class AINotifications extends Component
+{
+    public $notifications = [];
+    public $unreadCount = 0;
+    public $showPanel = false;
+
+    public function mount()
+    {
+        $this->loadNotifications();
+    }
+
+    #[On('alert-created')]
+    public function loadNotifications()
+    {
+        $team = auth()->user()->currentTeam;
+        
+        $this->notifications = AIPredictiveAlert::where('team_id', $team->id)
+            ->where('is_acknowledged', false)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->with('aiAgent')
+            ->get();
+        
+        $this->unreadCount = $this->notifications->count();
+    }
+
+    public function togglePanel()
+    {
+        $this->showPanel = !$this->showPanel;
+    }
+
+    public function acknowledge($alertId)
+    {
+        $alert = AIPredictiveAlert::find($alertId);
+        
+        if ($alert && $alert->team_id === auth()->user()->currentTeam->id) {
+            $alert->update([
+                'is_acknowledged' => true,
+                'acknowledged_at' => now(),
+                'acknowledged_by' => auth()->id(),
+            ]);
+            
+            $this->loadNotifications();
+            
+            $this->dispatch('alert-acknowledged', alertId: $alertId);
+        }
+    }
+
+    public function acknowledgeAll()
+    {
+        $team = auth()->user()->currentTeam;
+        
+        AIPredictiveAlert::where('team_id', $team->id)
+            ->where('is_acknowledged', false)
+            ->update([
+                'is_acknowledged' => true,
+                'acknowledged_at' => now(),
+                'acknowledged_by' => auth()->id(),
+            ]);
+        
+        $this->loadNotifications();
+    }
+
+    public function render()
+    {
+        return view('livewire.ai-notifications');
+    }
+}

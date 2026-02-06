@@ -1,0 +1,32 @@
+{
+  "_charts-l0sNRNKZ.js": {
+    "file": "assets/charts-l0sNRNKZ.js",
+    "name": "charts"
+  },
+  "_maps-CXUWDbkB.js": {
+    "file": "assets/maps-CXUWDbkB.js",
+    "name": "maps"
+  },
+  "_vendor-l0sNRNKZ.js": {
+    "file": "assets/vendor-l0sNRNKZ.js",
+    "name": "vendor"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-DKIb39Hx.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-DriwVhaZ.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_maps-CXUWDbkB.js"
+    ]
+  }
+}

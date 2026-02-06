@@ -1,0 +1,154 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\AIRecommendation;
+use App\Models\AIInsight;
+use App\Models\AIPredictiveAlert;
+use App\Services\AI\AIOptimizationService;
+use Livewire\Component;
+use Livewire\WithPagination;
+
+class AIOptimizationDashboard extends Component
+{
+    use WithPagination;
+
+    public $activeTab = 'overview';
+    public $selectedCategory = 'all';
+    public $selectedPriority = 'all';
+    public $analysisRunning = false;
+
+    protected $aiService;
+
+    public function boot(AIOptimizationService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
+
+    public function mount()
+    {
+        // Auto-run analysis if no recent data
+        $lastRecommendation = AIRecommendation::where('team_id', auth()->user()->currentTeam->id)
+            ->latest()
+            ->first();
+
+        if (!$lastRecommendation || $lastRecommendation->created_at->diffInHours(now()) > 24) {
+            $this->runAnalysis();
+        }
+    }
+
+    public function runAnalysis()
+    {
+        $this->analysisRunning = true;
+        
+        try {
+            $this->aiService->runComprehensiveAnalysis(
+                auth()->user()->currentTeam,
+                auth()->user()
+            );
+
+            $this->dispatch('analysis-completed');
+            session()->flash('success', 'AI analysis completed successfully!');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Analysis failed: ' . $e->getMessage());
+        }
+
+        $this->analysisRunning = false;
+    }
+
+    public function setCategory($category)
+    {
+        $this->selectedCategory = $category;
+        $this->resetPage();
+    }
+
+    public function setPriority($priority)
+    {
+        $this->selectedPriority = $priority;
+        $this->resetPage();
+    }
+
+    public function implementRecommendation($recommendationId)
+    {
+        $recommendation = AIRecommendation::findOrFail($recommendationId);
+        
+        $this->authorize('update', $recommendation);
+
+        $recommendation->markAsImplemented(auth()->user());
+
+        session()->flash('success', 'Recommendation marked as implemented!');
+    }
+
+    public function rejectRecommendation($recommendationId)
+    {
+        $recommendation = AIRecommendation::findOrFail($recommendationId);
+        
+        $this->authorize('update', $recommendation);
+
+        $recommendation->update(['status' => 'rejected']);
+
+        session()->flash('success', 'Recommendation rejected.');
+    }
+
+    public function acknowledgeAlert($alertId)
+    {
+        $alert = AIPredictiveAlert::findOrFail($alertId);
+        
+        $this->authorize('update', $alert);
+
+        $alert->acknowledge(auth()->user());
+
+        session()->flash('success', 'Alert acknowledged.');
+    }
+
+    public function markInsightAsRead($insightId)
+    {
+        $insight = AIInsight::findOrFail($insightId);
+        
+        $this->authorize('update', $insight);
+
+        $insight->markAsRead();
+    }
+
+    public function render()
+    {
+        $team = auth()->user()->currentTeam;
+
+        // Get dashboard data
+        $dashboardData = $this->aiService->getDashboardInsights($team);
+
+        // Get recommendations with filters
+        $recommendationsQuery = AIRecommendation::where('team_id', $team->id)
+            ->where('status', 'pending')
+            ->with(['aiAgent', 'machine', 'mineArea', 'route']);
+
+        if ($this->selectedCategory !== 'all') {
+            $recommendationsQuery->where('category', $this->selectedCategory);
+        }
+
+        if ($this->selectedPriority !== 'all') {
+            $recommendationsQuery->where('priority', $this->selectedPriority);
+        }
+
+        $recommendations = $recommendationsQuery
+            ->orderBy('priority')
+            ->orderByDesc('confidence_score')
+            ->paginate(10);
+
+        // Get predictive alerts
+        $predictiveAlerts = AIPredictiveAlert::where('team_id', $team->id)
+            ->unacknowledged()
+            ->with(['aiAgent', 'machine', 'mineArea'])
+            ->orderBy('severity')
+            ->orderBy('predicted_occurrence')
+            ->limit(5)
+            ->get();
+
+        return view('livewire.ai-optimization-dashboard', [
+            'stats' => $dashboardData['stats'],
+            'insights' => $dashboardData['insights'],
+            'recommendations' => $recommendations,
+            'predictiveAlerts' => $predictiveAlerts,
+        ]);
+    }
+}

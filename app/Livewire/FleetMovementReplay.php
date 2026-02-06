@@ -1,0 +1,373 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\Machine;
+use App\Models\MachineLocationHistory;
+use Carbon\Carbon;
+use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class FleetMovementReplay extends Component
+{
+    public $selectedMachine = null;
+    public array $activityFeed = [];
+    public bool $isLoading = false;
+    public $startDate = '';
+    public $endDate = '';
+    public $startTime = '00:00';
+    public $endTime = '23:59';
+    
+    // Playback controls
+    public $isPlaying = false;
+    public $playbackSpeed = 1.0;
+    public $currentPosition = 0;
+    public $totalPositions = 0;
+    public $autoReplay = false;
+    public $showTrail = true;
+    public $smoothPan = true;
+    
+    // Map settings
+    public $centerLat = -26.2041;
+    public $centerLng = 28.0473;
+    public $zoomLevel = 10;
+    
+    protected $listeners = ['playback-stopped' => 'handlePlaybackStopped', 'position-updated' => 'handlePositionUpdated'];
+    
+    public function mount()
+    {
+        $this->isLoading = true;
+        $this->startDate = now()->subDays(1)->format('Y-m-d');
+        $this->endDate = now()->format('Y-m-d');
+        $this->loadActivityFeed();
+        $this->isLoading = false;
+    }
+
+    public function loadActivityFeed()
+    {
+        $team = Auth::user()->currentTeam;
+        $this->activityFeed = \App\Models\ActivityLog::where('team_id', $team->id)
+            ->latest('created_at')
+            ->take(10)
+            ->get()
+            ->map(fn ($log) => [
+                'user' => $log->user->name ?? 'System',
+                'action' => $log->action,
+                'description' => $log->description,
+                'created_at' => $log->created_at->diffForHumans(),
+            ])
+            ->toArray();
+    }
+
+    public function render()
+    {
+        $team = Auth::user()->currentTeam;
+        $machines = Machine::where('team_id', $team->id)
+            ->orderBy('name')
+            ->get();
+        
+        $locationHistory = [];
+        $pathCoordinates = [];
+        $geofences = [];
+        $routes = [];
+        
+        if ($this->selectedMachine) {
+            $start = Carbon::parse($this->startDate . ' ' . $this->startTime);
+            $end = Carbon::parse($this->endDate . ' ' . $this->endTime);
+            
+            // Get location history from machine_metrics table (simulating historical data)
+            $locationHistory = DB::table('machine_metrics')
+                ->where('machine_id', $this->selectedMachine)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderBy('created_at')
+                ->get();
+            
+            $this->totalPositions = $locationHistory->count();
+            
+            // Build path coordinates
+            $pathCoordinates = $locationHistory->map(function($location) {
+                return [
+                    'lat' => $location->latitude,
+                    'lng' => $location->longitude,
+                    'timestamp' => Carbon::parse($location->created_at)->format('Y-m-d H:i:s'),
+                    'speed' => $location->speed ?? 0,
+                    'heading' => $location->heading ?? 0,
+                ];
+            })->toArray();
+            
+            // Get geofences for the team
+            $geofences = \App\Models\Geofence::where('team_id', $team->id)
+                ->get()
+                ->map(function($geofence) {
+                    $coordinates = json_decode($geofence->coordinates, true) ?? [];
+                    return [
+                        'id' => $geofence->id,
+                        'name' => $geofence->name,
+                        'type' => $geofence->type,
+                        'coordinates' => $coordinates,
+                        'color' => $geofence->color ?? '#3b82f6',
+                    ];
+                })
+                ->toArray();
+            
+            // Get routes with their waypoints - prioritize machine-specific routes, then team routes
+            $machineRoutes = DB::table('routes')
+                ->leftJoin('waypoints', 'routes.id', '=', 'waypoints.route_id')
+                ->where('routes.team_id', $team->id)
+                ->where('routes.status', 'active')
+                ->where(function($query) {
+                    $query->where('routes.machine_id', $this->selectedMachine)
+                          ->orWhereNull('routes.machine_id');
+                })
+                ->select('routes.id', 'routes.name', 'routes.start_latitude', 'routes.start_longitude', 
+                         'routes.end_latitude', 'routes.end_longitude', 'routes.total_distance',
+                         'waypoints.latitude', 'waypoints.longitude', 'waypoints.sequence_order')
+                ->orderBy('routes.id')
+                ->orderBy('waypoints.sequence_order')
+                ->get();
+
+            // Group waypoints by route
+            $routesMap = [];
+            foreach ($machineRoutes as $row) {
+                if (!isset($routesMap[$row->id])) {
+                    $routesMap[$row->id] = [
+                        'id' => $row->id,
+                        'name' => $row->name,
+                        'waypoints' => [],
+                        'color' => '#f59e0b',
+                        'start_location' => $row->start_latitude . ', ' . $row->start_longitude,
+                        'end_location' => $row->end_latitude . ', ' . $row->end_longitude,
+                    ];
+                }
+                if (!is_null($row->latitude) && !is_null($row->longitude)) {
+                    $routesMap[$row->id]['waypoints'][] = [$row->latitude, $row->longitude];
+                }
+            }
+            
+            $routes = array_values($routesMap);
+            
+            // Auto-calculate route between start and end points if no routes exist
+            // This ensures machine movement follows roads on the map
+            if (empty($routes) && !empty($pathCoordinates) && count($pathCoordinates) >= 2) {
+                $start_point = reset($pathCoordinates);
+                $end_point = end($pathCoordinates);
+                
+                if ($start_point && $end_point) {
+                    try {
+                        $routePlanningService = new \App\Services\RoutePlanningService();
+                        $calculatedRoute = $routePlanningService->calculateOptimalRoute(
+                            $start_point['lat'],
+                            $start_point['lng'],
+                            $end_point['lat'],
+                            $end_point['lng'],
+                            $this->selectedMachine,
+                            $team->id
+                        );
+                        
+                        if ($calculatedRoute && !empty($calculatedRoute['waypoints'])) {
+                            // Add the calculated route to the routes array
+                            $routes[] = [
+                                'id' => 'auto-' . time(),
+                                'name' => 'Auto-calculated Route',
+                                'waypoints' => $calculatedRoute['waypoints'],
+                                'color' => '#f59e0b',
+                                'start_location' => $start_point['lat'] . ', ' . $start_point['lng'],
+                                'end_location' => $end_point['lat'] . ', ' . $end_point['lng'],
+                            ];
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Failed to auto-calculate route for replay', [
+                            'machine_id' => $this->selectedMachine,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            }
+            
+            // Set map center to first position if available
+            if ($locationHistory->isNotEmpty()) {
+                $first = $locationHistory->first();
+                $this->centerLat = $first->latitude;
+                $this->centerLng = $first->longitude;
+                $this->zoomLevel = 14; // Closer zoom for tracking
+            }
+        }
+
+        return view('livewire.fleet-movement-replay', [
+            'machines' => $machines,
+            'locationHistory' => $locationHistory,
+            'pathCoordinates' => $pathCoordinates,
+            'geofences' => $geofences,
+            'routes' => $routes,
+        ]);
+    }
+
+    public function setMachine($machineId)
+    {
+        $this->selectedMachine = $machineId;
+        $this->currentPosition = 0;
+        $this->isPlaying = false;
+        $this->dispatch('machine-selected');
+    }
+
+    public function loadReplay()
+    {
+        $this->currentPosition = 0;
+        $this->isPlaying = false;
+        $this->dispatch('replay-loaded');
+    }
+
+    public function play()
+    {
+        $this->isPlaying = true;
+        $this->dispatch('replay-play', speed: $this->playbackSpeed);
+    }
+
+    public function pause()
+    {
+        $this->isPlaying = false;
+        $this->dispatch('replay-pause');
+    }
+
+    public function stop()
+    {
+        $this->isPlaying = false;
+        $this->currentPosition = 0;
+        $this->dispatch('replay-stop');
+    }
+    
+    public function updated($propertyName)
+    {
+        // When currentPosition is updated via wire:model, dispatch seek event
+        if ($propertyName === 'currentPosition') {
+            $this->dispatch('replay-seek', position: $this->currentPosition);
+        }
+        if ($propertyName === 'selectedMachine') {
+            // Auto-load replay when machine is selected
+            $this->dispatch('machine-selected');
+        }
+    }
+
+    public function setSpeed($speed)
+    {
+        $this->playbackSpeed = $speed;
+        if ($this->isPlaying) {
+            $this->dispatch('replay-speed-change', speed: $speed);
+        }
+    }
+
+    public function seekTo($position)
+    {
+        $this->currentPosition = $position;
+        $this->dispatch('replay-seek', position: $position);
+    }
+    
+    public function handlePlaybackStopped()
+    {
+        $this->isPlaying = false;
+    }
+    
+    public function handlePositionUpdated($data)
+    {
+        $this->currentPosition = $data['position'] ?? 0;
+    }
+    
+    public function nextFrame()
+    {
+        if ($this->currentPosition < $this->totalPositions - 1) {
+            $this->currentPosition++;
+            $this->dispatch('replay-seek', position: $this->currentPosition);
+        }
+    }
+    
+    public function previousFrame()
+    {
+        if ($this->currentPosition > 0) {
+            $this->currentPosition--;
+            $this->dispatch('replay-seek', position: $this->currentPosition);
+        }
+    }
+    
+    public function loadRecentReplay()
+    {
+        // Load the most recent replay data automatically
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::where('team_id', $team->id)
+            ->orderBy('updated_at', 'desc')
+            ->first();
+            
+        if ($machine) {
+            $this->selectedMachine = $machine->id;
+            $this->startDate = now()->subHours(2)->format('Y-m-d');
+            $this->endDate = now()->format('Y-m-d');
+            $this->startTime = now()->subHours(2)->format('H:i');
+            $this->endTime = now()->format('H:i');
+            $this->loadReplay();
+            
+            session()->flash('message', 'Loaded recent replay for ' . $machine->name);
+        } else {
+            session()->flash('error', 'No machines available');
+        }
+    }
+    
+    public function exportReplayData()
+    {
+        if (!$this->selectedMachine || $this->totalPositions == 0) {
+            session()->flash('error', 'No replay data to export. Please load a replay first.');
+            return;
+        }
+        
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::find($this->selectedMachine);
+        
+        if (!$machine) {
+            session()->flash('error', 'Machine not found');
+            return;
+        }
+        
+        $start = Carbon::parse($this->startDate . ' ' . $this->startTime);
+        $end = Carbon::parse($this->endDate . ' ' . $this->endTime);
+        
+        $locationHistory = DB::table('machine_metrics')
+            ->where('machine_id', $this->selectedMachine)
+            ->whereBetween('created_at', [$start, $end])
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->orderBy('created_at')
+            ->get();
+        
+        $csvData = [];
+        $csvData[] = ['Timestamp', 'Latitude', 'Longitude', 'Speed', 'Heading'];
+        
+        foreach ($locationHistory as $location) {
+            $csvData[] = [
+                Carbon::parse($location->created_at)->format('Y-m-d H:i:s'),
+                $location->latitude,
+                $location->longitude,
+                $location->speed ?? 0,
+                $location->heading ?? 0
+            ];
+        }
+        
+        $filename = 'replay_' . $machine->name . '_' . now()->format('Y-m-d_His') . '.csv';
+        $handle = fopen('php://temp', 'r+');
+        
+        foreach ($csvData as $row) {
+            fputcsv($handle, $row);
+        }
+        
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+        
+        return response()->streamDownload(function() use ($csv) {
+            echo $csv;
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+}

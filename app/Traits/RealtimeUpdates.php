@@ -1,0 +1,127 @@
+<?php
+
+namespace App\Traits;
+
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * Trait RealtimeUpdates
+ * 
+ * Adds real-time update capabilities to Livewire components
+ * Provides methods to initialize WebSocket listeners and handle real-time data
+ */
+trait RealtimeUpdates
+{
+    /**
+     * Initialize real-time listeners for this component
+     * Call this in the mount() or hydrate() method
+     */
+    public function initializeRealtimeUpdates(): void
+    {
+        $userId = Auth::id();
+        $teamId = Auth::user()->current_team_id;
+
+        // Dispatch JavaScript to initialize Reverb
+        $this->dispatch('realtime:init', userId: $userId, teamId: $teamId);
+    }
+
+    /**
+     * Get the current user
+     */
+    public function getCurrentUser()
+    {
+        return Auth::user();
+    }
+
+    /**
+     * Get the current team
+     */
+    public function getCurrentTeam()
+    {
+        return Auth::user()->currentTeam;
+    }
+
+    /**
+     * Get user ID for Reverb subscriptions
+     */
+    public function getUserId(): string
+    {
+        return (string) Auth::id();
+    }
+
+    /**
+     * Get team ID for Reverb subscriptions
+     */
+    public function getTeamId(): string
+    {
+        return (string) Auth::user()->current_team_id;
+    }
+
+    /**
+     * Subscribe to machine location updates (for LiveMap component)
+     * @param string $machineId
+     */
+    public function subscribeToMachineLocation(string $machineId): void
+    {
+        $this->dispatch('realtime:machine-location', machineId: $machineId);
+    }
+
+    /**
+     * Subscribe to team-wide location updates
+     */
+    public function subscribeToTeamLocations(): void
+    {
+        $this->dispatch('realtime:team-locations');
+    }
+
+    /**
+     * Subscribe to team alerts
+     */
+    public function subscribeToTeamAlerts(): void
+    {
+        $this->dispatch('realtime:team-alerts');
+    }
+
+    /**
+     * Subscribe to geofence events
+     * @param string $geofenceId
+     */
+    public function subscribeToGeofenceEvents(string $geofenceId): void
+    {
+        $this->dispatch('realtime:geofence-events', geofenceId: $geofenceId);
+    }
+
+    /**
+     * Subscribe to machine status (online/offline)
+     * @param string $machineId
+     */
+    public function subscribeToMachineStatus(string $machineId): void
+    {
+        $this->dispatch('realtime:machine-status', machineId: $machineId);
+    }
+
+    /**
+     * Subscribe to presence (active team members)
+     */
+    public function subscribeToPresence(): void
+    {
+        $this->dispatch('realtime:presence');
+    }
+
+    /**
+     * Stop listening to a specific channel
+     * @param string $machineId
+     */
+    public function stopListeningToMachine(string $machineId): void
+    {
+        $this->dispatch('realtime:stop-machine', machineId: $machineId);
+    }
+
+    /**
+     * Stop all listeners
+     */
+    public function stopAllListeners(): void
+    {
+        $this->dispatch('realtime:stop-all');
+    }
+}

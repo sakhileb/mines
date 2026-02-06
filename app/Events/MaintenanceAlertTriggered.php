@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class MaintenanceAlertTriggered implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $machine;
+    public $probability;
+    public $predictedDate;
+    public $teamId;
+
+    public function __construct($machine, $probability, $predictedDate, $teamId)
+    {
+        $this->machine = $machine;
+        $this->probability = $probability;
+        $this->predictedDate = $predictedDate;
+        $this->teamId = $teamId;
+    }
+
+    public function broadcastOn()
+    {
+        return new PrivateChannel("team.{$this->teamId}.alerts");
+    }
+
+    public function broadcastAs()
+    {
+        return 'maintenance.alert';
+    }
+
+    public function broadcastWith()
+    {
+        return [
+            'machine_id' => $this->machine->id,
+            'machine_name' => $this->machine->name,
+            'alert_type' => 'maintenance_prediction',
+            'probability' => round($this->probability, 2),
+            'predicted_date' => $this->predictedDate,
+            'severity' => $this->probability >= 0.8 ? 'critical' : ($this->probability >= 0.6 ? 'high' : 'medium'),
+            'timestamp' => now()->toIso8601String(),
+            'action_required' => true,
+        ];
+    }
+}

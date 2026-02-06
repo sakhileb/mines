@@ -1,0 +1,107 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\HasTeamFilters;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class MaintenanceSchedule extends Model
+{
+    use HasFactory, HasTeamFilters;
+
+    protected $fillable = [
+        'team_id',
+        'machine_id',
+        'maintenance_type',
+        'title',
+        'description',
+        'schedule_type',
+        'interval_hours',
+        'interval_km',
+        'interval_days',
+        'last_service_hours',
+        'last_service_km',
+        'last_service_date',
+        'next_service_hours',
+        'next_service_km',
+        'next_service_date',
+        'priority',
+        'status',
+        'estimated_cost',
+        'estimated_duration_hours',
+        'required_parts',
+        'required_tools',
+        'auto_generate_work_order',
+    ];
+
+    protected $casts = [
+        'last_service_date' => 'date',
+        'next_service_date' => 'date',
+        'estimated_cost' => 'decimal:2',
+        'required_parts' => 'json',
+        'required_tools' => 'json',
+        'auto_generate_work_order' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    public function machine(): BelongsTo
+    {
+        return $this->belongsTo(Machine::class);
+    }
+
+    public function maintenanceRecords(): HasMany
+    {
+        return $this->hasMany(MaintenanceRecord::class);
+    }
+
+    /**
+     * Check if service is due
+     */
+    public function isDue(Machine $machine): bool
+    {
+        return match($this->schedule_type) {
+            'hours' => $machine->operating_hours >= $this->next_service_hours,
+            'kilometers' => $machine->odometer >= $this->next_service_km,
+            'calendar' => now()->gte($this->next_service_date),
+            default => false,
+        };
+    }
+
+    /**
+     * Check if service is overdue
+     */
+    public function isOverdue(Machine $machine): bool
+    {
+        return match($this->schedule_type) {
+            'hours' => $machine->operating_hours > ($this->next_service_hours + ($this->interval_hours * 0.1)),
+            'kilometers' => $machine->odometer > ($this->next_service_km + ($this->interval_km * 0.1)),
+            'calendar' => now()->gt($this->next_service_date->addDays(7)),
+            default => false,
+        };
+    }
+
+    /**
+     * Scope for due schedules
+     */
+    public function scopeDue($query)
+    {
+        return $query->where('status', 'due');
+    }
+
+    /**
+     * Scope for overdue schedules
+     */
+    public function scopeOverdue($query)
+    {
+        return $query->where('status', 'overdue');
+    }
+}

@@ -1,0 +1,45 @@
+# Deployment exclusions - files/folders to exclude from production tar.gz
+
+# Development files
+node_modules/
+.git/
+.github/
+tests/
+.env.example
+.editorconfig
+.gitattributes
+.gitignore
+phpunit.xml
+vite.config.js
+postcss.config.js
+tailwind.config.js
+package.json
+package-lock.json
+composer.json
+composer.lock
+README.md
+
+# Development artifacts
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+!storage/framework/views/.gitignore
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.cache

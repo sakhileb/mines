@@ -1,0 +1,221 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Models\Report;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+/**
+ * Report API Controller
+ * 
+ * Handles report generation and management
+ */
+class ReportController extends Controller
+{
+    /**
+     * List all reports for current team
+     * 
+     * GET /api/reports
+     */
+    public function index(Request $request)
+    {
+        $validated = $request->validate([
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'status' => 'nullable|string|in:pending,completed,failed',
+            'type' => 'nullable|string',
+        ]);
+
+        $query = Report::where('team_id', auth()->user()->current_team_id);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        $perPage = $request->input('per_page', 15);
+        $reports = $query->with('generatedBy')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        return response()->json([
+            'data' => $reports->items(),
+            'pagination' => [
+                'total' => $reports->total(),
+                'per_page' => $reports->perPage(),
+                'current_page' => $reports->currentPage(),
+                'last_page' => $reports->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get a single report
+     * 
+     * GET /api/reports/{id}
+     */
+    public function show(Report $report)
+    {
+        return response()->json([
+            'data' => $report->load('generatedBy'),
+        ]);
+    }
+
+    /**
+     * Generate a new report
+     * 
+     * POST /api/reports/generate
+     */
+    public function generate(Request $request)
+    {
+        $this->authorize('generate', Report::class);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|in:truck_sensors,tire_condition,load_cycle,fuel,engine_parts,maintenance,custom',
+            'format' => 'nullable|string|in:pdf,csv,xlsx',
+            'filters' => 'nullable|json',
+        ]);
+
+        $validated['team_id'] = auth()->user()->current_team_id;
+        $validated['status'] = 'pending';
+        $validated['generated_by'] = auth()->id();
+        $validated['format'] = $request->input('format', 'pdf');
+
+        $report = Report::create($validated);
+
+        // TODO: Dispatch GenerateReportJob based on type
+
+        return response()->json([
+            'data' => $report,
+            'message' => 'Report generation started',
+        ], Response::HTTP_CREATED);
+    }
+
+    /**
+     * Download report file
+     * 
+     * GET /api/reports/{id}/download
+     */
+    public function download(Report $report)
+    {
+        $this->authorize('view', $report);
+
+        if (!$report->isAvailable()) {
+            return response()->json([
+                'message' => 'Report is not available for download',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $filePath = storage_path('app/' . $report->file_path);
+
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'message' => 'Report file not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return response()->download($filePath, $report->title . '.' . $report->format);
+    }
+
+    /**
+     * Delete a report
+     * 
+     * DELETE /api/reports/{id}
+     */
+    public function destroy(Report $report)
+    {
+        $this->authorize('delete', $report);
+
+        // Delete file if exists
+        if ($report->file_path && file_exists(storage_path('app/' . $report->file_path))) {
+            unlink(storage_path('app/' . $report->file_path));
+        }
+
+        $report->delete();
+
+        return response()->json([
+            'message' => 'Report deleted successfully',
+        ]);
+    }
+
+    /**
+     * Get available report templates
+     * 
+     * GET /api/reports/templates
+     */
+    public function templates()
+    {
+        $templates = [
+            [
+                'type' => 'truck_sensors',
+                'name' => 'Truck Sensors Report',
+                'description' => 'Engine RPM, temperature, and diagnostic data',
+                'formats' => ['pdf', 'csv', 'xlsx'],
+            ],
+            [
+                'type' => 'tire_condition',
+                'name' => 'Tire Condition Report',
+                'description' => 'Tire tread depth, pressure, and wear patterns',
+                'formats' => ['pdf', 'csv', 'xlsx'],
+            ],
+            [
+                'type' => 'load_cycle',
+                'name' => 'Load & Cycle Report',
+                'description' => 'Load weights and operational cycles',
+                'formats' => ['pdf', 'csv', 'xlsx'],
+            ],
+            [
+                'type' => 'fuel',
+                'name' => 'Fuel Consumption Report',
+                'description' => 'Fuel usage, costs, and consumption rates',
+                'formats' => ['pdf', 'csv', 'xlsx'],
+            ],
+            [
+                'type' => 'engine_parts',
+                'name' => 'Engine Parts Report',
+                'description' => 'Oil status, filter replacement, fluid levels',
+                'formats' => ['pdf', 'csv', 'xlsx'],
+            ],
+            [
+                'type' => 'maintenance',
+                'name' => 'Maintenance Recommendations',
+                'description' => 'Overdue and upcoming maintenance schedules',
+                'formats' => ['pdf', 'csv', 'xlsx'],
+            ],
+        ];
+
+        return response()->json([
+            'data' => $templates,
+        ]);
+    }
+
+    /**
+     * Get report statistics
+     * 
+     * GET /api/reports/stats
+     */
+    public function stats()
+    {
+        $stats = [
+            'total' => Report::where('team_id', auth()->user()->current_team_id)->count(),
+            'pending' => Report::where('team_id', auth()->user()->current_team_id)
+                ->where('status', 'pending')
+                ->count(),
+            'completed' => Report::where('team_id', auth()->user()->current_team_id)
+                ->where('status', 'completed')
+                ->count(),
+            'failed' => Report::where('team_id', auth()->user()->current_team_id)
+                ->where('status', 'failed')
+                ->count(),
+        ];
+
+        return response()->json([
+            'data' => $stats,
+        ]);
+    }
+}

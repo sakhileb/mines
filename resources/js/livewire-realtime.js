@@ -1,0 +1,221 @@
+/**
+ * Livewire Realtime Event Listener
+ * 
+ * Integrates with the RealtimeUpdates trait to listen for component events
+ * and manage real-time WebSocket subscriptions
+ * 
+ * Also integrates with UI services:
+ * - RealtimeMapManager: Live map updates
+ * - ToastNotificationService: Alert notifications
+ * - GeofenceVisualizationManager: Geofence events
+ */
+
+import ReverbService from './services/ReverbService.js';
+
+// Delay Livewire event listener setup until Livewire is available
+function setupLivewireListeners() {
+    if (typeof window.Livewire === 'undefined') {
+        // Wait for Livewire to be ready
+        setTimeout(setupLivewireListeners, 100);
+        return;
+    }
+
+    // Get UI services (wait for them to be available)
+    const getService = (serviceName) => {
+        return new Promise((resolve) => {
+            if (window[serviceName]) {
+                resolve(window[serviceName]);
+            } else {
+                const checkInterval = setInterval(() => {
+                    if (window[serviceName]) {
+                        clearInterval(checkInterval);
+                        resolve(window[serviceName]);
+                    }
+                }, 100);
+            }
+        });
+    };
+
+    /**
+     * Initialize Reverb for the current user/team
+     */
+    window.Livewire.on('realtime:init', ({ userId, teamId }) => {
+        console.log('📡 Initializing Reverb for user:', userId, 'team:', teamId);
+        ReverbService.init(userId, teamId);
+        
+        // Initialize toast service
+        getService('ToastNotificationService').then(service => {
+            service.init();
+        });
+    });
+
+    /**
+     * Subscribe to machine location updates
+     */
+    window.Livewire.on('realtime:machine-location', ({ machineId }) => {
+        console.log('🎯 Subscribing to machine location:', machineId);
+        ReverbService.subscribeMachineLocation(machineId, (data) => {
+            ReverbService.emit('machineLocationUpdated', data);
+            
+            // Update map if available
+            getService('RealtimeMapManager').then(mapManager => {
+                if (mapManager.map) {
+                    mapManager.updateMachineMarker(data);
+                }
+            });
+        });
+    });
+
+    /**
+     * Subscribe to team-wide location updates
+     */
+    window.Livewire.on('realtime:team-locations', () => {
+        console.log('🎯 Subscribing to team locations');
+        ReverbService.subscribeTeamLocations((data) => {
+            ReverbService.emit('teamLocationUpdated', data);
+            
+            // Update map if available
+            getService('RealtimeMapManager').then(mapManager => {
+                if (mapManager.map) {
+                    mapManager.updateMachineMarker(data);
+                }
+            });
+        });
+    });
+
+    /**
+     * Subscribe to team alerts
+     */
+    window.Livewire.on('realtime:team-alerts', () => {
+        console.log('🎯 Subscribing to team alerts');
+        ReverbService.subscribeTeamAlerts((data) => {
+            ReverbService.emit('alertTriggered', data);
+            
+            // Show toast notification
+            getService('ToastNotificationService').then(toastService => {
+                toastService.showAlert({
+                    title: data.title || 'New Alert',
+                    description: data.description,
+                    priority: data.priority || 'medium',
+                    type: 'alert',
+                    duration: 0 // Don't auto-dismiss critical/high alerts
+                });
+            });
+        });
+    });
+
+    /**
+     * Subscribe to geofence events
+     */
+    window.Livewire.on('realtime:geofence-events', ({ geofenceId }) => {
+        console.log('🎯 Subscribing to geofence events:', geofenceId);
+        ReverbService.subscribeGeofenceEvents(
+            geofenceId,
+            (data) => {
+                ReverbService.emit('geofenceEntry', data);
+                
+                // Update geofence visualization
+                getService('GeofenceVisualizationManager').then(geofenceManager => {
+                    if (geofenceManager.map) {
+                        geofenceManager.onGeofenceEntry(data);
+                        
+                        // Show toast
+                        getService('ToastNotificationService').then(toastService => {
+                            toastService.success(
+                                `${data.machine_name} Entered`,
+                                data.geofence_name,
+                                5000
+                            );
+                        });
+                    }
+                });
+            },
+            (data) => {
+                ReverbService.emit('geofenceExit', data);
+                
+                // Update geofence visualization
+                getService('GeofenceVisualizationManager').then(geofenceManager => {
+                    if (geofenceManager.map) {
+                        geofenceManager.onGeofenceExit(data);
+                        
+                        // Show toast
+                        getService('ToastNotificationService').then(toastService => {
+                            toastService.warning(
+                                `${data.machine_name} Exited`,
+                                data.geofence_name,
+                                5000
+                            );
+                        });
+                    }
+                });
+            }
+        );
+    });
+
+    /**
+     * Subscribe to machine status changes
+     */
+    window.Livewire.on('realtime:machine-status', ({ machineId }) => {
+        console.log('🎯 Subscribing to machine status:', machineId);
+        ReverbService.subscribeMachineStatus(machineId, (data) => {
+            ReverbService.emit('machineStatusChanged', data);
+            
+            // Update map marker color
+            getService('RealtimeMapManager').then(mapManager => {
+                if (mapManager.map && data.type === 'offline') {
+                    mapManager.setMachineOffline(machineId);
+                }
+            });
+            
+            // Show notification
+            getService('ToastNotificationService').then(toastService => {
+                toastService.error(
+                    'Machine Offline',
+                    data.machine_name || `Machine ${machineId}`,
+                    10000
+                );
+            });
+        });
+    });
+
+    /**
+     * Subscribe to presence (active users)
+     */
+    window.Livewire.on('realtime:presence', () => {
+        console.log('🎯 Subscribing to presence');
+        ReverbService.subscribePresence(
+            (users) => ReverbService.emit('usersJoined', users),
+            (user) => ReverbService.emit('userLeft', user)
+        );
+    });
+
+    /**
+     * Stop listening to a machine
+     */
+    window.Livewire.on('realtime:stop-machine', ({ machineId }) => {
+        const channelName = `machine.${machineId}`;
+        ReverbService.unsubscribe(channelName);
+    });
+
+    /**
+     * Stop all listeners
+     */
+    window.Livewire.on('realtime:stop-all', () => {
+        ReverbService.unsubscribeAll();
+    });
+
+    /**
+     * Custom event listener registration
+     * Allows components to listen to real-time events
+     */
+    window.onRealtimeUpdate = (eventName, callback) => {
+        ReverbService.on(eventName, callback);
+    };
+
+    console.log('✅ Livewire realtime event listeners initialized');
+}
+
+// Start setup when script loads
+setupLivewireListeners();
+
+export default { setupLivewireListeners };

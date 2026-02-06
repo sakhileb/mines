@@ -1,0 +1,264 @@
+<?php
+
+namespace App\Services\Integration;
+
+use Exception;
+
+/**
+ * Kawasaki Mining Equipment Integration Service
+ * 
+ * Handles integration with Kawasaki mining machines API
+ * for real-time data synchronization and monitoring
+ */
+class KawasakiService extends BaseManufacturerService
+{
+    /**
+     * Manufacturer identifier
+     */
+    protected string $manufacturer = 'kawasaki';
+
+    /**
+     * Test connection to Kawasaki API
+     * 
+     * @return array
+     */
+    public function testConnection(): array
+    {
+        try {
+            $response = $this->makeRequest('GET', '/health');
+            
+            return [
+                'success' => true,
+                'message' => 'Successfully connected to Kawasaki API',
+                'status' => $response['status'] ?? 'connected',
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => 'CONNECTION_FAILED',
+            ];
+        }
+    }
+
+    /**
+     * Fetch machines from Kawasaki API
+     * 
+     * @return array
+     */
+    public function fetchMachines(): array
+    {
+        try {
+            $response = $this->makeRequest('GET', '/machines');
+            
+            $machines = [];
+            if (!empty($response['data']['machines'])) {
+                foreach ($response['data']['machines'] as $machine) {
+                    $machines[] = $this->parseMachineData($machine);
+                }
+            }
+            
+            return [
+                'success' => true,
+                'machines' => $machines,
+                'count' => count($machines),
+            ];
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch machines', $e);
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'machines' => [],
+            ];
+        }
+    }
+
+    /**
+     * Fetch location data for a machine
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchLocation(string $machineId): array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/machines/{$machineId}/location");
+            
+            return [
+                'success' => true,
+                'location' => $this->parseLocation($response['data'] ?? []),
+            ];
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch location', $e);
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Fetch metrics for a machine
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMetrics(string $machineId): array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/machines/{$machineId}/metrics");
+            
+            $metrics = [];
+            if (!empty($response['data']['metrics'])) {
+                foreach ($response['data']['metrics'] as $metric) {
+                    $metrics[] = $this->parseMetric($metric);
+                }
+            }
+            
+            return [
+                'success' => true,
+                'metrics' => $metrics,
+            ];
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch metrics', $e);
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'metrics' => [],
+            ];
+        }
+    }
+
+    /**
+     * Fetch alerts for a machine
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchAlerts(string $machineId): array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/machines/{$machineId}/alerts");
+            
+            $alerts = [];
+            if (!empty($response['data']['alerts'])) {
+                foreach ($response['data']['alerts'] as $alert) {
+                    $alerts[] = $this->parseAlert($alert);
+                }
+            }
+            
+            return [
+                'success' => true,
+                'alerts' => $alerts,
+            ];
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch alerts', $e);
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'alerts' => [],
+            ];
+        }
+    }
+
+    /**
+     * Parse machine data from Kawasaki format
+     * 
+     * @param array $data
+     * @return array
+     */
+    protected function parseMachineData(array $data): array
+    {
+        return [
+            'external_id' => $data['id'] ?? null,
+            'name' => $data['name'] ?? 'Unknown Machine',
+            'model' => $data['model'] ?? 'Unknown Model',
+            'manufacturer' => 'Kawasaki',
+            'status' => $this->parseStatus($data['status'] ?? 'unknown'),
+            'location' => $this->parseLocation($data['location'] ?? []),
+            'last_heartbeat' => $data['last_heartbeat'] ?? null,
+            'specifications' => [
+                'type' => $data['type'] ?? 'mining_machine',
+                'capacity' => $data['bucket_capacity'] ?? $data['capacity'] ?? null,
+                'year_manufactured' => $data['year_manufactured'] ?? null,
+                'serial_number' => $data['serial_number'] ?? null,
+                'model_code' => $data['model_code'] ?? null,
+            ],
+        ];
+    }
+
+    /**
+     * Parse location data from Kawasaki format
+     * 
+     * @param array $data
+     * @return array
+     */
+    protected function parseLocation(array $data): array
+    {
+        return [
+            'latitude' => $data['latitude'] ?? $data['lat'] ?? 0,
+            'longitude' => $data['longitude'] ?? $data['lng'] ?? 0,
+            'altitude' => $data['elevation'] ?? $data['altitude'] ?? 0,
+            'accuracy' => $data['gps_accuracy'] ?? $data['accuracy'] ?? 0,
+            'timestamp' => $data['timestamp'] ?? now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Parse metric data from Kawasaki format
+     * 
+     * @param array $data
+     * @return array
+     */
+    protected function parseMetric(array $data): array
+    {
+        return [
+            'type' => $data['metric_type'] ?? $data['type'] ?? 'unknown',
+            'value' => $data['reading'] ?? $data['value'] ?? 0,
+            'unit' => $data['unit'] ?? $data['measurement_unit'] ?? '',
+            'timestamp' => $data['recorded_at'] ?? $data['timestamp'] ?? now()->toIso8601String(),
+            'tags' => $data['tags'] ?? [],
+        ];
+    }
+
+    /**
+     * Parse alert data from Kawasaki format
+     * 
+     * @param array $data
+     * @return array
+     */
+    protected function parseAlert(array $data): array
+    {
+        return [
+            'external_id' => $data['id'] ?? null,
+            'type' => $this->mapAlertType($data['alert_code'] ?? $data['type'] ?? 'unknown'),
+            'priority' => $this->mapAlertPriority($data['priority_level'] ?? $data['severity'] ?? 'medium'),
+            'message' => $data['description'] ?? $data['message'] ?? 'Alert from Kawasaki',
+            'timestamp' => $data['alert_time'] ?? $data['timestamp'] ?? now()->toIso8601String(),
+            'acknowledged' => $data['is_acknowledged'] ?? $data['acknowledged'] ?? false,
+            'raw_data' => $data,
+        ];
+    }
+
+    /**
+     * Map Kawasaki status to standard status
+     * 
+     * @param string $status
+     * @return string
+     */
+    protected function parseStatus(string $status): string
+    {
+        $statusMap = [
+            'active' => 'active',
+            'offline' => 'inactive',
+            'standby' => 'idle',
+            'operating' => 'active',
+            'service' => 'maintenance',
+            'down' => 'stopped',
+            'fault' => 'error',
+            'idle' => 'idle',
+        ];
+
+        return $statusMap[strtolower($status)] ?? 'unknown';
+    }
+}
