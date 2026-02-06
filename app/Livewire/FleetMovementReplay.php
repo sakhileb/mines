@@ -64,15 +64,19 @@ class FleetMovementReplay extends Component
     {
         $team = Auth::user()->currentTeam;
         $machines = Machine::where('team_id', $team->id)
+            ->orderBy('machine_type')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->groupBy('machine_type');
         
         $locationHistory = [];
         $pathCoordinates = [];
         $geofences = [];
         $routes = [];
+        $selectedMachineDetails = null;
         
         if ($this->selectedMachine) {
+            $selectedMachineDetails = Machine::find($this->selectedMachine);
             $start = Carbon::parse($this->startDate . ' ' . $this->startTime);
             $end = Carbon::parse($this->endDate . ' ' . $this->endTime);
             
@@ -102,7 +106,7 @@ class FleetMovementReplay extends Component
             $geofences = \App\Models\Geofence::where('team_id', $team->id)
                 ->get()
                 ->map(function($geofence) {
-                    $coordinates = json_decode($geofence->coordinates, true) ?? [];
+                    $coordinates = $geofence->coordinates ?? [];
                     return [
                         'id' => $geofence->id,
                         'name' => $geofence->name,
@@ -202,6 +206,7 @@ class FleetMovementReplay extends Component
             'pathCoordinates' => $pathCoordinates,
             'geofences' => $geofences,
             'routes' => $routes,
+            'selectedMachineDetails' => $selectedMachineDetails,
         ]);
     }
 
