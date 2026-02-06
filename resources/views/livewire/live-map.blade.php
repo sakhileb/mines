@@ -239,6 +239,19 @@
             currentLayer = fallbackKey;
             showToast('Satellite tiles failed to load. Switched to standard view.');
         }
+        
+        // Get machine emoji image based on machine type
+        function getMachineEmojiImage(machineType) {
+            const emojiMap = {
+                'excavator': '/machine-emojis/excavator.svg',
+                'articulated_hauler': '/machine-emojis/dump-truck.svg',
+                'dozer': '/machine-emojis/bulldozer.svg',
+                'grader': '/machine-emojis/grader.svg',
+                'support_vehicle': '/machine-emojis/service-truck.svg'
+            };
+            return emojiMap[machineType] || '/machine-emojis/service-truck.svg';
+        }
+        
         function addMachineMarkers() {
             debugLog('addMachineMarkers called - showMachinesData:', showMachinesData, 'machinesData.length:', machinesData.length);
             if (!showMachinesData || !map) {
@@ -268,16 +281,19 @@
                         'idle': '#3b82f6',
                         'maintenance': '#ef4444'
                     }[machine.status] || '#6b7280';
+                    
+                    const emojiImageUrl = getMachineEmojiImage(machine.machine_type);
 
                     const statusIcon = L.divIcon({
                         html: `
-                            <div class="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm" style="background-color: ${statusColor}; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"/>
-                                </svg>
+                            <div class="flex items-center justify-center w-10 h-10 rounded-full" style="background-color: ${statusColor}; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); padding: 4px;">
+                                <img src="${emojiImageUrl}" 
+                                     style="width: 28px; height: 28px; object-fit: contain;" 
+                                     onerror="this.style.display='none';" 
+                                     alt="Machine" />
                             </div>
                         `,
-                        iconSize: [32, 32],
+                        iconSize: [40, 40],
                         className: 'machine-marker'
                     });
 

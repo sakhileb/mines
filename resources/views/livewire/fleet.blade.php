@@ -120,6 +120,87 @@
         </div>
     </div>
 
+    <!-- Machine Performance Section -->
+    @if($topPerformers->count() > 0 || $worstPerformers->count() > 0)
+    <div class="mb-6">
+        <div class="flex items-center gap-2 mb-4">
+            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Machine Performance</h2>
+            <span class="text-xs text-gray-500 dark:text-gray-400">(Last 30 Days)</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Top 5 Performers -->
+            @if($topPerformers->count() > 0)
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="p-2 bg-green-100 dark:bg-green-500/20 rounded-lg">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Top 5 Performers</h3>
+                </div>
+                <div class="space-y-3">
+                    @foreach($topPerformers as $index => $machine)
+                    <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                        <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {{ $index + 1 }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <a href="{{ route('fleet.show', $machine['machine_id']) }}" class="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 truncate block">
+                                {{ $machine['machine_name'] }}
+                            </a>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ ucfirst(str_replace('_', ' ', $machine['machine_type'])) }}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ $machine['performance_score'] }}%</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Score</div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- Top 5 Worst Performers -->
+            @if($worstPerformers->count() > 0)
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="p-2 bg-red-100 dark:bg-red-500/20 rounded-lg">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Needs Attention</h3>
+                </div>
+                <div class="space-y-3">
+                    @foreach($worstPerformers as $index => $machine)
+                    <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                        <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {{ $index + 1 }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <a href="{{ route('fleet.show', $machine['machine_id']) }}" class="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 truncate block">
+                                {{ $machine['machine_name'] }}
+                            </a>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ ucfirst(str_replace('_', ' ', $machine['machine_type'])) }}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-red-600 dark:text-red-400">{{ $machine['performance_score'] }}%</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Score</div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+    @endif
+
     <!-- AI-Powered Fleet Optimization -->
     @if($aiRecommendations->count() > 0 || $aiInsights->count() > 0)
     <div class="mb-6">
@@ -131,18 +212,17 @@
             <span class="badge badge-primary">AI-Powered</span>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- AI Fleet Recommendations -->
-            @if($aiRecommendations->count() > 0)
-            <div class="card bg-gradient-to-br from-blue-900 to-cyan-900 text-white border border-blue-700">
-                <div class="card-body">
-                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        Optimization Recommendations
-                    </h3>
-                    <div class="space-y-3">
+        <!-- AI Fleet Recommendations - Full Width -->
+        @if($aiRecommendations->count() > 0)
+        <div class="mb-6">
+            <div class="bg-gradient-to-br from-blue-900 to-cyan-900 rounded-lg shadow-lg p-6 border border-blue-700">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Optimization Recommendations
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($aiRecommendations as $recommendation)
                         <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                             <div class="flex items-start justify-between mb-2">
@@ -221,17 +301,16 @@
             </div>
             @endif
 
-            <!-- AI Fleet Insights -->
+            <!-- AI Fleet Insights - Full Width -->
             @if($aiInsights->count() > 0)
-            <div class="card bg-gradient-to-br from-indigo-900 to-purple-900 text-white border border-indigo-700">
-                <div class="card-body">
-                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        Fleet Insights
-                    </h3>
-                    <div class="space-y-3">
+            <div class="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-lg shadow-lg p-6 border border-indigo-700">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Fleet Insights
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($aiInsights as $insight)
                         <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                             <div class="flex items-start justify-between mb-2">
@@ -269,10 +348,8 @@
                         </p>
                     </div>
                 </div>
-            </div>
             @endif
         </div>
-    </div>
     @endif
 
     <!-- Filters Section with improved design -->
@@ -340,20 +417,15 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
                 @foreach ($machines as $machine)
                     @php
-                        $icon = '/fleet-icons/other.svg';
-                        $type = strtolower($machine->machine_type ?? '');
-                        $manu = strtolower($machine->manufacturer ?? '');
-                        if ($manu === 'volvo' && $type === 'adt') {
-                            $icon = '/fleet-icons/volvo-adt.svg';
-                        } elseif ($manu === 'cat' && $type === 'excavator') {
-                            $icon = '/fleet-icons/cat-excavator.svg';
-                        } elseif ($manu === 'komatsu' && $type === 'dozer') {
-                            $icon = '/fleet-icons/komatsu-dozer.svg';
-                        } elseif ($manu === 'bell' && $type === 'truck') {
-                            $icon = '/fleet-icons/bell-truck.svg';
-                        } elseif ($type === 'loader') {
-                            $icon = '/fleet-icons/generic-loader.svg';
-                        }
+                        $machineType = strtolower($machine->machine_type ?? '');
+                        $iconMap = [
+                            'excavator' => '/machine-emojis/excavator.svg',
+                            'articulated_hauler' => '/machine-emojis/dump-truck.svg',
+                            'dozer' => '/machine-emojis/bulldozer.svg',
+                            'grader' => '/machine-emojis/grader.svg',
+                            'support_vehicle' => '/machine-emojis/service-truck.svg',
+                        ];
+                        $icon = $iconMap[$machineType] ?? '/machine-emojis/service-truck.svg';
                     @endphp
                     <div class="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col">
                         <div class="flex flex-col items-center justify-center p-4 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-b from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-900/10">

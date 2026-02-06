@@ -2,7 +2,8 @@
 <div class="h-screen flex flex-col bg-slate-900" 
      data-path-coords="{{ json_encode($pathCoordinates ?? []) }}"
      data-geofences="{{ json_encode($geofences ?? []) }}"
-     data-routes="{{ json_encode($routes ?? []) }}">
+     data-routes="{{ json_encode($routes ?? []) }}"
+     data-machine-type="{{ $selectedMachineDetails->machine_type ?? '' }}">
     <!-- Leaflet CSS - loaded directly in component -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
@@ -52,8 +53,12 @@
                 <label class="block text-sm font-medium text-gray-300 mb-2">Select Machine</label>
                 <select wire:model.live="selectedMachine" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500">
                     <option value="">-- Choose a Machine --</option>
-                    @foreach($machines as $machine)
-                        <option value="{{ $machine->id }}">{{ $machine->name }} ({{ $machine->manufacturer }})</option>
+                    @foreach($machines as $machineType => $machineGroup)
+                        <optgroup label="{{ strtoupper(str_replace('_', ' ', $machineType)) }}">
+                            @foreach($machineGroup as $machine)
+                                <option value="{{ $machine->id }}">{{ $machine->name }} ({{ $machine->manufacturer }})</option>
+                            @endforeach
+                        </optgroup>
                     @endforeach
                 </select>
             </div>
@@ -335,6 +340,19 @@
         window.geofencePolygons = [];
         window.routePolylines = [];
         window.trailPolyline = null;
+        window.machineType = '';
+        
+        // Get machine emoji image based on machine type
+        function getMachineEmojiImage(machineType) {
+            const emojiMap = {
+                'excavator': '/machine-emojis/excavator.svg',
+                'articulated_hauler': '/machine-emojis/dump-truck.svg',
+                'dozer': '/machine-emojis/bulldozer.svg',
+                'grader': '/machine-emojis/grader.svg',
+                'support_vehicle': '/machine-emojis/service-truck.svg'
+            };
+            return emojiMap[machineType] || '/machine-emojis/excavator.svg';
+        }
         
         // Load initial data from data attributes
         function loadDataFromAttributes() {
@@ -344,6 +362,8 @@
                     const pathCoordsStr = componentDiv.getAttribute('data-path-coords');
                     const geofencesStr = componentDiv.getAttribute('data-geofences');
                     const routesStr = componentDiv.getAttribute('data-routes');
+                    const machineTypeStr = componentDiv.getAttribute('data-machine-type');
+                    window.machineType = machineTypeStr || '';
                     
                     window.pathCoordinates = pathCoordsStr ? JSON.parse(pathCoordsStr) : [];
                     window.geofences = geofencesStr ? JSON.parse(geofencesStr) : [];
@@ -558,7 +578,21 @@
                 
                 window.routes.forEach((route, routeIndex) => {
                     if (route.waypoints && route.waypoints.length > 0) {
-                        const latlngs = route.waypoints.map(wp => [wp[0] || wp.lat, wp[1] || wp.lng]);
+                        // Handle multiple waypoint formats: {latitude, longitude}, {lat, lng}, or [lat, lng]
+                        const latlngs = route.waypoints.map(wp => {
+                            if (Array.isArray(wp) && wp.length >= 2) {
+                                // Array format: [lat, lng]
+                                return [wp[0], wp[1]];
+                            } else if (wp && typeof wp === 'object') {
+                                // Object format: {latitude, longitude} or {lat, lng}
+                                const lat = wp.latitude ?? wp.lat;
+                                const lng = wp.longitude ?? wp.lng;
+                                if (lat !== undefined && lng !== undefined) {
+                                    return [lat, lng];
+                                }
+                            }
+                            return null;
+                        }).filter(coord => coord !== null); // Remove invalid coordinates
                         
                         if (latlngs.length >= 2) {
                             // Enhanced route polyline with better styling
@@ -707,10 +741,11 @@
                     const wp1 = route.waypoints[i];
                     const wp2 = route.waypoints[i + 1];
                     
-                    const lat1 = wp1[0] !== undefined ? wp1[0] : wp1.lat;
-                    const lng1 = wp1[1] !== undefined ? wp1[1] : wp1.lng;
-                    const lat2 = wp2[0] !== undefined ? wp2[0] : wp2.lat;
-                    const lng2 = wp2[1] !== undefined ? wp2[1] : wp2.lng;
+                    // Handle multiple waypoint formats: {latitude, longitude}, {lat, lng}, or [lat, lng]
+                    const lat1 = wp1.latitude ?? wp1.lat ?? (Array.isArray(wp1) ? wp1[0] : undefined);
+                    const lng1 = wp1.longitude ?? wp1.lng ?? (Array.isArray(wp1) ? wp1[1] : undefined);
+                    const lat2 = wp2.latitude ?? wp2.lat ?? (Array.isArray(wp2) ? wp2[0] : undefined);
+                    const lng2 = wp2.longitude ?? wp2.lng ?? (Array.isArray(wp2) ? wp2[1] : undefined);
                     
                     // Validate waypoints
                     if (typeof lat1 === 'undefined' || typeof lng1 === 'undefined' ||
@@ -811,24 +846,26 @@
                 }
                 
                 const speed = coord.speed || 0;
+                const emojiImageUrl = getMachineEmojiImage(window.machineType);
                 
                 const markerHtml = `
                     <div style="
                         background-color: #ef4444;
-                        color: white;
-                        width: 32px;
-                        height: 32px;
+                        width: 40px;
+                        height: 40px;
                         border-radius: 50%;
                         border: 3px solid white;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-weight: bold;
-                        font-size: 16px;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.5);
                         transform: rotate(${heading}deg);
+                        padding: 4px;
                     ">
-                        🚜
+                        <img src="${emojiImageUrl}" 
+                             style="width: 28px; height: 28px; object-fit: contain;" 
+                             onerror="this.style.display='none'; this.parentElement.innerHTML='🚜';" 
+                             alt="Machine" />
                     </div>
                 `;
                 
@@ -836,8 +873,8 @@
                     icon: L.divIcon({
                         html: markerHtml,
                         className: '',
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
                     })
                 }).bindPopup(`
                     <strong>Machine Position</strong><br>

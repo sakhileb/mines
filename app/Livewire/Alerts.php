@@ -35,6 +35,8 @@ class Alerts extends Component
         'sensor' => 'Sensor Fault',
         'geofence' => 'Geofence Breach',
         'downtime' => 'Extended Downtime',
+        'speed_violation' => 'Speed Violation',
+        'machine_idle' => 'Machine Idle',
     ];
 
     public function mount(): void

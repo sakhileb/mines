@@ -19,6 +19,7 @@ class RoutePlanning extends Component
     public $machineId = null;
     public $mineAreaId = null;
     public $routeType = 'optimal';
+    public $speedLimit = null;
     
     // Route coordinates
     public $startLat = null;
@@ -55,6 +56,7 @@ class RoutePlanning extends Component
         'endLat' => 'required|numeric|between:-90,90',
         'endLon' => 'required|numeric|between:-180,180',
         'routeType' => 'required|in:optimal,shortest,safest,custom',
+        'speedLimit' => 'nullable|integer|min:1|max:200',
     ];
     
     public function mount()
@@ -162,6 +164,7 @@ class RoutePlanning extends Component
                 'estimated_time' => $this->calculatedRoute['estimated_time'],
                 'estimated_fuel' => $this->calculatedRoute['estimated_fuel'],
                 'route_type' => $this->routeType,
+                'speed_limit' => $this->speedLimit,
                 'status' => 'active',
                 'route_geometry' => $this->calculatedRoute['route_geometry'] ?? null,
             ]);
@@ -189,7 +192,7 @@ class RoutePlanning extends Component
             session()->flash('success', 'Route saved successfully!');
             
             // Reset form
-            $this->reset(['name', 'description', 'calculatedRoute', 'showCalculatedRoute']);
+            $this->reset(['name', 'description', 'speedLimit', 'calculatedRoute', 'showCalculatedRoute']);
             
         } catch (\Exception $e) {
             DB::rollBack();

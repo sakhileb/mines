@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('geofences', function (Blueprint $table) {
             $table->id();
             $table->foreignId('team_id')->constrained('teams')->cascadeOnDelete();
+            $table->foreignId('mine_area_id')->nullable()->constrained('mine_areas')->nullOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('type'); // pit, stockpile, dump, facility
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index('team_id');
+            $table->index('mine_area_id');
             $table->index('type');
             $table->index('status');
         });

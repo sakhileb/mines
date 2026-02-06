@@ -55,6 +55,131 @@
             </div>
         </div>
 
+        <!-- Geofence Route Selection -->
+        <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-6 mb-8">
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                    <span class="text-2xl">🗺️</span>
+                    Route to Geofence
+                </h2>
+                <p class="text-sm text-gray-400 mt-1">Select a geofence to find the safest and most optimal route</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Geofence Selector -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Select Destination Geofence</label>
+                    <select 
+                        wire:model.live="selectedGeofenceId"
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-white"
+                    >
+                        <option value="">-- Choose a geofence --</option>
+                        @foreach($geofences as $geofence)
+                            <option value="{{ $geofence->id }}">
+                                {{ $geofence->name }} 
+                                @if($geofence->mineArea)
+                                    ({{ $geofence->mineArea->name }})
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    
+                    @if($selectedGeofenceId && count($availableRoutes) === 0)
+                        <div class="mt-3 p-3 bg-yellow-600/20 border border-yellow-600/50 rounded-lg">
+                            <p class="text-yellow-400 text-sm">⚠️ No active routes found leading to this geofence.</p>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Recommended Route Display -->
+                <div>
+                    @if($recommendedRoute)
+                        <div class="bg-gradient-to-br from-green-600/20 to-emerald-600/20 border border-green-600/50 rounded-lg p-4">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-green-400 text-lg">✓</span>
+                                        <h3 class="text-white font-semibold">{{ $recommendedRoute['name'] }}</h3>
+                                    </div>
+                                    <p class="text-xs text-gray-400">{{ $recommendedRoute['machine'] }}</p>
+                                </div>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white">
+                                    {{ ucfirst($recommendedRoute['type']) }}
+                                </span>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-3 mt-4">
+                                <div class="bg-gray-800/50 rounded-lg p-2">
+                                    <p class="text-xs text-gray-400">Distance</p>
+                                    <p class="text-sm font-bold text-white">{{ number_format($recommendedRoute['distance'], 2) }} km</p>
+                                </div>
+                                <div class="bg-gray-800/50 rounded-lg p-2">
+                                    <p class="text-xs text-gray-400">Time</p>
+                                    <p class="text-sm font-bold text-white">{{ $recommendedRoute['estimated_time'] }} min</p>
+                                </div>
+                                <div class="bg-gray-800/50 rounded-lg p-2">
+                                    <p class="text-xs text-gray-400">Fuel</p>
+                                    <p class="text-sm font-bold text-white">{{ number_format($recommendedRoute['estimated_fuel'], 1) }} L</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span class="text-xs text-green-400 font-medium">Optimal Route Selected</span>
+                                </div>
+                                <span class="text-xs text-gray-400">Score: {{ $recommendedRoute['score'] }}/100</span>
+                            </div>
+                        </div>
+                        
+                        @if(count($availableRoutes) > 1)
+                            <div class="mt-3">
+                                <details class="group">
+                                    <summary class="cursor-pointer text-sm text-amber-400 hover:text-amber-300 flex items-center gap-1">
+                                        <span class="group-open:rotate-90 transition-transform">▶</span>
+                                        View {{ count($availableRoutes) - 1 }} alternative route(s)
+                                    </summary>
+                                    <div class="mt-2 space-y-2">
+                                        @foreach(array_slice($availableRoutes, 1) as $route)
+                                            <div class="bg-gray-700/50 border border-gray-600 rounded p-2">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="text-xs">
+                                                        <p class="text-white font-medium">{{ $route['name'] }}</p>
+                                                        <p class="text-gray-400">{{ $route['distance'] }} km · {{ $route['estimated_time'] }} min · {{ $route['estimated_fuel'] }} L</p>
+                                                    </div>
+                                                    <span class="text-xs px-2 py-1 bg-gray-600 text-gray-300 rounded">{{ ucfirst($route['type']) }}</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </details>
+                            </div>
+                        @endif
+                    @elseif($selectedGeofenceId)
+                        <div class="flex items-center justify-center h-full bg-gray-700/30 border border-gray-600 border-dashed rounded-lg p-6">
+                            <div class="text-center">
+                                <div class="text-4xl mb-2">🔍</div>
+                                <p class="text-gray-400 text-sm">Searching for routes...</p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="flex items-center justify-center h-full bg-gray-700/30 border border-gray-600 border-dashed rounded-lg p-6">
+                            <div class="text-center">
+                                <div class="text-4xl mb-2">🎯</div>
+                                <p class="text-gray-400 text-sm">Select a geofence to see recommended routes</p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-blue-600/10 border border-blue-600/30 rounded-lg">
+                <p class="text-xs text-blue-300">
+                    <strong>💡 Smart Route Selection:</strong> The system automatically analyzes all available routes and selects the most optimal and safest path based on route type, fuel efficiency, and travel time.
+                </p>
+            </div>
+        </div>
+
         <!-- Key Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-6">

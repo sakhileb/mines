@@ -13,9 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create demo data for development
+        // Create comprehensive realistic data for the platform
         $this->call([
-            DemoSeeder::class,
+            ComprehensiveDataSeeder::class,
         ]);
     }
 }

@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\MineArea;
+use App\Models\Geofence;
+use App\Models\Route;
 use App\Services\MineAreaService;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +29,11 @@ class MineAreasDashboard extends Component
     public $selectedPeriod = '7days';
     public $filterType = null;
     public $filterStatus = null;
+    
+    // Route Selection Properties
+    public $selectedGeofenceId = null;
+    public $recommendedRoute = null;
+    public $availableRoutes = [];
 
     protected $mineAreaService;
 
@@ -177,13 +184,163 @@ class MineAreasDashboard extends Component
         return $count > 0 ? $total / $count : 0;
     }
 
+    /**
+     * Handle geofence selection and find optimal route
+     */
+    public function updatedSelectedGeofenceId($geofenceId)
+    {
+        if (!$geofenceId) {
+            $this->recommendedRoute = null;
+            $this->availableRoutes = [];
+            return;
+        }
+
+        $geofence = Geofence::find($geofenceId);
+        if (!$geofence) {
+            return;
+        }
+
+        // Find all active routes that lead to this geofence
+        $this->availableRoutes = $this->findRoutesToGeofence($geofence);
+
+        // Select the best route based on safety and optimization
+        $this->recommendedRoute = $this->selectOptimalRoute($this->availableRoutes);
+    }
+
+    /**
+     * Find all routes that lead to a specific geofence
+     */
+    private function findRoutesToGeofence($geofence)
+    {
+        $routes = Route::where('team_id', $this->team->id)
+            ->where('status', 'active')
+            ->with(['machine', 'mineArea'])
+            ->get();
+
+        // Filter routes whose end point is within or near the geofence
+        $routesToGeofence = $routes->filter(function($route) use ($geofence) {
+            return $this->isPointNearGeofence(
+                $route->end_latitude,
+                $route->end_longitude,
+                $geofence
+            );
+        });
+
+        return $routesToGeofence->map(function($route) {
+            return [
+                'id' => $route->id,
+                'name' => $route->name,
+                'type' => $route->route_type,
+                'distance' => $route->total_distance,
+                'estimated_time' => $route->estimated_time,
+                'estimated_fuel' => $route->estimated_fuel,
+                'machine' => $route->machine ? $route->machine->name : 'N/A',
+                'score' => $this->calculateRouteScore($route),
+            ];
+        })->sortByDesc('score')->values()->toArray();
+    }
+
+    /**
+     * Check if a point is within or near a geofence
+     */
+    private function isPointNearGeofence($lat, $lon, $geofence)
+    {
+        // Calculate distance from point to geofence center
+        $distance = $this->calculateDistance(
+            $lat,
+            $lon,
+            $geofence->center_latitude,
+            $geofence->center_longitude
+        );
+
+        // Consider route leads to geofence if within 500m of center
+        // Adjust threshold based on geofence size
+        $threshold = 0.5; // 500 meters
+        if ($geofence->area_sqm > 100000) { // If area > 100,000 sqm
+            $threshold = 1.0; // 1 km threshold for larger areas
+        }
+
+        return $distance <= $threshold;
+    }
+
+    /**
+     * Calculate distance between two points in kilometers
+     */
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // km
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
+    /**
+     * Calculate route score based on safety and optimization
+     */
+    private function calculateRouteScore($route)
+    {
+        $score = 0;
+
+        // Route type scoring (higher is better)
+        $typeScores = [
+            'optimal' => 50,
+            'safest' => 45,
+            'shortest' => 30,
+            'custom' => 20,
+        ];
+        $score += $typeScores[$route->route_type] ?? 0;
+
+        // Fuel efficiency scoring (lower fuel is better)
+        if ($route->estimated_fuel > 0) {
+            $fuelScore = max(0, 30 - ($route->estimated_fuel / 10));
+            $score += $fuelScore;
+        }
+
+        // Time efficiency scoring (lower time is better)
+        if ($route->estimated_time > 0) {
+            $timeScore = max(0, 20 - ($route->estimated_time / 10));
+            $score += $timeScore;
+        }
+
+        return round($score, 2);
+    }
+
+    /**
+     * Select the optimal route from available options
+     */
+    private function selectOptimalRoute($routes)
+    {
+        if (empty($routes)) {
+            return null;
+        }
+
+        // Routes are already sorted by score in descending order
+        // Return the highest scoring route
+        return $routes[0] ?? null;
+    }
+
     public function render()
     {
+        $geofences = Geofence::where('team_id', $this->team->id)
+            ->where('status', 'active')
+            ->with('mineArea')
+            ->orderBy('name')
+            ->get();
+
         return view('livewire.mine-areas-dashboard', [
             'statistics' => $this->getStatistics(),
             'productionTrend' => $this->getProductionTrend(),
             'topAreas' => $this->getTopAreas(),
             'machineDistribution' => $this->getMachineDistribution(),
+            'geofences' => $geofences,
         ]);
     }
 }

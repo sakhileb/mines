@@ -124,6 +124,9 @@ class MachineLocationUpdateJob implements ShouldQueue
                 ]);
             }
 
+            // Dispatch speed monitoring job after location updates
+            RouteSpeedMonitoringJob::dispatch();
+
             Log::info('Location update job completed', [
                 'integration_id' => $this->integration->id,
                 'machines_updated' => $broadcastCount,

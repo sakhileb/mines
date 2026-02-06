@@ -94,6 +94,10 @@ Route::middleware([
     Route::get('/alerts', App\Livewire\Alerts::class)
         ->name('alerts');
 
+    // Production Dashboard
+    Route::get('/production', App\Livewire\ProductionDashboard::class)
+        ->name('production');
+
     // Fuel Management
     Route::get('/fuel', App\Livewire\FuelManagement::class)
         ->name('fuel');

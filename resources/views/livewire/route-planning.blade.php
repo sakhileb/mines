@@ -140,6 +140,16 @@
                         </select>
                     </div>
 
+                    <!-- Speed Limit -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Speed Limit (km/h)</label>
+                        <input type="number" wire:model="speedLimit" min="1" max="200" step="1"
+                            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500"
+                            placeholder="e.g., 40">
+                        <p class="text-xs text-gray-400 mt-1">Set a speed limit for this route. Alerts will trigger when machines exceed this limit.</p>
+                        @error('speedLimit') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
                     <div class="border-t border-gray-700 pt-4">
                         <h3 class="text-lg font-semibold text-white mb-3">Start & End Points</h3>
                         <p class="text-sm text-gray-400 mb-3">Click on the map to set start and end points</p>
