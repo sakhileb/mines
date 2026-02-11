@@ -739,22 +739,29 @@
                     map: null,
                     markers: [],
                     polygon: null,
+                    isDrawingMode: @json($isDrawing ?? false),
                     
                     createMap() {
                         console.log('✅ Creating Leaflet map');
                         if (this.map) return;
                         
-                        this.map = L.map('map').setView([-25.7479, 28.1872], 13);
-                        
-                        L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(this.map);
-                        
-                        const statusDiv = document.getElementById('map-status');
-                        if (statusDiv) statusDiv.innerText = '✅ Map ready!';
+                        try {
+                            this.map = L.map('map').setView([-25.7479, 28.1872], 13);
+                            L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(this.map);
+                            
+                            const statusDiv = document.getElementById('map-status');
+                            if (statusDiv) statusDiv.innerText = '✅ Map ready!';
+                            console.log('✅ Leaflet map created successfully');
+                        } catch (e) {
+                            console.error('❌ Error creating map:', e);
+                        }
                         
                         this.map.on('click', (e) => {
-                            if (window.currentMineAreaDrawing) {
+                            if (this.isDrawingMode) {
                                 const lat = e.latlng.lat;
                                 const lon = e.latlng.lng;
+                                
+                                console.log(`📍 Map clicked: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
                                 
                                 const marker = L.marker([lat, lon], {
                                     icon: L.icon({
@@ -770,7 +777,8 @@
                                 
                                 this.markers.push({lat, lon, marker});
                                 
-                                @this.call('addCoordinate', lat, lon);
+                                // Call Livewire method to add coordinate
+                                @this.call('addCoordinateFromMap', lat, lon);
                             }
                         });
                     },
@@ -788,11 +796,16 @@
                                 opacity: 0.8,
                                 dashArray: '5, 5'
                             }).addTo(this.map);
+                            console.log(`📏 Polygon drawn with ${coords.length} points`);
                         }
                     },
                     
                     updateMarkers() {
-                        this.markers.forEach(m => this.map.removeLayer(m.marker));
+                        if (!this.map) return;
+                        
+                        this.markers.forEach(m => {
+                            try { this.map.removeLayer(m.marker); } catch (e) { }
+                        });
                         this.markers = [];
                         
                         const coords = @json($coordinates ?? []);
@@ -813,12 +826,15 @@
                         });
                         
                         this.drawPolygon();
+                        console.log(`🎯 Updated ${coords.length} markers`);
                     },
                     
                     initializeMap() {
                         console.log('✅ Initializing map component');
-                        this.createMap();
-                        this.updateMarkers();
+                        setTimeout(() => {
+                            this.createMap();
+                            this.updateMarkers();
+                        }, 100);
                     }
                 };
             };
@@ -826,15 +842,12 @@
             // Update map when Livewire updates
             document.addEventListener('livewire:updated', () => {
                 console.log('🔄 Livewire updated, refreshing map');
-                if (window.mapInstance) {
-                    window.mapInstance.updateMarkers();
-                    window.currentMineAreaDrawing = @json($isDrawing ?? false);
+                const mapEl = document.getElementById('map');
+                if (mapEl && mapEl.__x) {
+                    mapEl.__x.updateMarkers();
+                    mapEl.__x.isDrawingMode = @json($isDrawing ?? false);
+                    console.log(`🎯 Drawing mode: ${mapEl.__x.isDrawingMode}`);
                 }
-            });
-            
-            // Store instance for updates
-            document.addEventListener('livewire:initialized', () => {
-                console.log('🎯 Livewire initialized');
             });
             
             console.log('✅ Map scripts loaded, window.initMapComponent defined');
