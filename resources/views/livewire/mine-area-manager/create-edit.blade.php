@@ -737,8 +737,8 @@
         </div>
     </div>
     @endif
+</div>
 
-    <!-- Leaflet CSS and external JS files -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
-    <script src="{{ asset('js/mine-area-map.js') }}" defer></script>
-    </div>
+<!-- Leaflet CSS and external JS files - OUTSIDE component to avoid morphdom stripping -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="{{ asset('js/mine-area-map.js') }}" defer></script>
