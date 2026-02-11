@@ -1,7 +1,4 @@
 <div>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-
     <style>
         #map {
             min-height: 384px;
@@ -545,6 +542,205 @@
         </div>
     </div>
 
+    <!-- End of component div - scripts must be OUTSIDE -->
+</div>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+console.log('🟢 [MINE AREA MAP] Inline script executing in create-edit component');
+
+(function() {
+    'use strict';
+    
+    let mineAreaMap = null;
+    let mapInitialized = false;
+    let initRetryCount = 0;
+    const MAX_INIT_RETRIES = 50;
+
+    function initializeCreateEditMap() {
+        console.log('═══════════════════════════════════════════════');
+        console.log('🗺️ [MINE AREA MAP] initializeCreateEditMap() called');
+        console.log('═══════════════════════════════════════════════');
+        
+        // Robust Leaflet check
+        if (typeof L === 'undefined') {
+            initRetryCount++;
+            if (initRetryCount > MAX_INIT_RETRIES) {
+                console.error('❌ [MINE AREA MAP] Leaflet failed after max retries');
+                return;
+            }
+            console.log('⏳ [MINE AREA MAP] Waiting for Leaflet, retry:', initRetryCount);
+            setTimeout(initializeCreateEditMap, 200);
+            return;
+        }
+
+        console.log('✅ [MINE AREA MAP] Leaflet available, version:', L.version);
+
+        const mapContainer = document.getElementById('map');
+        const mapStatus = document.getElementById('map-status');
+        
+        console.log('[MINE AREA MAP] Map container found:', !!mapContainer);
+        console.log('[MINE AREA MAP] Status div found:', !!mapStatus);
+        
+        if (!mapContainer) {
+            console.error('❌ [MINE AREA MAP] Map container not found!');
+            if (mapStatus) mapStatus.textContent = '❌ Map container not found';
+            return;
+        }
+
+        // Clean up existing map if present
+        if (mineAreaMap) {
+            try {
+                mineAreaMap.remove();
+                console.log('[MINE AREA MAP] Cleaned up previous map instance');
+            } catch (e) {
+                console.log('[MINE AREA MAP] Error removing old map:', e);
+            }
+            mineAreaMap = null;
+        }
+
+        // Clear Leaflet state
+        if (mapContainer._leaflet_id) {
+            delete mapContainer._leaflet_id;
+        }
+
+        try {
+            console.log('🚀 [MINE AREA MAP] Creating map...');
+            if (mapStatus) mapStatus.innerHTML = '🔄 Initializing map...';
+
+            // Create map instance
+            mineAreaMap = L.map('map', {
+                preferCanvas: true
+            }).setView([-25.7479, 28.1872], 6);
+
+            // Add OpenStreetMap tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(mineAreaMap);
+
+            // Invalidate size after timeout
+            setTimeout(() => {
+                if (mineAreaMap) {
+                    console.log('[MINE AREA MAP] Running invalidateSize...');
+                    mineAreaMap.invalidateSize();
+                    console.log('✅ [MINE AREA MAP] Map size invalidated');
+                    if (mapStatus) mapStatus.innerHTML = '✅ Map ready!';
+                }
+            }, 250);
+
+            mapInitialized = true;
+            console.log('✅✅✅ [MINE AREA MAP] Map initialized successfully!');
+
+            // Setup event listeners for drawing mode and coordinate updates
+            setupMapEventListeners();
+
+        } catch (error) {
+            console.error('❌❌❌ [MINE AREA MAP] ERROR initializing map!');
+            console.error('[MINE AREA MAP] Error:', error);
+            if (mapStatus) mapStatus.innerHTML = '❌ Error: ' + error.message;
+        }
+
+        console.log('═══════════════════════════════════════════════');
+        console.log('🏁 [MINE AREA MAP] initializeCreateEditMap() completed');
+        console.log('═══════════════════════════════════════════════');
+    }
+
+    function setupMapEventListeners() {
+        console.log('[MINE AREA MAP] Setting up event listeners...');
+        
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer || !mineAreaMap) {
+            console.warn('[MINE AREA MAP] Cannot setup listeners - map or container missing');
+            return;
+        }
+
+        // Listen for drawing mode changes from Livewire
+        document.addEventListener('drawing-mode-changed', function(e) {
+            console.log('[MINE AREA MAP] Drawing mode changed:', e.detail?.isDrawing);
+            // Map cursor style can be updated here if needed
+        });
+
+        // Listen for coordinate updates from Livewire
+        document.addEventListener('coordinates-updated', function(e) {
+            console.log('[MINE AREA MAP] Coordinates updated from Livewire');
+            redrawCoordinates(e.detail?.coordinates);
+        });
+    }
+
+    function redrawCoordinates(coordinates) {
+        if (!mineAreaMap) {
+            console.warn('[MINE AREA MAP] Map not initialized for redrawing');
+            return;
+        }
+
+        console.log('[MINE AREA MAP] Redrawing', coordinates?.length || 0, 'coordinates');
+
+        // Clear existing markers
+        // Note: In a full implementation, you'd track markers to remove them
+        
+        if (!coordinates || coordinates.length === 0) return;
+
+        // Add markers for each coordinate
+        coordinates.forEach((coord, index) => {
+            L.circleMarker([coord.lat, coord.lon], {
+                radius: 6,
+                fillColor: '#3b82f6',
+                color: '#1e40af',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(mineAreaMap).bindPopup(`Point ${index + 1}`);
+        });
+
+        // Draw polygon if 3+ points
+        if (coordinates.length >= 3) {
+            const latlngs = coordinates.map(c => [c.lat, c.lon]);
+            L.polygon(latlngs, {
+                color: '#2563eb',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.2,
+                weight: 2
+            }).addTo(mineAreaMap);
+        }
+    }
+
+    // Initialize on DOMContentLoaded
+    console.log('[MINE AREA MAP] Setting up initialization...');
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[MINE AREA MAP] DOMContentLoaded fired');
+            setTimeout(initializeCreateEditMap, 100);
+        });
+    } else {
+        console.log('[MINE AREA MAP] DOM already loaded, initializing immediately');
+        setTimeout(initializeCreateEditMap, 100);
+    }
+
+    // Re-initialize after Livewire component updates
+    document.addEventListener('livewire:navigated', function() {
+        console.log('[MINE AREA MAP] livewire:navigated - reinitializing map');
+        initRetryCount = 0;
+        mapInitialized = false;
+        setTimeout(initializeCreateEditMap, 100);
+    });
+
+    // Also handle livewire:init event
+    document.addEventListener('livewire:init', function() {
+        console.log('[MINE AREA MAP] livewire:init - initializing map');
+        setTimeout(initializeCreateEditMap, 150);
+    });
+
+    console.log('🟢 [MINE AREA MAP] Script setup complete');
+})();
+</script>
+
+<div>
     <!-- Shift Modal -->
     @if($showShiftModal)
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" wire:click="closeShiftModal">
@@ -738,7 +934,3 @@
     </div>
     @endif
 </div>
-
-<!-- Leaflet CSS and external JS files - OUTSIDE component to avoid morphdom stripping -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
-<script src="{{ asset('js/mine-area-map.js') }}" defer></script>
