@@ -741,7 +741,6 @@
     @push('scripts')
         <!-- Leaflet JS Scripts -->
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js"></script>
         
         <!-- Map Initialization Script -->
         <script>
@@ -800,28 +799,14 @@
                     state.map = L.map('map').setView([-25.7479, 28.1872], 13);
                     console.log('✅ L.map created:', state.map);
                     
-                    // Add tile layer - try leaflet-providers first, fallback to direct URL
-                    console.log('🌍 Adding tile layer...');
-                    try {
-                        if (L.tileLayer.provider) {
-                            console.log('✅ leaflet-providers available, using provider');
-                            L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(state.map);
-                        } else {
-                            console.log('⚠️ leaflet-providers not available, using direct URL');
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '© OpenStreetMap contributors',
-                                maxZoom: 19,
-                                minZoom: 1
-                            }).addTo(state.map);
-                        }
-                    } catch (e) {
-                        console.error('❌ Error adding tile layer with provider, falling back to direct URL:', e);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors',
-                            maxZoom: 19,
-                            minZoom: 1
-                        }).addTo(state.map);
-                    }
+                    // Add tile layer directly (no provider dependency)
+                    console.log('🌍 Adding OpenStreetMap tile layer...');
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 19,
+                        minZoom: 1
+                    }).addTo(state.map);
+                    console.log('✅ Tile layer added');
                     
                     state.initialized = true;
                     
