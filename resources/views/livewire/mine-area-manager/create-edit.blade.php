@@ -925,8 +925,35 @@
             }
             
             // Initialize immediately when script loads
-            console.log('📋 Script loaded, calling initializeMineAreaMap...');
-            initializeMineAreaMap();
+            console.log('📋 Script loaded, waiting for Leaflet to be available...');
+            
+            // Small wait to ensure Leaflet is fully ready
+            let initAttempts = 0;
+            function tryInitialize() {
+                initAttempts++;
+                console.log(`⏱️ Init attempt ${initAttempts}, Leaflet available: ${typeof L !== 'undefined'}`);
+                
+                if (typeof L === 'undefined' && initAttempts < 50) {
+                    setTimeout(tryInitialize, 50);
+                    return;
+                }
+                
+                if (typeof L === 'undefined') {
+                    console.error('❌ Leaflet failed to load after 50 attempts');
+                    const statusDiv = document.getElementById('map-status');
+                    if (statusDiv) {
+                        statusDiv.innerText = '❌ Leaflet library failed to load';
+                        statusDiv.style.backgroundColor = '#7f1d1d';
+                        statusDiv.style.color = '#fecaca';
+                    }
+                    return;
+                }
+                
+                console.log('✅ Leaflet is available, initializing map');
+                initializeMineAreaMap();
+            }
+            
+            tryInitialize();
             
             // Also initialize on DOMContentLoaded as fallback
             document.addEventListener('DOMContentLoaded', function() {
@@ -958,9 +985,6 @@
             }
             
             console.log('✅ Map initialization script fully loaded');
-        </script>
-            
-            console.log('✅ Map initialization script loaded');
         </script>
     @endpush
 
