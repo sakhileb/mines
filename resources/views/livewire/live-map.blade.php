@@ -1,4 +1,5 @@
 <div>
+<div>
     <!-- Leaflet CSS - loaded directly in component -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
@@ -565,4 +566,5 @@
         color: rgba(156, 163, 175, 0.5) !important;
     }
     </style>
+</div>
 </div>

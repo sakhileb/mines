@@ -206,27 +206,35 @@ console.log('🟢 [MAP] External script loading');
         });
     }
     
-    // Initialize map
-    console.log('🔍 [MAP] Checking Leaflet availability:', typeof L);
-    if (typeof L !== 'undefined') {
-        console.log('✅ [MAP] Leaflet already loaded, initializing map');
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeMineAreaMap);
-        } else {
-            initializeMineAreaMap();
-        }
-    } else {
-        console.log('⏳ [MAP] Leaflet not immediately available, will retry');
-        setTimeout(function() {
-            if (typeof L !== 'undefined') {
-                console.log('✅ [MAP] Leaflet loaded after delay');
-                initializeMineAreaMap();
+    // Initialize map with retry logic
+    function tryInitializeMapScript() {
+        console.log('🔍 [MAP] Checking Leaflet availability:', typeof L);
+        if (typeof L !== 'undefined') {
+            console.log('✅ [MAP] Leaflet already loaded, initializing map');
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeMineAreaMap);
             } else {
-                console.error('❌ [MAP] Leaflet still not available after delay');
-                setTimeout(initializeMineAreaMap, 500);
+                setTimeout(initializeMineAreaMap, 50);  // Small delay to ensure DOM is ready
             }
-        }, 500);
+        } else {
+            console.log('⏳ [MAP] Leaflet not immediately available, will retry');
+            setTimeout(function() {
+                if (typeof L !== 'undefined') {
+                    console.log('✅ [MAP] Leaflet loaded after delay');
+                    initializeMineAreaMap();
+                } else {
+                    console.error('❌ [MAP] Leaflet still not available after delay');
+                    setTimeout(initializeMineAreaMap, 500);
+                }
+            }, 500);
+        }
     }
+    
+    // Start initialization
+    tryInitializeMapScript();
+    
+    // Also expose as global function for manual triggering
+    window.initializeMineAreaMapDebug = tryInitializeMapScript;
     
     console.log('🔴 [MAP] External script loaded and execution started');
 })();
