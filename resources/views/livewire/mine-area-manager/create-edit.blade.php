@@ -738,13 +738,12 @@
     </div>
     @endif
 
-    @push('scripts')
-        <!-- Leaflet JS Scripts -->
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        
-        <!-- Map Initialization Script -->
-        <script>
-            console.log('🗺️ Map initialization script loading...');
+    <!-- Leaflet CSS and Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" wire:ignore></script>
+    
+    <!-- Map Initialization Script -->
+    <script wire:ignore>
+        console.log('🗺️ Map initialization script loading...');
             
             // Store global map instance
             window.mineAreaMapState = {
@@ -986,6 +985,4 @@
             
             console.log('✅ Map initialization script fully loaded');
         </script>
-    @endpush
-
-</div>
+    </div>
