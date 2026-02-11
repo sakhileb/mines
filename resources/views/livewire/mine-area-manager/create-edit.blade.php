@@ -193,6 +193,16 @@
         x-init="initializeMap()"
         style="height: 384px;"
     ></div>
+
+                    <!-- Coordinates List -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-medium text-white">Coordinates ({{ count($coordinates) }} / 4 Required)</h3>
+                            @if(count($coordinates) > 0)
+                                <button 
+                                    wire:click="clearCoordinates"
+                                    wire:confirm="Clear all coordinates?"
+                                    class="text-sm text-red-600 hover:text-red-800 font-medium transition"
                                 >
                                     Clear All
                                 </button>
