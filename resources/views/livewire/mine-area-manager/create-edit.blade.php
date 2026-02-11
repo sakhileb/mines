@@ -5,23 +5,39 @@
     <style>
         #map {
             min-height: 384px;
-            height: 384px;
+            height: 384px !important;
+            width: 100% !important;
             position: relative;
-            z-index: 0;
-            width: 100%;
+            z-index: 10 !important;
+            display: block !important;
+            background-color: #1f2937 !important;
         }
+        
         .leaflet-container {
             background: #1f2937 !important;
             font-family: inherit;
-            height: 100%;
-            width: 100%;
+            height: 100% !important;
+            width: 100% !important;
+            position: relative !important;
+            z-index: 10 !important;
         }
+        
         .leaflet-popup-content-wrapper {
             background-color: #374151;
             color: #f3f4f6;
         }
+        
         .leaflet-popup-tip {
             background-color: #374151;
+        }
+        
+        /* Ensure map parent doesn't hide the map */
+        #map-status {
+            z-index: 5 !important;
+        }
+        
+        .leaflet-pane {
+            z-index: 11 !important;
         }
     </style>
 
@@ -743,47 +759,79 @@
             console.log('🗺️  Map init called');
             
             if (typeof L === 'undefined') {
-                console.log('⏳ Leaflet not ready');
+                console.log('⏳ Leaflet not ready, retrying...');
+                updateStatus('⏳ Loading Leaflet...');
                 setTimeout(initMap, 100);
                 return;
             }
             
             const container = document.getElementById('map');
             if (!container) {
-                console.log('⏳ Container not found');
+                console.log('⏳ Container not found, retrying...');
+                updateStatus('⏳ Looking for map container...');
                 setTimeout(initMap, 100);
                 return;
             }
             
+            // Debug: check container visibility
+            const rect = container.getBoundingClientRect();
+            console.log('📐 Container info:', {
+                width: container.offsetWidth,
+                height: container.offsetHeight,
+                visible: rect.width > 0 && rect.height > 0,
+                display: window.getComputedStyle(container).display,
+                position: window.getComputedStyle(container).position,
+                zIndex: window.getComputedStyle(container).zIndex,
+                parent: container.parentElement?.className
+            });
+            
             if (map) {
                 console.log('✅ Map already initialized');
-                map.invalidateSize();
+                map.invalidateSize(true);
                 return;
             }
             
             try {
                 console.log('🚀 Creating map...');
-                map = L.map('map').setView([-25.7479, 28.1872], 6);
+                updateStatus('🚀 Initializing map...');
+                
+                // Clear any existing map
+                container.innerHTML = '';
+                
+                map = L.map('map', {
+                    attributionControl: true,
+                    preferCanvas: true
+                }).setView([-25.7479, 28.1872], 6);
+                
+                console.log('✅ L.map created:', map);
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap',
-                    maxZoom: 19
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19,
+                    minZoom: 3
                 }).addTo(map);
                 
-                window.MineAreaMapManager.map = map;
-                updateStatus('✅ Map ready!');
-                console.log('✅ Map initialized');
+                console.log('✅ Tile layer added');
                 
+                window.MineAreaMapManager.map = map;
+                updateStatus('✅ Map ready! Click to add points...');
+                console.log('✅ Map fully initialized');
+                
+                // Force size calculation
                 setTimeout(() => {
-                    if (map) map.invalidateSize();
-                }, 200);
+                    if (map) {
+                        map.invalidateSize(true);
+                        console.log('✅ Map size invalidated');
+                    }
+                }, 300);
                 
                 // Map click handler
                 map.on('click', function(e) {
+                    console.log('🖱️  Map clicked:', e.latlng);
                     if (window.MineAreaMapManager.isDrawing) {
                         const lat = parseFloat(e.latlng.lat.toFixed(6));
                         const lon = parseFloat(e.latlng.lng.toFixed(6));
-                        console.log('📍 Add:', lat, lon);
+                        console.log('📍 Adding coordinate:', lat, lon);
                         
                         if (window.Livewire) {
                             const el = document.querySelector('[wire\\:id]');
@@ -795,35 +843,65 @@
                                 }
                             }
                         }
+                    } else {
+                        console.log('⚠️  Drawing mode not active');
                     }
                 });
                 
             } catch (error) {
                 console.error('❌ Map error:', error);
                 updateStatus('❌ Error: ' + error.message);
+                updateStatus('❌ Map initialization failed. Check console.');
             }
         }
         
+        // Wait for everything to be ready
+        console.log('📋 Initial state:', {
+            leaflet: typeof L,
+            container: !!document.getElementById('map'),
+            readyState: document.readyState
+        });
+        
         // Initialize
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initMap);
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('✅ DOMContentLoaded fired');
+                setTimeout(initMap, 100);
+            });
         } else {
-            setTimeout(initMap, 50);
+            console.log('✅ DOM already ready');
+            setTimeout(initMap, 100);
         }
         
-        window.addEventListener('load', initMap);
+        // Fallback initialization
+        window.addEventListener('load', () => {
+            console.log('✅ Window load fired');
+            setTimeout(() => {
+                if (!map) {
+                    console.log('⚠️  Map not initialized yet, retrying...');
+                    initMap();
+                }
+            }, 500);
+        });
         
         // Livewire events
         document.addEventListener('livewire:updated', function() {
             console.log('🔄 Livewire updated');
             if (!window.MineAreaMapManager.map) {
+                console.log('⚠️  Map lost, re-initializing...');
                 setTimeout(initMap, 100);
+            } else {
+                console.log('✅ Map still present');
             }
         });
         
         // Coordinate update function
         window.updateMineAreaCoordinates = function(coords) {
-            if (!map) return;
+            console.log('🎨 Updating coordinates:', coords);
+            if (!map) {
+                console.log('⚠️  Map not initialized');
+                return;
+            }
             
             markers.forEach(m => map.removeLayer(m));
             markers = [];
@@ -834,7 +912,7 @@
             
             if (!Array.isArray(coords) || coords.length === 0) return;
             
-            coords.forEach(c => {
+            coords.forEach((c, i) => {
                 const m = L.circleMarker([c.lat, c.lon], {
                     radius: 12,
                     fillColor: '#2563eb',
@@ -842,7 +920,7 @@
                     weight: 3,
                     opacity: 1,
                     fillOpacity: 0.9
-                }).addTo(map);
+                }).addTo(map).bindPopup('Point ' + (i + 1));
                 markers.push(m);
             });
             
@@ -866,7 +944,8 @@
         window.MineAreaMapManager.setDrawing = function(isDrawing) {
             window.MineAreaMapManager.isDrawing = isDrawing;
             if (map) {
-                map.getContainer().style.cursor = isDrawing ? 'crosshair' : 'default';
+                map.getContainer().style.cursor = isDrawing ? 'crosshair' : 'grab';
+                console.log('🎯 Drawing mode:', isDrawing);
             }
         };
         
