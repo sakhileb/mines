@@ -843,7 +843,9 @@
                             state.markers.push({lat, lon, marker});
                             
                             // Call Livewire method to persist
-                            @this.call('addCoordinateFromMap', lat, lon);
+                            if (window.Livewire) {
+                                @this.call('addCoordinateFromMap', lat, lon);
+                            }
                         }
                     });
                     
@@ -922,47 +924,41 @@
                 console.log(`🎯 Updated ${coords.length} markers on map`);
             }
             
-            // Listen to Livewire events
+            // Initialize immediately when script loads
+            console.log('📋 Script loaded, calling initializeMineAreaMap...');
+            initializeMineAreaMap();
+            
+            // Also initialize on DOMContentLoaded as fallback
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('📄 DOMContentLoaded fired');
-                console.log('🔍 Checking for Livewire:', typeof window.Livewire);
-                
-                // Small delay to ensure Livewire is ready
-                setTimeout(() => {
-                    console.log('⏱️ Initializing map after delay...');
+                console.log('📄 DOMContentLoaded fired, ensuring map is initialized');
+                if (!window.mineAreaMapState.initialized) {
                     initializeMineAreaMap();
-                    
-                    // Listen for drawing mode changes
-                    if (window.Livewire) {
-                        Livewire.on('drawing-mode-changed', (data) => {
-                            console.log('🎯 Drawing mode changed:', data.drawing);
-                            window.mineAreaMapState.isDrawingMode = data.drawing;
-                            const statusDiv = document.getElementById('map-status');
-                            if (statusDiv && window.mineAreaMapState.map) {
-                                statusDiv.innerText = `✅ Map ready! ${data.drawing ? '[Drawing enabled]' : '[Click toolbar to draw]'}`;
-                            }
-                        });
-                        
-                        // Listen for coordinate updates
-                        Livewire.on('coordinates-updated', (data) => {
-                            console.log('📍 Coordinates updated');
-                            setTimeout(updateMapMarkers, 100);
-                        });
-                    } else {
-                        console.warn('⚠️ Livewire not available yet');
-                    }
-                }, 300);
+                }
             });
             
-            // Also handle case where DOM is already loaded (for page reloads)
-            if (document.readyState === 'loading') {
-                console.log('📄 DOM still loading, waiting for DOMContentLoaded');
+            // Setup Livewire listeners when available
+            if (typeof window.Livewire !== 'undefined') {
+                console.log('✅ Livewire available, setting up listeners');
+                
+                Livewire.on('drawing-mode-changed', (data) => {
+                    console.log('🎯 Drawing mode changed:', data.drawing);
+                    window.mineAreaMapState.isDrawingMode = data.drawing;
+                    const statusDiv = document.getElementById('map-status');
+                    if (statusDiv && window.mineAreaMapState.map) {
+                        statusDiv.innerText = `✅ Map ready! ${data.drawing ? '[Drawing enabled]' : '[Click toolbar to draw]'}`;
+                    }
+                });
+                
+                Livewire.on('coordinates-updated', (data) => {
+                    console.log('📍 Coordinates updated');
+                    setTimeout(updateMapMarkers, 100);
+                });
             } else {
-                console.log('📄 DOM already loaded, initializing map immediately');
-                setTimeout(() => {
-                    initializeMineAreaMap();
-                }, 300);
+                console.warn('⚠️ Livewire not available at script load time');
             }
+            
+            console.log('✅ Map initialization script fully loaded');
+        </script>
             
             console.log('✅ Map initialization script loaded');
         </script>
