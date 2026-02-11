@@ -11,6 +11,11 @@
             z-index: 10 !important;
             display: block !important;
             background-color: #1f2937 !important;
+            border-radius: 0.5rem;
+        }
+        
+        #map * {
+            box-sizing: border-box;
         }
         
         .leaflet-container {
@@ -38,6 +43,18 @@
         
         .leaflet-pane {
             z-index: 11 !important;
+        }
+        
+        .leaflet-tile-pane {
+            z-index: 2 !important;
+        }
+        
+        .leaflet-marker-pane {
+            z-index: 6 !important;
+        }
+        
+        .leaflet-popup-pane {
+            z-index: 7 !important;
         }
     </style>
 
@@ -747,6 +764,21 @@
                 const mapContainer = document.getElementById('map');
                 const statusDiv = document.getElementById('map-status');
                 
+                // Debug: Check map container
+                if (mapContainer) {
+                    console.log('✅ Map container found');
+                    console.log('Map container size:', {
+                        width: mapContainer.clientWidth,
+                        height: mapContainer.clientHeight,
+                        offsetWidth: mapContainer.offsetWidth,
+                        offsetHeight: mapContainer.offsetHeight,
+                        computedStyle: window.getComputedStyle(mapContainer)
+                    });
+                } else {
+                    console.error('❌ Map container not found');
+                    return;
+                }
+                
                 // Check if Leaflet is loaded
                 if (typeof L === 'undefined') {
                     console.log('🔄 Leaflet not ready yet, retrying...');
@@ -754,11 +786,7 @@
                     return;
                 }
                 
-                // Check if map container exists
-                if (!mapContainer) {
-                    console.error('❌ Map container not found');
-                    return;
-                }
+                console.log('✅ Leaflet library is available:', typeof L);
                 
                 // Prevent re-initialization
                 if (state.initialized && state.map) {
@@ -768,8 +796,32 @@
                 
                 try {
                     // Create the map
+                    console.log('🗺️ Creating L.map instance...');
                     state.map = L.map('map').setView([-25.7479, 28.1872], 13);
-                    L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(state.map);
+                    console.log('✅ L.map created:', state.map);
+                    
+                    // Add tile layer - try leaflet-providers first, fallback to direct URL
+                    console.log('🌍 Adding tile layer...');
+                    try {
+                        if (L.tileLayer.provider) {
+                            console.log('✅ leaflet-providers available, using provider');
+                            L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(state.map);
+                        } else {
+                            console.log('⚠️ leaflet-providers not available, using direct URL');
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors',
+                                maxZoom: 19,
+                                minZoom: 1
+                            }).addTo(state.map);
+                        }
+                    } catch (e) {
+                        console.error('❌ Error adding tile layer with provider, falling back to direct URL:', e);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19,
+                            minZoom: 1
+                        }).addTo(state.map);
+                    }
                     
                     state.initialized = true;
                     
@@ -779,7 +831,8 @@
                         statusDiv.style.color = '#d1fae5';
                     }
                     
-                    console.log('✅ Leaflet map created successfully');
+                    console.log('✅ Leaflet map created and tiles loaded successfully');
+                    console.log('Map bounds:', state.map.getBounds());
                     
                     // Set up click handler for drawing mode
                     state.map.on('click', function(e) {
@@ -809,11 +862,25 @@
                         }
                     });
                     
+                    // Trigger a resize event to ensure map renders properly
+                    setTimeout(() => {
+                        if (state.map) {
+                            state.map.invalidateSize();
+                            console.log('✅ Map invalidateSize triggered');
+                        }
+                    }, 100);
+                    
                     // Initial marker update
                     updateMapMarkers();
                     
                 } catch (e) {
                     console.error('❌ Error initializing map:', e);
+                    console.error('Stack trace:', e.stack);
+                    if (statusDiv) {
+                        statusDiv.innerText = '❌ Error loading map: ' + e.message;
+                        statusDiv.style.backgroundColor = '#7f1d1d';
+                        statusDiv.style.color = '#fecaca';
+                    }
                 }
             }
             
@@ -872,34 +939,44 @@
             
             // Listen to Livewire events
             document.addEventListener('DOMContentLoaded', function() {
-                // Initialize map
-                initializeMineAreaMap();
+                console.log('📄 DOMContentLoaded fired');
+                console.log('🔍 Checking for Livewire:', typeof window.Livewire);
                 
-                // Listen for drawing mode changes
-                Livewire.on('drawing-mode-changed', (data) => {
-                    console.log('🎯 Drawing mode changed:', data.drawing);
-                    window.mineAreaMapState.isDrawingMode = data.drawing;
-                    const statusDiv = document.getElementById('map-status');
-                    if (statusDiv && window.mineAreaMapState.map) {
-                        statusDiv.innerText = `✅ Map ready! ${data.drawing ? '[Drawing enabled]' : '[Click toolbar to draw]'}`;
+                // Small delay to ensure Livewire is ready
+                setTimeout(() => {
+                    console.log('⏱️ Initializing map after delay...');
+                    initializeMineAreaMap();
+                    
+                    // Listen for drawing mode changes
+                    if (window.Livewire) {
+                        Livewire.on('drawing-mode-changed', (data) => {
+                            console.log('🎯 Drawing mode changed:', data.drawing);
+                            window.mineAreaMapState.isDrawingMode = data.drawing;
+                            const statusDiv = document.getElementById('map-status');
+                            if (statusDiv && window.mineAreaMapState.map) {
+                                statusDiv.innerText = `✅ Map ready! ${data.drawing ? '[Drawing enabled]' : '[Click toolbar to draw]'}`;
+                            }
+                        });
+                        
+                        // Listen for coordinate updates
+                        Livewire.on('coordinates-updated', (data) => {
+                            console.log('📍 Coordinates updated');
+                            setTimeout(updateMapMarkers, 100);
+                        });
+                    } else {
+                        console.warn('⚠️ Livewire not available yet');
                     }
-                });
-                
-                // Listen for coordinate updates
-                Livewire.on('coordinates-updated', (data) => {
-                    console.log('📍 Coordinates updated');
-                    setTimeout(updateMapMarkers, 100);
-                });
+                }, 300);
             });
             
-            // Also handle Livewire re-initialization (in case of page refresh or navigation)
+            // Also handle case where DOM is already loaded (for page reloads)
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
-                    initializeMineAreaMap();
-                });
+                console.log('📄 DOM still loading, waiting for DOMContentLoaded');
             } else {
-                // DOM is already ready
-                initializeMineAreaMap();
+                console.log('📄 DOM already loaded, initializing map immediately');
+                setTimeout(() => {
+                    initializeMineAreaMap();
+                }, 300);
             }
             
             console.log('✅ Map initialization script loaded');
