@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         // Create comprehensive realistic data for the platform
         $this->call([
             ComprehensiveDataSeeder::class,
+            OperatorFatigueSeeder::class,
         ]);
     }
 }

@@ -128,19 +128,6 @@
                     </div>
                 </div>
 
-                <!-- Assign Machines Section -->
-                @if($currentMineArea && $currentMineArea instanceof \App\Models\MineArea && $currentMineArea->exists)
-                <div class="bg-gray-800 border border-blue-700 rounded-lg shadow-lg p-6 mb-6">
-                    <h2 class="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Assign Machines to Area
-                    </h2>
-                    <!-- Machine assignment manager Livewire component removed to fix property type error -->
-                </div>
-                @endif
-
                 <!-- Assigned Machines Section -->
                 <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-semibold text-white mb-4">Assigned Machines</h2>
@@ -397,74 +384,111 @@
     @endif
 </div>
 
-@push('scripts')
 <script>
+console.log('🔵🔵🔵 [DETAIL MAP SCRIPT] Script tag is now executing! 🔵🔵🔵');
+(function() {
     let detailMap = null;
     let initRetryCount = 0;
-    const MAX_INIT_RETRIES = 50;
+    const MAX_INIT_RETRIES = 100;
 
     function initializeDetailMap() {
-        // Debug: Check what's available
-        console.log('Checking for Leaflet... window.L:', typeof window.L, 'L:', typeof L);
+        console.log('═════════════════════════════════════════════════');
+        console.log('🗺️  [DETAIL MAP DEBUG] initializeDetailMap() called');
+        console.log('═════════════════════════════════════════════════');
         
-        // Check if Leaflet is loaded (check both window.L and global L)
-        if (typeof window.L === 'undefined' && typeof L === 'undefined') {
+        // Check if Leaflet is loaded - more robust check
+        console.log('[DETAIL MAP DEBUG] Checking Leaflet...');
+        console.log('[DETAIL MAP DEBUG] typeof L:', typeof L);
+        
+        if (typeof L === 'undefined') {
             initRetryCount++;
             if (initRetryCount > MAX_INIT_RETRIES) {
-                console.error('Leaflet failed to load after maximum retries');
+                console.error('❌ [DETAIL MAP DEBUG] Leaflet failed to load after maximum retries');
                 return;
             }
-            console.log('Leaflet not loaded yet, retry', initRetryCount);
+            console.log('⏳ [DETAIL MAP DEBUG] Leaflet not loaded yet, retry', initRetryCount);
             setTimeout(initializeDetailMap, 200);
             return;
         }
         
-        // Use window.L to ensure we have the right reference
-        if (typeof L === 'undefined' && typeof window.L !== 'undefined') {
-            window.L = window.L; // Make sure L is available globally
-        }
+        console.log('✅ [DETAIL MAP DEBUG] Leaflet available, version:', L.version);
 
         const mineArea = @json($currentMineArea);
-        if (!mineArea || !document.getElementById('detailMap')) {
-            console.log('Mine area data or map container not found, retrying...');
+        const mapContainer = document.getElementById('detailMap');
+        
+        console.log('[DETAIL MAP DEBUG] Mine area data:', mineArea);
+        console.log('[DETAIL MAP DEBUG] Map container found:', !!mapContainer);
+        
+        if (!mineArea || !mapContainer) {
+            console.error('❌ [DETAIL MAP DEBUG] Mine area data or map container not found, retrying...');
             setTimeout(initializeDetailMap, 100);
             return;
         }
+        
+        console.log('✅ [DETAIL MAP DEBUG] Container dimensions:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
 
-        // Check if map already initialized
+        // Clean up existing map instance if present
         if (detailMap) {
-            console.log('Map already initialized');
-            return;
+            console.log('[DETAIL MAP DEBUG] Removing existing map instance...');
+            try {
+                detailMap.remove();
+            } catch (e) {
+                console.log('[DETAIL MAP DEBUG] Error removing old map:', e);
+            }
+            detailMap = null;
+        }
+
+        // Clear any residual Leaflet state
+        if (mapContainer._leaflet_id) {
+            console.log('[DETAIL MAP DEBUG] Clearing _leaflet_id...');
+            delete mapContainer._leaflet_id;
         }
 
         const coordinates = mineArea.coordinates || [];
+        console.log('[DETAIL MAP DEBUG] Coordinates count:', coordinates.length);
 
         try {
-            detailMap = L.map('detailMap').setView(
-                [mineArea.center_latitude, mineArea.center_longitude], 
+            console.log('🚀 [DETAIL MAP DEBUG] Creating map instance...');
+            
+            // Initialize map with canvas renderer for better performance
+            detailMap = L.map('detailMap', {
+                preferCanvas: true,
+                renderer: L.canvas()
+            }).setView(
+                [mineArea.center_latitude || -25.7479, mineArea.center_longitude || 28.2293], 
                 13
             );
             
+            // Add OpenStreetMap tile layer
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors',
                 maxZoom: 19
             }).addTo(detailMap);
 
-            // Draw polygon
+            // Draw polygon boundary if we have coordinates
             if (coordinates.length > 2) {
                 const latlngs = coordinates.map(c => [c[0], c[1]]);
-                L.polygon(latlngs, {
+                const polygon = L.polygon(latlngs, {
                     color: '#2563eb',
                     fillColor: '#3b82f6',
                     fillOpacity: 0.3,
                     weight: 3
                 }).addTo(detailMap);
 
-                // Fit bounds
-                const group = new L.featureGroup(
-                    coordinates.map(c => L.marker([c[0], c[1]]))
-                );
-                detailMap.fitBounds(group.getBounds().pad(0.1));
+                // Add corner markers
+                coordinates.forEach((coord, index) => {
+                    L.circleMarker([coord[0], coord[1]], {
+                        radius: 6,
+                        fillColor: '#2563eb',
+                        color: '#1e40af',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(detailMap).bindPopup(`Corner ${index + 1}`);
+                });
+
+                // Fit map to show all boundaries
+                detailMap.fitBounds(polygon.getBounds().pad(0.1));
             }
 
             // Show center point
@@ -479,32 +503,60 @@
                 }).addTo(detailMap).bindPopup('Center Point');
             }
 
-            // Invalidate size after short delay
+            // Invalidate size to ensure proper rendering
             setTimeout(() => {
                 if (detailMap) {
+                    console.log('[DETAIL MAP DEBUG] Running invalidateSize...');
                     detailMap.invalidateSize();
+                    console.log('✅ [DETAIL MAP DEBUG] Map size invalidated');
                 }
             }, 100);
 
-            console.log('Detail map initialized successfully');
+            console.log('✅✅✅ [DETAIL MAP DEBUG] Detail map initialized successfully!');
+            console.log('[DETAIL MAP DEBUG] Map object:', detailMap);
         } catch (error) {
-            console.error('Error initializing detail map:', error);
+            console.error('❌❌❌ [DETAIL MAP DEBUG] CRITICAL ERROR initializing detail map!');
+            console.error('[DETAIL MAP DEBUG] Error:', error);
+            console.error('[DETAIL MAP DEBUG] Stack:', error.stack);
         }
+        
+        console.log('═════════════════════════════════════════════════');
+        console.log('🏁 [DETAIL MAP DEBUG] initializeDetailMap() completed');
+        console.log('═════════════════════════════════════════════════');
     }
 
-    // Initialize on both DOMContentLoaded and livewire:navigated
+    // Initialize on DOMContentLoaded
+    console.log('[DETAIL MAP DEBUG] Setting up initialization triggers...');
+    console.log('[DETAIL MAP DEBUG] document.readyState:', document.readyState);
+    
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('[DETAIL MAP DEBUG] DOMContentLoaded event fired!');
         if (document.getElementById('detailMap') && @json($currentMineArea)) {
+            console.log('[DETAIL MAP DEBUG] Container and data found, initializing...');
             initializeDetailMap();
+        } else {
+            console.log('[DETAIL MAP DEBUG] Container or data not found on DOMContentLoaded');
         }
     });
 
+    // Re-initialize on Livewire navigation
     document.addEventListener('livewire:navigated', function() {
+        console.log('[DETAIL MAP DEBUG] livewire:navigated event fired!');
         if (document.getElementById('detailMap') && @json($currentMineArea)) {
-            detailMap = null; // Reset map instance for re-initialization
+            console.log('[DETAIL MAP DEBUG] Re-initializing after navigation...');
             initRetryCount = 0;
             initializeDetailMap();
         }
     });
+
+    // Also try on livewire:init
+    document.addEventListener('livewire:init', function() {
+        console.log('[DETAIL MAP DEBUG] livewire:init event fired!');
+        if (document.getElementById('detailMap') && @json($currentMineArea)) {
+            console.log('[DETAIL MAP DEBUG] Initializing after livewire:init...');
+            setTimeout(initializeDetailMap, 100);
+        }
+    });
+})();
+console.log('🔵🔵🔵 [DETAIL MAP SCRIPT] Script tag finished executing! 🔵🔵🔵');
 </script>
-@endpush

@@ -1,6 +1,40 @@
 <!-- Create/Edit View -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Cache Buster: 2026-02-11-v8-EXTERNAL-SCRIPT -->
+
+<!-- Leaflet CSS - loaded directly in component like route-planning -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<style>
+    #map {
+        min-height: 384px;
+        height: 384px;
+        position: relative;
+        z-index: 0;
+        width: 100%;
+        /* Debug border to see if container is visible */
+        outline: 3px solid red;
+    }
+    .leaflet-container {
+        background: #1f2937 !important;
+        font-family: inherit;
+        height: 100%;
+        width: 100%;
+    }
+    .leaflet-popup-content-wrapper {
+        background-color: #374151;
+        color: #f3f4f6;
+    }
+    .leaflet-popup-tip {
+        background-color: #374151;
+    }
+    .drawing-instruction-popup .leaflet-popup-content-wrapper {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .drawing-instruction-popup .leaflet-popup-tip {
+        background-color: #3b82f6;
+    }
+</style>
 
 <div class="space-y-6">
     <!-- Back Button -->
@@ -135,13 +169,23 @@
                 @endif
 
                 <!-- Map Container -->
-                <div id="map" wire:ignore class="w-full h-96 rounded-lg border mb-4 bg-gray-900 transition-all
+                <!-- Debug Status -->
+                <div id="map-status" class="mb-2 p-2 bg-gray-700 rounded text-xs text-gray-300 font-mono">
+                    Initializing map...
+                </div>
+                
+                <!-- Map Container v2.0 - No Alpine -->
+                <div 
+                    id="map" 
+                    wire:ignore 
+                    data-map-version="2.0"
+                    class="w-full rounded-lg border mb-4 bg-gray-900 transition-all
                     @if($isDrawing) 
                         border-blue-500 shadow-lg shadow-blue-500/30 ring-2 ring-blue-400
                     @else 
                         border-gray-700
                     @endif
-                "></div>
+                " style="height: 384px;"></div>
 
                 <!-- Coordinates List -->
                 <div class="space-y-2">
@@ -253,7 +297,7 @@
                         </button>
                     </div>
                     <p class="text-xs text-amber-400 mt-2">
-                        💡 Tip: Coordinates update the map in real-time as you type!
+                        💡 Tip: You need exactly 4 coordinates to define a complete mine area boundary. The map updates in real-time as you add points!
                     </p>
                 </div>
             </div>
@@ -695,249 +739,9 @@
 </div>
 @endif
 
-@push('scripts')
-<script>
-    let window_mineAreaMap = null;
-    let initRetryCount = 0;
-    const MAX_INIT_RETRIES = 50;
+<!-- Leaflet JS - loaded directly in component -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    function initializeMap() {
-        // Debug: Check what's available
-        console.log('Checking for Leaflet... window.L:', typeof window.L, 'L:', typeof L);
-        
-        // Check if Leaflet is loaded (check both window.L and global L)
-        if (typeof window.L === 'undefined' && typeof L === 'undefined') {
-            initRetryCount++;
-            if (initRetryCount > MAX_INIT_RETRIES) {
-                console.error('Leaflet library failed to load after maximum retries');
-                return;
-            }
-            console.log('Leaflet not loaded yet, retry', initRetryCount);
-            setTimeout(initializeMap, 200);
-            return;
-        }
-        
-        // Use window.L to ensure we have the right reference
-        if (typeof L === 'undefined' && typeof window.L !== 'undefined') {
-            window.L = window.L; // Make sure L is available globally
-        }
-
-        if (!document.getElementById('map')) {
-            console.log('Map container not found, retrying...');
-            setTimeout(initializeMap, 100);
-            return;
-        }
-
-        if (window_mineAreaMap) {
-            console.log('Map already initialized');
-            return;
-        }
-
-        try {
-            const map = L.map('map').setView([-25.7479, 28.1872], 6);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(map);
-
-            // Store map instance for later use
-            window_mineAreaMap = map;
-            window.mineAreaMap = map;
-            window.mineAreaDrawing = false;
-            window.previewMarker = null;
-
-        // Listen for preview coordinate (live update as user types)
-        window.addEventListener('preview-coordinate', (event) => {
-            const data = event.detail[0] || event.detail;
-            const lat = data.lat;
-            const lon = data.lon;
-            
-            // Remove previous preview marker
-            if (window.previewMarker) {
-                map.removeLayer(window.previewMarker);
-            }
-            
-            // Create preview marker with different color
-            window.previewMarker = L.marker([lat, lon], {
-                icon: L.divIcon({
-                    className: 'preview-marker',
-                    html: '<div style="background-color: #f59e0b; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10]
-                })
-            }).addTo(map);
-            
-            // Center map on preview location
-            map.setView([lat, lon], Math.max(map.getZoom(), 13), { animate: true });
-        });
-
-        // Listen for drawing toggle
-        window.addEventListener('drawing-mode-changed', (event) => {
-            const data = event.detail[0] || event.detail;
-            const drawing = data.drawing;
-            window.mineAreaDrawing = drawing;
-            if (drawing) {
-                map.dragging.enable(); // Keep dragging enabled for better UX
-                document.getElementById('map').style.cursor = 'crosshair';
-                
-                // Show instruction popup
-                if (window.drawingPopup) {
-                    map.closePopup(window.drawingPopup);
-                }
-                window.drawingPopup = L.popup({ closeButton: false, autoClose: false, closeOnClick: false })
-                    .setLatLng(map.getCenter())
-                    .setContent('<div style="text-align: center; font-weight: bold; color: #2563eb;">🎯 Click on the map to add points</div>')
-                    .openOn(map);
-            } else {
-                map.dragging.enable();
-                document.getElementById('map').style.cursor = 'grab';
-                
-                // Close instruction popup
-                if (window.drawingPopup) {
-                    map.closePopup(window.drawingPopup);
-                    window.drawingPopup = null;
-                }
-            }
-        });
-
-        // Listen for coordinates update
-        window.addEventListener('coordinates-updated', (event) => {
-            const data = event.detail[0] || event.detail;
-            const coordinates = data.coordinates;
-            
-            // Clear existing markers/polygons (except preview marker)
-            map.eachLayer(layer => {
-                if ((layer instanceof L.Marker && layer !== window.previewMarker) || layer instanceof L.Polygon) {
-                    map.removeLayer(layer);
-                }
-            });
-            
-            // Remove preview marker since we have real coordinates now
-            if (window.previewMarker) {
-                map.removeLayer(window.previewMarker);
-                window.previewMarker = null;
-            }
-
-            // Redraw coordinates
-            if (Array.isArray(coordinates) && coordinates.length > 0) {
-                coordinates.forEach((coord, idx) => {
-                    L.marker([coord.lat, coord.lon], {
-                        icon: L.divIcon({
-                            className: 'numbered-marker',
-                            html: `<div style="background-color: #2563eb; color: white; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">${idx + 1}</div>`,
-                            iconSize: [30, 30],
-                            iconAnchor: [15, 15]
-                        })
-                    }).addTo(map).bindPopup(`Point ${idx + 1}<br>${coord.lat}, ${coord.lon}`);
-                });
-
-                // Draw polygon if 3 or more points
-                if (coordinates.length >= 3) {
-                    const latlngs = coordinates.map(c => [c.lat, c.lon]);
-                    L.polygon(latlngs, {
-                        color: coordinates.length === 4 ? '#10b981' : '#f59e0b',
-                        fillColor: coordinates.length === 4 ? '#34d399' : '#fbbf24',
-                        fillOpacity: 0.2,
-                        weight: 2
-                    }).addTo(map);
-                }
-                
-                // Draw line if 2 points
-                else if (coordinates.length === 2) {
-                    const latlngs = coordinates.map(c => [c.lat, c.lon]);
-                    L.polyline(latlngs, {
-                        color: '#d97706',
-                        weight: 3,
-                        dashArray: '5, 10'
-                    }).addTo(map);
-                }
-
-                // Fit bounds
-                const group = new L.featureGroup(
-                    coordinates.map(c => L.marker([c.lat, c.lon]))
-                );
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
-        });
-
-        // Add temporary marker on hover when drawing
-        let tempHoverMarker = null;
-        map.on('mousemove', function(e) {
-            if (window.mineAreaDrawing) {
-                if (tempHoverMarker) {
-                    map.removeLayer(tempHoverMarker);
-                }
-                tempHoverMarker = L.circleMarker(e.latlng, {
-                    radius: 8,
-                    fillColor: '#3b82f6',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 0.6,
-                    fillOpacity: 0.4
-                }).addTo(map);
-            } else if (tempHoverMarker) {
-                map.removeLayer(tempHoverMarker);
-                tempHoverMarker = null;
-            }
-        });
-
-        // Handle map click for drawing
-        map.on('click', function(e) {
-            if (window.mineAreaDrawing) {
-                // Remove hover marker
-                if (tempHoverMarker) {
-                    map.removeLayer(tempHoverMarker);
-                    tempHoverMarker = null;
-                }
-                
-                // Add visual feedback - flash animation
-                const flashMarker = L.circleMarker(e.latlng, {
-                    radius: 20,
-                    fillColor: '#10b981',
-                    color: '#fff',
-                    weight: 3,
-                    opacity: 1,
-                    fillOpacity: 0.6
-                }).addTo(map);
-                
-                setTimeout(() => {
-                    map.removeLayer(flashMarker);
-                }, 500);
-                
-                @this.call('addCoordinateFromMap', 
-                    parseFloat(e.latlng.lat.toFixed(6)),
-                    parseFloat(e.latlng.lng.toFixed(6))
-                );
-            }
-        });
-
-            // Invalidate size after short delay
-            setTimeout(() => {
-                if (window_mineAreaMap) {
-                    window_mineAreaMap.invalidateSize();
-                }
-            }, 100);
-
-            console.log('Map initialized successfully');
-        } catch (error) {
-            console.error('Error initializing map:', error);
-        }
-    }
-    
-    // Initialize on both DOMContentLoaded and livewire:init
-    document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('map')) {
-            initializeMap();
-        }
-    });
-
-    document.addEventListener('livewire:init', function() {
-        if (document.getElementById('map') && !window_mineAreaMap) {
-            window_mineAreaMap = null; // Reset for re-initialization
-            initRetryCount = 0;
-            initializeMap();
-        }
-    });
-</script>
-@endpush
+<!-- Mine Area Map Script - External file to avoid Livewire morphdom issues -->
+<script src="{{ asset('js/mine-area-map.js') }}?v={{ now()->timestamp }}" defer></script>

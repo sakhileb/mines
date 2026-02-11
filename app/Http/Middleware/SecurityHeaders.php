@@ -32,7 +32,7 @@ class SecurityHeaders
             "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://fonts.bunny.net https://unpkg.com; " .
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net; " .
             "img-src 'self' data: https: blob:; " .
-            "connect-src 'self' https://unpkg.com https://cdnjs.cloudflare.com ws: wss:; " .
+            "connect-src 'self' https://unpkg.com https://cdnjs.cloudflare.com https://*.pusher.com https://*.pusherapp.com ws: wss:; " .
             "frame-ancestors 'none';"
         );
 

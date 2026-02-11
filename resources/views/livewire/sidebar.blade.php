@@ -10,8 +10,8 @@
          }
      }">
     <!-- Logo Section -->
-    <div class="relative p-6 border-b border-gray-700">
-        <a href="{{ route('dashboard') }}" class="flex items-center gap-2" :class="{ 'justify-center': !sidebarOpen }">
+    <div class="p-6 border-b border-gray-700">
+        <a href="{{ route('dashboard') }}" class="flex items-center gap-2 mb-3" :class="{ 'justify-center': !sidebarOpen }">
             <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
@@ -23,16 +23,18 @@
             </div>
         </a>
         
-        <!-- Toggle Button -->
-        <button 
-            @click="sidebarOpen = !sidebarOpen"
-            class="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 bg-amber-500 hover:bg-amber-600 rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
-            title="Toggle Sidebar"
-        >
-            <svg class="w-3 h-3 text-gray-900 transition-transform duration-300" :class="{ 'rotate-180': !sidebarOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path>
-            </svg>
-        </button>
+        <!-- Toggle Button Row -->
+        <div class="flex" :class="{ 'justify-center': !sidebarOpen }">
+            <button 
+                @click="sidebarOpen = !sidebarOpen"
+                class="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg flex items-center justify-center transition-colors"
+                title="Toggle Sidebar"
+            >
+                <svg class="w-4 h-4 text-amber-500 transition-transform duration-300" :class="{ 'rotate-180': !sidebarOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+        </div>
     </div>
 
     <!-- Navigation Menu -->

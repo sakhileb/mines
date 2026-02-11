@@ -101,7 +101,7 @@
         let currentLayer = null;
         let layers = {};
         let initRetryCount = 0;
-        const MAX_INIT_RETRIES = 50;
+        const MAX_INIT_RETRIES = 100;
 
         let machinesData = @json($machines);
         let geofencesData = @json($geofences);
@@ -118,25 +118,41 @@
         function initMap() {
             try {
                 debugLog('initMap called');
+                
+                // Check if Leaflet is loaded - more robust check
                 if (typeof L === 'undefined') {
                     initRetryCount++;
-                    debugLog('Leaflet not loaded yet, retry', initRetryCount);
                     if (initRetryCount > MAX_INIT_RETRIES) {
                         console.error('Leaflet failed to load after maximum retries');
                         showError('Map library failed to load. Please refresh the page.');
                         return;
                     }
+                    debugLog('Leaflet not loaded yet, retry', initRetryCount);
+                    setTimeout(initMap, 200);
+                    return;
+                }
+
+                const mapContainer = document.getElementById('map');
+                if (!mapContainer) {
+                    debugLog('Map container not found, retrying...');
                     setTimeout(initMap, 100);
                     return;
                 }
 
+                // Clean up existing map instance if present
                 if (map !== null) {
                     debugLog('Removing existing map instance');
-                    map.remove();
+                    try {
+                        map.remove();
+                    } catch (e) {
+                        console.log('Error removing old map:', e);
+                    }
                     map = null;
                 }
-                if (window.L && window.L.DomUtil && window.L.DomUtil.get('map') && window.L.DomUtil.get('map')._leaflet_id) {
-                    window.L.DomUtil.get('map')._leaflet_id = null;
+
+                // Clear any residual Leaflet state
+                if (mapContainer._leaflet_id) {
+                    delete mapContainer._leaflet_id;
                 }
 
                 const loadingEl = document.getElementById('map-loading');
@@ -145,7 +161,13 @@
                 }
 
                 debugLog('Map center:', {{ $centerLat }}, {{ $centerLng }}, 'Zoom:', {{ $zoomLevel }});
-                map = L.map('map').setView([{{ $centerLat }}, {{ $centerLng }}], {{ $zoomLevel }});
+                
+                // Initialize map with canvas renderer for better performance
+                map = L.map('map', {
+                    preferCanvas: true,
+                    renderer: L.canvas()
+                }).setView([{{ $centerLat }}, {{ $centerLng }}], {{ $zoomLevel }});
+                
                 debugLog('Map initialized:', map);
                 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',

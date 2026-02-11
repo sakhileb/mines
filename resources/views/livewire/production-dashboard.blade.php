@@ -45,70 +45,70 @@
         </div>
 
         <!-- Production Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
             <!-- Total Loads -->
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow p-3 text-white">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="p-1.5 bg-white/20 rounded backdrop-blur-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-4xl font-bold mb-1">{{ number_format($summary['total_loads']) }}</h3>
-                <p class="text-sm opacity-90">Total Loads</p>
+                <h3 class="text-xl font-bold mb-0">{{ number_format($summary['total_loads']) }}</h3>
+                <p class="text-[10px] opacity-90">Total Loads</p>
             </div>
 
             <!-- Total Cycles -->
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow p-3 text-white">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="p-1.5 bg-white/20 rounded backdrop-blur-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-4xl font-bold mb-1">{{ number_format($summary['total_cycles']) }}</h3>
-                <p class="text-sm opacity-90">Total Cycles</p>
+                <h3 class="text-xl font-bold mb-0">{{ number_format($summary['total_cycles']) }}</h3>
+                <p class="text-[10px] opacity-90">Total Cycles</p>
             </div>
 
             <!-- Total Tonnage -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow p-3 text-white">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="p-1.5 bg-white/20 rounded backdrop-blur-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-4xl font-bold mb-1">{{ number_format($summary['total_tonnage'], 2) }}</h3>
-                <p class="text-sm opacity-90">Tonnage (T)</p>
+                <h3 class="text-xl font-bold mb-0">{{ number_format($summary['total_tonnage'], 2) }}</h3>
+                <p class="text-[10px] opacity-90">Tonnage (T)</p>
             </div>
 
             <!-- Total BCM -->
-            <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow p-3 text-white">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="p-1.5 bg-white/20 rounded backdrop-blur-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-4xl font-bold mb-1">{{ number_format($summary['total_bcm'], 2) }}</h3>
-                <p class="text-sm opacity-90">BCM (m³)</p>
+                <h3 class="text-xl font-bold mb-0">{{ number_format($summary['total_bcm'], 2) }}</h3>
+                <p class="text-[10px] opacity-90">BCM (m³)</p>
             </div>
 
             <!-- Active Areas -->
-            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"/>
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow p-3 text-white">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="p-1.5 bg-white/20 rounded backdrop-blur-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"></path>
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-4xl font-bold mb-1">{{ number_format($summary['active_areas']) }}</h3>
-                <p class="text-sm opacity-90">Active Areas</p>
+                <h3 class="text-xl font-bold mb-0">{{ number_format($summary['active_areas']) }}</h3>
+                <p class="text-[10px] opacity-90">Active Areas</p>
             </div>
         </div>
 
@@ -217,6 +217,180 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
                         </svg>
                         <p class="text-sm">No material data available</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Operator Fatigue Management Section -->
+        <div class="mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Operator Fatigue Management
+                    </h2>
+                    <div class="flex gap-2 text-xs">
+                        <span class="px-2 py-1 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">● Normal</span>
+                        <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">● Caution</span>
+                        <span class="px-2 py-1 rounded bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">● Alert</span>
+                        <span class="px-2 py-1 rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">● Critical</span>
+                    </div>
+                </div>
+
+                @if(count($fatigueData) > 0)
+                    <!-- Fatigue Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-bold text-green-700 dark:text-green-300">{{ $fatigueStats['well_rested'] }}</p>
+                                    <p class="text-xs text-green-600 dark:text-green-400">Well Rested</p>
+                                </div>
+                                <div class="p-2 bg-green-200 dark:bg-green-700 rounded-lg">
+                                    <svg class="w-5 h-5 text-green-700 dark:text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{{ $fatigueStats['needs_monitoring'] }}</p>
+                                    <p class="text-xs text-yellow-600 dark:text-yellow-400">Need Monitoring</p>
+                                </div>
+                                <div class="p-2 bg-yellow-200 dark:bg-yellow-700 rounded-lg">
+                                    <svg class="w-5 h-5 text-yellow-700 dark:text-yellow-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-bold text-orange-700 dark:text-orange-300">{{ $fatigueStats['high_fatigue'] }}</p>
+                                    <p class="text-xs text-orange-600 dark:text-orange-400">High Fatigue</p>
+                                </div>
+                                <div class="p-2 bg-orange-200 dark:bg-orange-700 rounded-lg">
+                                    <svg class="w-5 h-5 text-orange-700 dark:text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4 border border-red-200 dark:border-red-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-bold text-red-700 dark:text-red-300">{{ $fatigueStats['needs_rest'] }}</p>
+                                    <p class="text-xs text-red-600 dark:text-red-400">Needs Rest</p>
+                                </div>
+                                <div class="p-2 bg-red-200 dark:bg-red-700 rounded-lg">
+                                    <svg class="w-5 h-5 text-red-700 dark:text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operator Fatigue Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Operator</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Machine</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Shift</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Hours</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Consec. Days</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fatigue Level</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($fatigueData as $fatigue)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                    {{ substr($fatigue['operator_name'], 0, 2) }}
+                                                </div>
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $fatigue['operator_name'] }}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">
+                                                {{ $fatigue['machine_name'] ?? 'N/A' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <span class="text-xs px-2 py-1 rounded font-medium
+                                                {{ $fatigue['shift_type'] === 'morning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' : '' }}
+                                                {{ $fatigue['shift_type'] === 'afternoon' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : '' }}
+                                                {{ $fatigue['shift_type'] === 'night' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' : '' }}">
+                                                {{ ucfirst($fatigue['shift_type']) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white font-medium">
+                                            {{ number_format($fatigue['hours_worked'], 1) }}h
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white font-medium">
+                                            {{ number_format($fatigue['consecutive_days'], 0) }}
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                    <div class="h-2 rounded-full transition-all
+                                                        {{ $fatigue['fatigue_score'] < 20 ? 'bg-green-500' : '' }}
+                                                        {{ $fatigue['fatigue_score'] >= 20 && $fatigue['fatigue_score'] < 40 ? 'bg-yellow-500' : '' }}
+                                                        {{ $fatigue['fatigue_score'] >= 40 && $fatigue['fatigue_score'] < 60 ? 'bg-orange-500' : '' }}
+                                                        {{ $fatigue['fatigue_score'] >= 60 ? 'bg-red-500' : '' }}" 
+                                                        style="width: {{ $fatigue['fatigue_score'] }}%">
+                                                    </div>
+                                                </div>
+                                                <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ $fatigue['fatigue_score'] }}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center">
+                                            @if($fatigue['alert_level'] === 'none')
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                    Normal
+                                                </span>
+                                            @elseif($fatigue['alert_level'] === 'low' || $fatigue['alert_level'] === 'medium')
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                    Monitor
+                                                </span>
+                                            @elseif($fatigue['alert_level'] === 'high')
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                                    Caution
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                    Rest Required
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+                        <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <p class="text-sm">No fatigue data available for this period</p>
+                        <p class="text-xs mt-2">Operator fatigue tracking will appear here once shifts are logged</p>
                     </div>
                 @endif
             </div>
