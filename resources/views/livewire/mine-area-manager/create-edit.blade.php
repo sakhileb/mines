@@ -2,6 +2,189 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
+    <!-- Leaflet JS Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Alpine.js Map Initialization - Define BEFORE use -->
+    <script>
+    // Define the map component function IMMEDIATELY so Alpine can access it
+    window.initMapComponent = function() {
+        return {
+            map: null,
+            markers: [],
+            polygon: null,
+            
+            initializeMap() {
+                console.log('🗺️  Alpine map initialization starting...');
+                
+                // Check if Leaflet is loaded
+                const checkLeaflet = () => {
+                    if (typeof L === 'undefined') {
+                        console.log('⏳ Waiting for Leaflet to load...');
+                        setTimeout(checkLeaflet, 100);
+                        return;
+                    }
+                    
+                    console.log('✅ Leaflet loaded');
+                    this.createMap();
+                };
+                
+                checkLeaflet();
+            },
+            
+            createMap() {
+                console.log('🚀 Creating map...');
+                
+                const container = document.getElementById('map');
+                if (!container) {
+                    console.log('❌ Map container not found');
+                    return;
+                }
+                
+                if (this.map) {
+                    console.log('✅ Map already exists');
+                    this.map.invalidateSize(true);
+                    return;
+                }
+                
+                try {
+                    this.map = L.map('map', {
+                        attributionControl: true,
+                        preferCanvas: true
+                    }).setView([-25.7479, 28.1872], 6);
+                    
+                    console.log('✅ Map object created:', this.map);
+                    
+                    // Add tile layer
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 19,
+                        minZoom: 3
+                    }).addTo(this.map);
+                    
+                    console.log('✅ Tile layer added');
+                    
+                    // Update status
+                    const status = document.getElementById('map-status');
+                    if (status) {
+                        status.textContent = '✅ Map ready!';
+                        status.style.backgroundColor = '#065f46';
+                        status.style.color = '#d1fae5';
+                    }
+                    
+                    // Force size recalculation
+                    setTimeout(() => {
+                        if (this.map) {
+                            this.map.invalidateSize(true);
+                            console.log('✅ Map size recalculated');
+                        }
+                    }, 300);
+                    
+                    // Setup click handler for drawing
+                    this.map.on('click', (e) => {
+                        console.log('🖱️  Map clicked:', e.latlng);
+                        
+                        if (!window.MineAreaMapManager || !window.MineAreaMapManager.isDrawing) {
+                            console.log('⚠️ Drawing mode not active');
+                            return;
+                        }
+                        
+                        const lat = parseFloat(e.latlng.lat.toFixed(6));
+                        const lon = parseFloat(e.latlng.lng.toFixed(6));
+                        console.log('📍 Coordinate captured:', lat, lon);
+                        
+                        // Call Livewire method
+                        if (window.Livewire) {
+                            const el = document.querySelector('[wire\\:id]');
+                            if (el) {
+                                const id = el.getAttribute('wire:id');
+                                const component = window.Livewire.find(id);
+                                if (component) {
+                                    component.call('addCoordinateFromMap', lat, lon);
+                                    console.log('✅ Livewire method called');
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Expose to window for external access
+                    window.MineAreaMapManager = window.MineAreaMapManager || {};
+                    window.MineAreaMapManager.map = this.map;
+                    window.MineAreaMapManager.isDrawing = false;
+                    window.MineAreaMapManager.setDrawing = (isDrawing) => {
+                        window.MineAreaMapManager.isDrawing = isDrawing;
+                        if (this.map) {
+                            this.map.getContainer().style.cursor = isDrawing ? 'crosshair' : 'grab';
+                        }
+                    };
+                    
+                    // Coordinate update function
+                    window.updateMineAreaCoordinates = (coords) => {
+                        console.log('🎨 Updating coordinates:', coords);
+                        if (!this.map) return;
+                        
+                        this.markers.forEach(m => this.map.removeLayer(m));
+                        this.markers = [];
+                        if (this.polygon) {
+                            this.map.removeLayer(this.polygon);
+                            this.polygon = null;
+                        }
+                        
+                        if (!Array.isArray(coords) || coords.length === 0) return;
+                        
+                        coords.forEach((c, i) => {
+                            const m = L.circleMarker([c.lat, c.lon], {
+                                radius: 12,
+                                fillColor: '#2563eb',
+                                color: '#fff',
+                                weight: 3,
+                                opacity: 1,
+                                fillOpacity: 0.9
+                            }).addTo(this.map).bindPopup('Point ' + (i + 1));
+                            this.markers.push(m);
+                        });
+                        
+                        if (coords.length >= 3) {
+                            const latlngs = coords.map(c => [c.lat, c.lon]);
+                            this.polygon = L.polygon(latlngs, {
+                                color: coords.length === 4 ? '#10b981' : '#f59e0b',
+                                fillColor: coords.length === 4 ? '#34d399' : '#fbbf24',
+                                fillOpacity: 0.2,
+                                weight: 3
+                            }).addTo(this.map);
+                        }
+                        
+                        if (this.markers.length > 0) {
+                            const group = L.featureGroup(this.markers);
+                            this.map.fitBounds(group.getBounds().pad(0.2));
+                        }
+                    };
+                    
+                    console.log('✅ Map initialization complete');
+                    
+                } catch (error) {
+                    console.error('❌ Map error:', error);
+                    const status = document.getElementById('map-status');
+                    if (status) {
+                        status.textContent = '❌ Error: ' + error.message;
+                        status.style.backgroundColor = '#7f1d1d';
+                        status.style.color = '#fecaca';
+                    }
+                }
+            }
+        };
+    };
+    
+    // Handle Livewire updates
+    document.addEventListener('livewire:updated', () => {
+        console.log('🔄 Livewire updated');
+        if (typeof window.MineAreaMapManager !== 'undefined' && window.MineAreaMapManager.map) {
+            console.log('✅ Map still exists after Livewire update');
+        }
+    });
+    </script>
+
     <style>
         #map {
             min-height: 384px;
@@ -722,188 +905,5 @@
         </div>
     </div>
     @endif
-
-    <!-- Leaflet JS Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-    <!-- Alpine.js Map Initialization -->
-    <script>
-    // Define the map component function in the global scope so Alpine can access it
-    function initMapComponent() {
-        return {
-            map: null,
-            markers: [],
-            polygon: null,
-            
-            initializeMap() {
-                console.log('🗺️  Alpine map initialization starting...');
-                
-                // Check if Leaflet is loaded
-                const checkLeaflet = () => {
-                    if (typeof L === 'undefined') {
-                        console.log('⏳ Waiting for Leaflet to load...');
-                        setTimeout(checkLeaflet, 100);
-                        return;
-                    }
-                    
-                    console.log('✅ Leaflet loaded');
-                    this.createMap();
-                };
-                
-                checkLeaflet();
-            },
-            
-            createMap() {
-                console.log('🚀 Creating map...');
-                
-                const container = document.getElementById('map');
-                if (!container) {
-                    console.log('❌ Map container not found');
-                    return;
-                }
-                
-                if (this.map) {
-                    console.log('✅ Map already exists');
-                    this.map.invalidateSize(true);
-                    return;
-                }
-                
-                try {
-                    this.map = L.map('map', {
-                        attributionControl: true,
-                        preferCanvas: true
-                    }).setView([-25.7479, 28.1872], 6);
-                    
-                    console.log('✅ Map object created:', this.map);
-                    
-                    // Add tile layer
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors',
-                        maxZoom: 19,
-                        minZoom: 3
-                    }).addTo(this.map);
-                    
-                    console.log('✅ Tile layer added');
-                    
-                    // Update status
-                    const status = document.getElementById('map-status');
-                    if (status) {
-                        status.textContent = '✅ Map ready!';
-                        status.style.backgroundColor = '#065f46';
-                        status.style.color = '#d1fae5';
-                    }
-                    
-                    // Force size recalculation
-                    setTimeout(() => {
-                        if (this.map) {
-                            this.map.invalidateSize(true);
-                            console.log('✅ Map size recalculated');
-                        }
-                    }, 300);
-                    
-                    // Setup click handler for drawing
-                    this.map.on('click', (e) => {
-                        console.log('🖱️  Map clicked:', e.latlng);
-                        
-                        if (!window.MineAreaMapManager || !window.MineAreaMapManager.isDrawing) {
-                            console.log('⚠️ Drawing mode not active');
-                            return;
-                        }
-                        
-                        const lat = parseFloat(e.latlng.lat.toFixed(6));
-                        const lon = parseFloat(e.latlng.lng.toFixed(6));
-                        console.log('📍 Coordinate captured:', lat, lon);
-                        
-                        // Call Livewire method
-                        if (window.Livewire) {
-                            const el = document.querySelector('[wire\\:id]');
-                            if (el) {
-                                const id = el.getAttribute('wire:id');
-                                const component = window.Livewire.find(id);
-                                if (component) {
-                                    component.call('addCoordinateFromMap', lat, lon);
-                                    console.log('✅ Livewire method called');
-                                }
-                            }
-                        }
-                    });
-                    
-                    // Expose to window for external access
-                    window.MineAreaMapManager = window.MineAreaMapManager || {};
-                    window.MineAreaMapManager.map = this.map;
-                    window.MineAreaMapManager.isDrawing = false;
-                    window.MineAreaMapManager.setDrawing = (isDrawing) => {
-                        window.MineAreaMapManager.isDrawing = isDrawing;
-                        if (this.map) {
-                            this.map.getContainer().style.cursor = isDrawing ? 'crosshair' : 'grab';
-                        }
-                    };
-                    
-                    // Coordinate update function
-                    window.updateMineAreaCoordinates = (coords) => {
-                        console.log('🎨 Updating coordinates:', coords);
-                        if (!this.map) return;
-                        
-                        this.markers.forEach(m => this.map.removeLayer(m));
-                        this.markers = [];
-                        if (this.polygon) {
-                            this.map.removeLayer(this.polygon);
-                            this.polygon = null;
-                        }
-                        
-                        if (!Array.isArray(coords) || coords.length === 0) return;
-                        
-                        coords.forEach((c, i) => {
-                            const m = L.circleMarker([c.lat, c.lon], {
-                                radius: 12,
-                                fillColor: '#2563eb',
-                                color: '#fff',
-                                weight: 3,
-                                opacity: 1,
-                                fillOpacity: 0.9
-                            }).addTo(this.map).bindPopup('Point ' + (i + 1));
-                            this.markers.push(m);
-                        });
-                        
-                        if (coords.length >= 3) {
-                            const latlngs = coords.map(c => [c.lat, c.lon]);
-                            this.polygon = L.polygon(latlngs, {
-                                color: coords.length === 4 ? '#10b981' : '#f59e0b',
-                                fillColor: coords.length === 4 ? '#34d399' : '#fbbf24',
-                                fillOpacity: 0.2,
-                                weight: 3
-                            }).addTo(this.map);
-                        }
-                        
-                        if (this.markers.length > 0) {
-                            const group = L.featureGroup(this.markers);
-                            this.map.fitBounds(group.getBounds().pad(0.2));
-                        }
-                    };
-                    
-                    console.log('✅ Map initialization complete');
-                    
-                } catch (error) {
-                    console.error('❌ Map error:', error);
-                    const status = document.getElementById('map-status');
-                    if (status) {
-                        status.textContent = '❌ Error: ' + error.message;
-                        status.style.backgroundColor = '#7f1d1d';
-                        status.style.color = '#fecaca';
-                    }
-                }
-            }
-        };
-    }
-    
-    // Handle Livewire updates
-    document.addEventListener('livewire:updated', () => {
-        console.log('🔄 Livewire updated');
-        if (typeof window.MineAreaMapManager !== 'undefined' && window.MineAreaMapManager.map) {
-            console.log('✅ Map still exists after Livewire update');
-        }
-    });
-    </script>
 
 </div>
