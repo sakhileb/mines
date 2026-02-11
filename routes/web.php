@@ -63,6 +63,12 @@ Route::middleware([
         return view('mine-areas.index');
     })->name('mine-areas');
 
+    Route::get('/mine-areas/create', App\Livewire\MineAreaManager::class)
+        ->name('mine-areas.create');
+
+    Route::get('/mine-areas/{mineArea}/edit', App\Livewire\MineAreaManager::class)
+        ->name('mine-areas.edit');
+
     Route::get('/mine-areas/dashboard', App\Livewire\MineAreasDashboard::class)
         ->name('mine-areas.dashboard');
 
