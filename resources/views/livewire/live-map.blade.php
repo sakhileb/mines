@@ -1,5 +1,7 @@
 <div>
-<div>
+    <!-- Leaflet CSS - loaded directly in component -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
     <div class="container mx-auto py-8">
         <div class="flex flex-col lg:flex-row gap-8">
             <!-- Left: Map and controls -->
@@ -93,6 +95,11 @@
     </div>
 
     <!-- Map Toast and Loading Indicator (overlay, always present) removed: handled inside map card -->
+    
+    <!-- Leaflet JS - loaded directly in component -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         let map = null;
@@ -558,5 +565,4 @@
         color: rgba(156, 163, 175, 0.5) !important;
     }
     </style>
-</div>
 </div>

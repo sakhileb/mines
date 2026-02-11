@@ -13,12 +13,11 @@
                         Plan File *
                     </label>
                     <div class="relative border-2 border-dashed border-slate-300 rounded-lg p-8 hover:border-blue-500 transition"
-                        @if($file) x-data="{ isDragging: false }"
+                        x-data="{ isDragging: false }"
                         @dragover.prevent="isDragging = true"
                         @dragleave.prevent="isDragging = false"
                         @drop.prevent="isDragging = false; $wire.upload('file', $event.dataTransfer.files[0])"
-                        :class="{ 'border-blue-500 bg-blue-50': isDragging }"
-                        @endif>
+                        :class="{ 'border-blue-500 bg-blue-50': isDragging }">
                         @if($file)
                             <div class="text-center">
                                 <svg class="w-12 h-12 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
