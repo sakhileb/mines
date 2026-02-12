@@ -375,30 +375,30 @@
                         <div class="bg-gray-700 border border-gray-600 rounded-lg p-3">
                             <p class="text-xs text-gray-400 uppercase font-medium">Daily</p>
                             <p class="text-lg font-bold text-white mt-1">
-                                {{ number_format($mining_targets['daily']) }}
+                                {{ number_format($mining_targets['daily'] ?? 0) }}
                             </p>
                         </div>
                         <div class="bg-gray-700 border border-gray-600 rounded-lg p-3">
                             <p class="text-xs text-gray-400 uppercase font-medium">Weekly</p>
                             <p class="text-lg font-bold text-white mt-1">
-                                {{ number_format($mining_targets['weekly']) }}
+                                {{ number_format($mining_targets['weekly'] ?? 0) }}
                             </p>
                         </div>
                         <div class="bg-gray-700 border border-gray-600 rounded-lg p-3">
                             <p class="text-xs text-gray-400 uppercase font-medium">Monthly</p>
                             <p class="text-lg font-bold text-white mt-1">
-                                {{ number_format($mining_targets['monthly']) }}
+                                {{ number_format($mining_targets['monthly'] ?? 0) }}
                             </p>
                         </div>
                         <div class="bg-gray-700 border border-gray-600 rounded-lg p-3">
                             <p class="text-xs text-gray-400 uppercase font-medium">Yearly</p>
                             <p class="text-lg font-bold text-white mt-1">
-                                {{ number_format($mining_targets['yearly']) }}
+                                {{ number_format($mining_targets['yearly'] ?? 0) }}
                             </p>
                         </div>
                     </div>
                     <p class="text-xs text-gray-400 mt-3 text-center">
-                        Unit: {{ ucfirst(str_replace('_', ' ', $mining_targets['unit'])) }}
+                        Unit: {{ ucfirst(str_replace('_', ' ', $mining_targets['unit'] ?? 'tonnes')) }}
                     </p>
                 </div>
             </div>
