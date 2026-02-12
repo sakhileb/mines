@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Geofence;
 use App\Models\GeofenceEntry;
-use App\Services\AI\MineAreaDetectorAgent;
+use App\Models\MineArea;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +20,7 @@ class GeofenceManager extends Component
 
     // Form properties
     public ?int $editingGeofenceId = null;
-    public ?int $mineAreaId = null;
+    public ?int $teamId = null;
     public string $name = '';
     public string $description = '';
     public string $type = 'pit';
@@ -60,7 +60,7 @@ class GeofenceManager extends Component
     public function resetForm(): void
     {
         $this->editingGeofenceId = null;
-        $this->mineAreaId = null;
+        $this->teamId = null;
         $this->name = '';
         $this->description = '';
         $this->type = 'pit';
@@ -72,7 +72,7 @@ class GeofenceManager extends Component
     public function editGeofence(Geofence $geofence): void
     {
         $this->editingGeofenceId = $geofence->id;
-        $this->mineAreaId = $geofence->mine_area_id;
+        $this->teamId = auth()->user()->current_team_id;
         $this->name = $geofence->name;
         $this->description = $geofence->description ?? '';
         $this->type = $geofence->type;
@@ -85,7 +85,7 @@ class GeofenceManager extends Component
     public function saveGeofence(): void
     {
         $this->validate([
-            'mineAreaId' => 'required|exists:mine_areas,id',
+            'teamId' => 'required|exists:teams,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'type' => 'required|in:pit,stockpile,dump,facility',
@@ -96,7 +96,7 @@ class GeofenceManager extends Component
         $team = Auth::user()->currentTeam;
 
         $data = [
-            'mine_area_id' => $this->mineAreaId,
+            'team_id' => $this->teamId,
             'name' => $this->name,
             'description' => $this->description ?: null,
             'type' => $this->type,
@@ -137,7 +137,6 @@ class GeofenceManager extends Component
         $team = Auth::user()->currentTeam;
 
         $geofencesQuery = Geofence::where('team_id', $team->id)
-            ->with('mineArea')
             ->when($this->search, function ($query) {
                 return $query->where('name', 'like', "%{$this->search}%")
                     ->orWhere('description', 'like', "%{$this->search}%");
@@ -157,24 +156,22 @@ class GeofenceManager extends Component
             ];
         }
 
-        // AI Mine Area Detection Analysis
-        $aiAgent = new MineAreaDetectorAgent();
-        $aiAnalysis = $aiAgent->analyze($team);
-        $aiRecommendations = collect($aiAnalysis['recommendations'])->take(5);
-        $aiInsights = collect($aiAnalysis['insights'])->take(3);
-
         // Get all mine areas for the team
-        $mineAreas = \App\Models\MineArea::where('team_id', $team->id)
+        $mineAreas = MineArea::where('team_id', $team->id)
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
 
+        // AI-powered recommendations (placeholder for future AI integration)
+        $aiRecommendations = collect([]);
+        $aiInsights = collect([]);
+
         return view('livewire.geofence-manager', [
             'geofences' => $geofencesQuery,
             'geofenceStats' => $geofenceStats,
+            'mineAreas' => $mineAreas,
             'aiRecommendations' => $aiRecommendations,
             'aiInsights' => $aiInsights,
-            'mineAreas' => $mineAreas,
         ]);
     }
 }

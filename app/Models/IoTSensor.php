@@ -37,11 +37,6 @@ class IoTSensor extends Model
         return $this->belongsTo(Team::class);
     }
 
-    public function mineArea(): BelongsTo
-    {
-        return $this->belongsTo(MineArea::class);
-    }
-
     public function readings()
     {
         return $this->hasMany(SensorReading::class);

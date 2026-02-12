@@ -8,8 +8,6 @@ use App\Http\Controllers\Api\{
     AlertController,
     IntegrationController,
     ReportController,
-    MineAreaController,
-    MinePlanController,
     MachineAssignmentController,
     IoTSensorController,
     ForecastingController,
@@ -129,42 +127,11 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
     });
 
     /**
-     * Mine Areas endpoints
-     */
-    Route::prefix('mine-areas')->group(function () {
-        Route::get('/', [MineAreaController::class, 'index']);             // List all areas
-        Route::post('/', [MineAreaController::class, 'store']);            // Create area
-        Route::get('/{mineArea}', [MineAreaController::class, 'show']);    // Get single area
-        Route::put('/{mineArea}', [MineAreaController::class, 'update']);  // Update area
-        Route::delete('/{mineArea}', [MineAreaController::class, 'destroy']); // Delete area
-
-        // Area statistics and operations
-        Route::get('/{mineArea}/statistics', [MineAreaController::class, 'statistics']);
-        Route::post('/{mineArea}/assign-machines', [MineAreaController::class, 'assignMachines']);
-        Route::post('/{mineArea}/unassign-machines', [MineAreaController::class, 'unassignMachines']);
-        Route::get('/{mineArea}/export/geojson', [MineAreaController::class, 'exportGeoJson']);
-        Route::get('/{mineArea}/export/csv', [MineAreaController::class, 'exportCsv']);
-
-        // Bulk operations
-        Route::post('/bulk/import', [MineAreaController::class, 'bulkImport']);
-
-        // Mine plans
-        Route::get('/{mineArea}/plans', [MinePlanController::class, 'index']);
-        Route::post('/{mineArea}/plans', [MinePlanController::class, 'store']);
-        Route::get('/plans/{plan}', [MinePlanController::class, 'show']);
-        Route::delete('/plans/{plan}', [MinePlanController::class, 'destroy']);
-        Route::get('/plans/{plan}/download', [MinePlanController::class, 'download']);
-        Route::post('/plans/{plan}/set-current', [MinePlanController::class, 'setAsCurrent']);
-    });
-
-    /**
      * Machine Assignment endpoints
      */
     Route::prefix('assignments')->group(function () {
         Route::get('/available', [MachineAssignmentController::class, 'available']);
         Route::get('/machines/{machine}/history', [MachineAssignmentController::class, 'history']);
-        Route::get('/areas/{mineArea}/history', [MachineAssignmentController::class, 'areaHistory']);
-        Route::get('/areas/{mineArea}/current', [MachineAssignmentController::class, 'current']);
     });
 
     /**

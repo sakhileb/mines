@@ -3,8 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Models\Machine;
 use App\Models\Geofence;
-use App\Models\MineArea;
-use App\Models\MinePlan;
 use App\Models\Report;
 
 // Include test routes for session/CSRF debugging (remove in production)
@@ -63,25 +61,8 @@ Route::middleware([
         return view('mine-areas.index');
     })->name('mine-areas');
 
-    Route::get('/mine-areas/create', App\Livewire\MineAreaManager::class)
-        ->name('mine-areas.create');
-
-    Route::get('/mine-areas/{mineArea}/edit', App\Livewire\MineAreaManager::class)
-        ->name('mine-areas.edit');
-
-    Route::get('/mine-areas/dashboard', App\Livewire\MineAreasDashboard::class)
-        ->name('mine-areas.dashboard');
-
-    Route::get('/mine-areas/{mineArea}/plans', function (MineArea $mineArea) {
-        return view('mine-areas.plans', ['mineArea' => $mineArea]);
-    })->name('mine-areas.plans');
-
-    Route::get('/mine-areas/{mineArea}/assignments', App\Livewire\MachineAssignmentManager::class)
-        ->name('mine-areas.assignments');
-
-    Route::get('/mine-plans/{plan}/preview', function (MinePlan $plan) {
-        return view('mine-plans.preview', ['plan' => $plan]);
-    })->name('mine-plans.preview');
+    Route::get('/mine-areas/{mineArea}', App\Livewire\MineAreaDetail::class)
+        ->name('mine-areas.show');
 
     // Reports
     Route::get('/reports', function () {
@@ -161,7 +142,6 @@ Route::view('/pricing', 'pages.pricing')->name('pricing');
 // Core features detail pages
 Route::prefix('core-features')->group(function () {
     Route::view('/fleet-tracking', 'pages.core-features.fleet-tracking')->name('core-features.fleet-tracking');
-    Route::view('/mine-area', 'pages.core-features.mine-area')->name('core-features.mine-area');
     Route::view('/maintenance', 'pages.core-features.maintenance')->name('core-features.maintenance');
     Route::view('/fuel', 'pages.core-features.fuel')->name('core-features.fuel');
 });

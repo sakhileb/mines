@@ -105,7 +105,7 @@
             <span class="whitespace-nowrap overflow-hidden transition-all duration-300" x-show="sidebarOpen">Reports</span>
         </a>
 
-        <!-- Production -->
+        <!-- Production Dashboard -->
         <a href="{{ route('production') }}" 
            class="nav-link px-4 py-3 rounded-lg transition-colors flex items-center gap-3 {{ request()->routeIs('production*') ? 'bg-amber-600 text-white' : 'text-gray-300 hover:bg-gray-700' }}"
            :class="{ 'justify-center': !sidebarOpen }"

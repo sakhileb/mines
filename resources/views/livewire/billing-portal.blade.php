@@ -247,8 +247,8 @@
                         <!-- Confirmation Modal -->
                         @if($showConfirmModal)
                             <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-                                <div class="bg-gray-800 rounded-lg p-8 w-full max-w-md text-center">
-                                    <h3 class="text-xl font-bold text-white mb-4">Confirm Subscription</h3>
+                                <div class="bg-gray-800 rounded-lg p-8 w-full max-w-md text-center border border-gray-700 text-gray-100 shadow-lg">
+                                    <h3 class="text-xl font-bold text-gray-100 mb-4">Confirm Subscription</h3>
                                     <p class="text-gray-300 mb-4">You are about to subscribe to <span class="font-bold">{{ $selectedAdtCount }} ADT</span> and <span class="font-bold">{{ $selectedBigMachineCount }} Big Machine</span> for a total of <span class="text-green-400 font-bold">R{{ number_format($selectedBillingCycle === 'yearly' ? $userSelectedYearlyTotal : $userSelectedMonthlyTotal, 2) }}</span> per {{ $selectedBillingCycle === 'yearly' ? 'year' : 'month' }}.</p>
                                     <div class="flex gap-4 justify-center">
                                         <button wire:click="subscribe" class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">Confirm & Subscribe</button>

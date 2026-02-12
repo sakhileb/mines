@@ -4,9 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Geofence;
 use App\Models\Machine;
-use App\Models\MineArea;
 use App\Models\Route;
 use App\Models\Waypoint;
+use App\Models\MineArea;
 use App\Services\RoutePlanningService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +17,6 @@ class RoutePlanning extends Component
     public $name = '';
     public $description = '';
     public $machineId = null;
-    public $mineAreaId = null;
     public $routeType = 'optimal';
     public $speedLimit = null;
     
@@ -50,7 +49,6 @@ class RoutePlanning extends Component
     protected $rules = [
         'name' => 'required|min:3|max:255',
         'machineId' => 'nullable|exists:machines,id',
-        'mineAreaId' => 'nullable|exists:mine_areas,id',
         'startLat' => 'required|numeric|between:-90,90',
         'startLon' => 'required|numeric|between:-180,180',
         'endLat' => 'required|numeric|between:-90,90',
@@ -69,15 +67,16 @@ class RoutePlanning extends Component
     public function render()
     {
         $team = Auth::user()->currentTeam;
-        
+
         $machines = Machine::where('team_id', $team->id)
             ->orderBy('name')
             ->get();
-        
+
+        // Fetch mine areas for the current team
         $mineAreas = MineArea::where('team_id', $team->id)
             ->orderBy('name')
             ->get();
-        
+
         // Convert geofences to plain array for safe JavaScript serialization
         $geofences = Geofence::where('team_id', $team->id)
             ->get()
@@ -88,7 +87,7 @@ class RoutePlanning extends Component
                 if (is_string($coordinates)) {
                     $coordinates = json_decode($coordinates, true);
                 }
-                
+
                 return [
                     'id' => $geofence->id,
                     'name' => $geofence->name,
@@ -97,7 +96,7 @@ class RoutePlanning extends Component
                 ];
             })
             ->toArray();
-        
+
         return view('livewire.route-planning', [
             'machines' => $machines,
             'mineAreas' => $mineAreas,

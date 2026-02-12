@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\MineArea;
 use App\Models\IoTSensor;
 use App\Models\SensorReading;
 use App\Services\IoTSensorService;
@@ -17,42 +16,6 @@ class IoTSensorController extends Controller
     public function __construct(IoTSensorService $service)
     {
         $this->service = $service;
-    }
-
-    /**
-     * Register new sensor
-     */
-    public function store(Request $request, MineArea $mineArea)
-    {
-        $this->authorize('update', $mineArea);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'sensor_type' => 'required|in:temperature,humidity,dust,vibration,noise,air_quality,pressure,custom',
-            'device_id' => 'required|string|unique:iot_sensors',
-            'location_latitude' => 'nullable|numeric|between:-90,90',
-            'location_longitude' => 'nullable|numeric|between:-180,180',
-            'metadata' => 'nullable|json',
-        ]);
-
-        $sensor = $this->service->registerSensor($mineArea, $validated);
-
-        return response()->json($sensor, Response::HTTP_CREATED);
-    }
-
-    /**
-     * Get all sensors for area
-     */
-    public function index(Request $request, MineArea $mineArea)
-    {
-        $this->authorize('view', $mineArea);
-
-        $sensors = $mineArea->sensors()
-            ->when($request->has('type'), fn($q) => $q->where('sensor_type', $request->type))
-            ->when($request->has('status'), fn($q) => $q->where('status', $request->status))
-            ->paginate($request->get('per_page', 15));
-
-        return response()->json($sensors);
     }
 
     /**
@@ -127,33 +90,6 @@ class IoTSensorController extends Controller
         $this->service->deactivateSensor($sensor);
 
         return response()->json(['message' => 'Sensor deactivated']);
-    }
-
-    /**
-     * Bulk record readings
-     */
-    public function bulkReadings(Request $request, MineArea $mineArea)
-    {
-        $this->authorize('update', $mineArea);
-
-        $validated = $request->validate([
-            'readings' => 'required|array',
-            'readings.*.sensor_id' => 'required|exists:iot_sensors,id',
-            'readings.*.value' => 'required|numeric',
-            'readings.*.unit' => 'required|string',
-            'readings.*.timestamp' => 'nullable|date_format:Y-m-d H:i:s',
-        ]);
-
-        $recorded = [];
-        foreach ($validated['readings'] as $readingData) {
-            $sensor = IoTSensor::find($readingData['sensor_id']);
-            $recorded[] = $this->service->recordReading($sensor, $readingData);
-        }
-
-        return response()->json([
-            'message' => sprintf('%d readings recorded', count($recorded)),
-            'recorded' => $recorded,
-        ], Response::HTTP_CREATED);
     }
 
     /**

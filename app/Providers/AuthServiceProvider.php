@@ -7,14 +7,12 @@ use App\Models\Geofence;
 use App\Models\Alert;
 use App\Models\Integration;
 use App\Models\Report;
-use App\Models\MineArea;
 use App\Models\Notification;
 use App\Policies\MachinePolicy;
 use App\Policies\GeofencePolicy;
 use App\Policies\AlertPolicy;
 use App\Policies\IntegrationPolicy;
 use App\Policies\ReportPolicy;
-use App\Policies\MineAreaPolicy;
 use App\Policies\NotificationPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -31,7 +29,6 @@ class AuthServiceProvider extends ServiceProvider
         Alert::class => AlertPolicy::class,
         Integration::class => IntegrationPolicy::class,
         Report::class => ReportPolicy::class,
-        MineArea::class => MineAreaPolicy::class,
         Notification::class => NotificationPolicy::class,
     ];
 

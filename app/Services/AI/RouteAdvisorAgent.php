@@ -5,7 +5,6 @@ namespace App\Services\AI;
 use App\Models\Team;
 use App\Models\Route;
 use App\Models\Machine;
-use App\Models\MineArea;
 use App\Services\RoutePlanningService;
 
 /**
@@ -47,10 +46,6 @@ class RouteAdvisorAgent
             }
         }
 
-        // Analyze area coverage
-        $coverageAnalysis = $this->analyzeAreaCoverage($team);
-        $recommendations = array_merge($recommendations, $coverageAnalysis);
-
         return [
             'recommendations' => $recommendations,
             'insights' => $insights,
@@ -83,29 +78,4 @@ class RouteAdvisorAgent
         ];
     }
 
-    protected function analyzeAreaCoverage(Team $team): array
-    {
-        $recommendations = [];
-        $areas = MineArea::where('team_id', $team->id)->get();
-
-        foreach ($areas as $area) {
-            $routesInArea = Route::where('team_id', $team->id)
-                ->where('mine_area_id', $area->id)
-                ->count();
-
-            if ($routesInArea === 0 && $area->machines()->count() > 0) {
-                $recommendations[] = [
-                    'category' => 'route',
-                    'priority' => 'medium',
-                    'title' => "No Optimized Routes: {$area->name}",
-                    'description' => "Mine area {$area->name} has no optimized routes defined. Create routes to improve efficiency.",
-                    'confidence_score' => 0.70,
-                    'estimated_efficiency_gain' => 20,
-                    'related_mine_area_id' => $area->id,
-                ];
-            }
-        }
-
-        return $recommendations;
-    }
 }

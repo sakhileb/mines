@@ -1,4 +1,5 @@
-<div class="p-6">
+<div>
+<div class="p-6 bg-gray-900 min-h-screen text-gray-100">
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-3xl font-bold">Fuel Management</h1>
@@ -6,22 +7,13 @@
         </div>
         <div class="flex items-center gap-3">
             <button 
-                wire:click="openTankModal" 
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                wire:click="openManageModal" 
+                class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors flex items-center gap-2"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
-                Add Fuel Tank
-            </button>
-            <button 
-                wire:click="openAllocationModal" 
-                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
-            >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Set Monthly Allocation
+                Manage Fuel
             </button>
         </div>
     </div>
@@ -417,281 +409,157 @@
         </div>
     </div>
 
-    <!-- Monthly Allocation Modal -->
-    @if($showAllocationModal)
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeAllocationModal">
-        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4" wire:click.stop>
+
+    <!-- Unified Manage Modal -->
+    @if($showManageModal)
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeManageModal">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700 shadow-lg" wire:click.stop>
+            @if(session('success'))
+                <div class="alert alert-success mb-4">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="alert alert-error mb-4">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Set Monthly Fuel Allocation</h2>
-                <button wire:click="closeAllocationModal" class="text-gray-400 hover:text-gray-600">
+                <h2 class="text-2xl font-bold text-gray-100">Manage Fuel</h2>
+                <button wire:click="closeManageModal" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
-
-            <form wire:submit="saveAllocation" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                        <select wire:model="allocationYear" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900">
-                            @for($year = now()->year - 1; $year <= now()->year + 1; $year++)
-                                <option value="{{ $year }}">{{ $year }}</option>
-                            @endfor
-                        </select>
-                        @error('allocationYear') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Month</label>
-                        <select wire:model="allocationMonth" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900">
-                            @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $index => $month)
-                                <option value="{{ $index + 1 }}">{{ $month }}</option>
-                            @endforeach
-                        </select>
-                        @error('allocationMonth') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Mine Area (Optional)</label>
-                    <select wire:model="mineAreaId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900">
-                        <option value="">All Mine Areas (General Allocation)</option>
-                        @foreach($mineAreas as $area)
-                            <option value="{{ $area->id }}">{{ $area->name }} ({{ ucfirst($area->type) }})</option>
-                        @endforeach
-                    </select>
-                    @error('mineAreaId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    <p class="text-xs text-gray-500 mt-1">Select a specific mine area or leave blank for general team allocation</p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Allocated Liters</label>
-                    <input 
-                        type="number" 
-                        wire:model.live="allocatedLiters" 
-                        step="0.01"
-                        placeholder="e.g., 50000"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                    @error('allocatedLiters') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    <p class="text-xs text-gray-500 mt-1">Enter the total liters available for this month</p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Fuel Price per Liter (ZAR)</label>
-                    <input 
-                        type="number" 
-                        wire:model.live="fuelPricePerLiter" 
-                        step="0.01"
-                        placeholder="e.g., 23.50"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                    @error('fuelPricePerLiter') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    <p class="text-xs text-gray-500 mt-1">Current fuel price in South African Rands</p>
-                </div>
-
-                @if($allocatedLiters && $fuelPricePerLiter)
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-700 font-medium">Total Budget:</span>
-                        <span class="text-2xl font-bold text-blue-600">R{{ number_format($allocatedLiters * $fuelPricePerLiter, 2) }}</span>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1">{{ number_format($allocatedLiters) }} liters × R{{ number_format($fuelPricePerLiter, 2) }} per liter</p>
-                </div>
-                @endif
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
-                    <textarea 
-                        wire:model="allocationNotes" 
-                        rows="3"
-                        placeholder="Any additional notes or comments..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    ></textarea>
-                </div>
-
-                <div class="flex gap-3 pt-4">
-                    <button 
-                        type="submit" 
-                        class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
-                        wire:loading.attr="disabled"
-                        wire:target="saveAllocation"
-                    >
-                        <span wire:loading.remove wire:target="saveAllocation">Save Allocation</span>
-                        <span wire:loading wire:target="saveAllocation" class="flex items-center gap-2">
-                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Saving...
-                        </span>
-                    </button>
-                    <button 
-                        type="button" 
-                        wire:click="closeAllocationModal"
-                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    @endif
-
-    <!-- Fuel Tank Creation Modal -->
-    @if($showTankModal)
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeTankModal">
-        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" wire:click.stop>
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Add New Fuel Tank</h2>
-                <button wire:click="closeTankModal" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+            <!-- Tabbed interface for actions -->
+            <div class="mb-4 flex gap-2">
+                <button type="button" wire:click="setManageTab('dispense')"
+                    class="px-3 py-2 rounded-lg font-medium transition-colors {{ $manageTab === 'dispense' ? 'bg-blue-700 text-white' : 'bg-gray-700 text-gray-200' }}">
+                    Dispense Fuel
+                </button>
+                <button type="button" wire:click="setManageTab('allocation')"
+                    class="px-3 py-2 rounded-lg font-medium transition-colors {{ $manageTab === 'allocation' ? 'bg-blue-700 text-white' : 'bg-gray-700 text-gray-200' }}">
+                    Set Monthly Allocation
+                </button>
+                <button type="button" wire:click="setManageTab('tank')"
+                    class="px-3 py-2 rounded-lg font-medium transition-colors {{ $manageTab === 'tank' ? 'bg-blue-700 text-white' : 'bg-gray-700 text-gray-200' }}">
+                    Add Fuel Tank
                 </button>
             </div>
-
-            <form wire:submit="saveTank" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tank Name *</label>
-                    <input 
-                        type="text" 
-                        wire:model="tankName" 
-                        placeholder="e.g., Main Diesel Tank A"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                    @error('tankName') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tank Number</label>
-                        <input 
-                            type="text" 
-                            wire:model="tankNumber" 
-                            placeholder="e.g., T-001"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                        @error('tankNumber') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Fuel Type *</label>
-                        <select wire:model="tankFuelType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900">
-                            <option value="diesel">Diesel</option>
-                            <option value="petrol">Petrol</option>
-                            <option value="aviation_fuel">Aviation Fuel</option>
-                            <option value="biodiesel">Biodiesel</option>
-                        </select>
-                        @error('tankFuelType') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Mine Area (Optional)</label>
-                    <select wire:model="tankMineAreaId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900">
-                        <option value="">No specific mine area</option>
-                        @foreach($mineAreas as $area)
-                            <option value="{{ $area->id }}">{{ $area->name }} ({{ ucfirst($area->type) }})</option>
-                        @endforeach
-                    </select>
-                    @error('tankMineAreaId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    <p class="text-xs text-gray-500 mt-1">Assign this tank to a specific mine area</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Capacity (Liters) *</label>
-                        <input 
-                            type="number" 
-                            wire:model.live="tankCapacity" 
-                            step="0.01"
-                            placeholder="e.g., 50000"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                        @error('tankCapacity') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Level (Liters) *</label>
-                        <input 
-                            type="number" 
-                            wire:model.live="tankMinimumLevel" 
-                            step="0.01"
-                            placeholder="e.g., 5000"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                        @error('tankMinimumLevel') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        <p class="text-xs text-gray-500 mt-1">Alert threshold</p>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Location Description</label>
-                    <input 
-                        type="text" 
-                        wire:model="tankLocationDescription" 
-                        placeholder="e.g., Near north pit entrance"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                    @error('tankLocationDescription') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
-                    <textarea 
-                        wire:model="tankNotes" 
-                        rows="3"
-                        placeholder="Any additional notes..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    ></textarea>
-                </div>
-
-                @if($tankCapacity && $tankMinimumLevel)
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-gray-700 font-medium">Tank will start at full capacity</span>
-                        <span class="text-lg font-bold text-blue-600">{{ number_format($tankCapacity) }}L</span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <span class="font-medium">Alert at:</span> {{ number_format($tankMinimumLevel) }}L ({{ $tankCapacity > 0 ? number_format(($tankMinimumLevel / $tankCapacity) * 100, 1) : 0 }}%)
-                    </div>
-                </div>
+            <div>
+                @if($manageTab === 'dispense')
+                    <!-- Dispense Fuel Form -->
+                    <form wire:submit.prevent="recordDispensingTransaction" class="space-y-4">
+                        <div>
+                            <label class="block font-medium mb-1">Tank</label>
+                            <select wire:model.live="transactionTankId" class="select select-bordered w-full bg-gray-900 border-gray-700 text-gray-100">
+                                <option value="">Select Tank</option>
+                                @foreach($tanks as $tank)
+                                    <option value="{{ $tank->id }}">{{ $tank->name }} ({{ $tank->fuel_type }})</option>
+                                @endforeach
+                            </select>
+                            @error('transactionTankId') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Machine</label>
+                            <select wire:model.live="transactionMineAreaId" class="select select-bordered w-full bg-gray-900 border-gray-700 text-gray-100">
+                                <option value="">Select Machine</option>
+                                @foreach($machines as $machine)
+                                    <option value="{{ $machine->id }}">{{ $machine->name }} ({{ $machine->machine_type }})</option>
+                                @endforeach
+                            </select>
+                            @error('transactionMineAreaId') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Quantity (Liters)</label>
+                            <input type="number" min="1" wire:model.live="transactionQuantity" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('transactionQuantity') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" wire:click="closeManageModal" class="btn btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Dispense</button>
+                        </div>
+                    </form>
+                @elseif($manageTab === 'allocation')
+                    <!-- Set Monthly Allocation Form -->
+                    <form wire:submit.prevent="saveAllocation" class="space-y-4">
+                        <div>
+                            <label class="block font-medium mb-1">Year</label>
+                            <input type="number" min="2020" max="2100" wire:model.live="allocationYear" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('allocationYear') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Month</label>
+                            <input type="number" min="1" max="12" wire:model.live="allocationMonth" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('allocationMonth') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Allocated Liters</label>
+                            <input type="number" min="1" wire:model.live="allocatedLiters" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('allocatedLiters') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Fuel Price Per Liter (ZAR)</label>
+                            <input type="number" min="0.01" step="0.01" wire:model.live="fuelPricePerLiter" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('fuelPricePerLiter') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Notes</label>
+                            <input type="text" wire:model.live="allocationNotes" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('allocationNotes') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" wire:click="closeManageModal" class="btn btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Allocation</button>
+                        </div>
+                    </form>
+                @elseif($manageTab === 'tank')
+                    <!-- Add/Edit Fuel Tank Form -->
+                    <form wire:submit.prevent="saveTank" class="space-y-4">
+                        <div>
+                            <label class="block font-medium mb-1">Select Existing Tank</label>
+                            <select wire:model.live="selectedTankId" class="select select-bordered w-full bg-gray-900 border-gray-700 text-gray-100">
+                                <option value="">Create New Tank</option>
+                                @foreach($tanks as $tank)
+                                    <option value="{{ $tank->id }}">{{ $tank->name }} ({{ $tank->fuel_type }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Tank Name</label>
+                            <input type="text" wire:model.live="tankName" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('tankName') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Fuel Type</label>
+                            <input type="text" wire:model.live="tankFuelType" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('tankFuelType') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Capacity (Liters)</label>
+                            <input type="number" min="1" wire:model.live="tankCapacity" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('tankCapacity') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">Mine Area</label>
+                            <select wire:model.live="tankMineAreaId" class="select select-bordered w-full bg-gray-900 border-gray-700 text-gray-100">
+                                <option value="">Select Area</option>
+                                @foreach($mineAreas as $area)
+                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('tankMineAreaId') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" wire:click="closeManageModal" class="btn btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Tank</button>
+                        </div>
+                    </form>
                 @endif
-
-                <div class="flex gap-3 pt-4">
-                    <button 
-                        type="submit" 
-                        class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
-                        wire:loading.attr="disabled"
-                        wire:target="saveTank"
-                    >
-                        <span wire:loading.remove wire:target="saveTank" class="flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Create Tank
-                        </span>
-                        <span wire:loading wire:target="saveTank" class="flex items-center gap-2">
-                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Creating...
-                        </span>
-                    </button>
-                    <button 
-                        type="button" 
-                        wire:click="closeTankModal"
-                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
     @endif
-</div>

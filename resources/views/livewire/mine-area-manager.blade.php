@@ -1,0 +1,612 @@
+<div class="h-screen flex flex-col bg-gray-900">
+    <link rel="stylesheet" href="/vendor/leaflet.css" />
+    <link rel="stylesheet" href="/vendor/leaflet-draw/leaflet.draw.css" />
+
+    <style>
+        #mine-area-map {
+            background: #1f2937;
+            min-height: 400px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .leaflet-container {
+            background: #1f2937 !important;
+        }
+
+        .mine-area-search-input {
+            @apply w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none;
+        }
+    </style>
+
+    <!-- Header -->
+    <div class="bg-gray-800 border-b border-gray-700 p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Mine Areas</h1>
+                    <p class="mt-2 text-gray-400">Manage and organize your mining operation areas</p>
+                </div>
+                <div class="flex gap-2">
+                    @if($viewMode === 'map' && $isDrawing)
+                        <button 
+                            wire:click="switchToListMode" 
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                            View List
+                        </button>
+                    @elseif($viewMode === 'list')
+                        <button 
+                            wire:click="openCreateMapModal" 
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"></path>
+                            </svg>
+                            Draw on Map
+                        </button>
+                        <button 
+                            wire:click="openCreateModal" 
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add Manually
+                        </button>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Mode Tabs -->
+            @if($viewMode === 'list')
+                <div class="flex gap-2">
+                    <button 
+                        wire:click="switchToListMode"
+                        class="px-4 py-2 rounded-lg transition-colors bg-blue-600 text-white"
+                    >
+                        List View
+                    </button>
+                    <button 
+                        wire:click="switchToMapMode"
+                        class="px-4 py-2 rounded-lg transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    >
+                        Map View
+                    </button>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 flex overflow-hidden">
+        @if($viewMode === 'list')
+            <!-- List View -->
+            <div class="w-full flex flex-col overflow-auto">
+                <div class="bg-gray-800 m-6 rounded-lg shadow space-y-4">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 border-b border-gray-700">
+                        <div class="bg-gray-800 rounded-lg p-4 shadow border border-gray-700">
+                            <p class="text-gray-400 text-sm">Total Areas</p>
+                            <p class="text-3xl font-bold text-white">{{ $stats['total_areas'] }}</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4 shadow border border-gray-700">
+                            <p class="text-gray-400 text-sm">Active Areas</p>
+                            <p class="text-3xl font-bold text-blue-400">{{ $stats['active_areas'] }}</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4 shadow border border-gray-700">
+                            <p class="text-gray-400 text-sm">Total Area Size</p>
+                            <p class="text-3xl font-bold text-white">{{ number_format($stats['total_area_hectares'], 1) }} ha</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4 shadow border border-gray-700">
+                            <p class="text-gray-400 text-sm">With Managers</p>
+                            <p class="text-3xl font-bold text-white">{{ $stats['areas_with_manager'] }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="p-6 border-b border-gray-700">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <input 
+                                    type="text"
+                                    wire:model.live="search"
+                                    placeholder="Search mine areas..."
+                                    class="mine-area-search-input"
+                                >
+                            </div>
+                            <div>
+                                <select 
+                                    wire:model.live="statusFilter"
+                                    class="mine-area-search-input"
+                                >
+                                    <option value="">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="planning">Planning</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-700 border-b border-gray-600">
+                                <tr>
+                                    <th class="px-6 py-3 text-left">
+                                        <button wire:click="toggleSort('name')" class="flex items-center gap-2 font-semibold text-white">
+                                            Name
+                                            @if($sortBy === 'name')
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    @if($sortDirection === 'asc')
+                                                        <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"></path>
+                                                    @else
+                                                        <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 11-1.414 1.414L11 5.414V15a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"></path>
+                                                    @endif
+                                                </svg>
+                                            @endif
+                                        </button>
+                                    </th>
+                                    <th class="px-6 py-3 text-left font-semibold text-white">Location</th>
+                                    <th class="px-6 py-3 text-center font-semibold text-white">Machines</th>
+                                    <th class="px-6 py-3 text-center font-semibold text-white">Geofences</th>
+                                    <th class="px-6 py-3 text-center font-semibold text-white">Alerts</th>
+                                    <th class="px-6 py-3 text-center font-semibold text-white">Plans</th>
+                                    <th class="px-6 py-3 text-left">
+                                        <button wire:click="toggleSort('status')" class="flex items-center gap-2 font-semibold text-white">
+                                            Status
+                                            @if($sortBy === 'status')
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    @if($sortDirection === 'asc')
+                                                        <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"></path>
+                                                    @else
+                                                        <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 11-1.414 1.414L11 5.414V15a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"></path>
+                                                    @endif
+                                                </svg>
+                                            @endif
+                                        </button>
+                                    </th>
+                                    <th class="px-6 py-3 text-right font-semibold text-white">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                @forelse($mineAreas as $area)
+                                    <tr class="hover:bg-gray-700 transition-colors cursor-pointer" onclick="window.location='{{ route('mine-areas.show', $area->id) }}'">
+                                        <td class="px-6 py-4">
+                                            <div>
+                                                <p class="font-semibold text-white">{{ $area->name }}</p>
+                                                <p class="text-sm text-gray-400">{{ Str::limit($area->description, 50) }}</p>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-300">
+                                            {{ $area->location ?? '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-900 text-blue-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                                {{ $area->machines_count ?? 0 }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-900 text-purple-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                                {{ $area->geofences_count ?? 0 }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            @if(($area->alerts_count ?? 0) > 0)
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-900 text-red-200 animate-pulse">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"></path></svg>
+                                                    {{ $area->alerts_count }}
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400">0</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-900 text-amber-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                {{ $area->mine_plan_uploads_count ?? 0 }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                                @if($area->status === 'active')
+                                                    bg-green-900 text-green-200
+                                                @elseif($area->status === 'inactive')
+                                                    bg-red-900 text-red-200
+                                                @else
+                                                    bg-yellow-900 text-yellow-200
+                                                @endif
+                                            ">
+                                                {{ ucfirst($area->status) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <div class="flex items-center justify-end gap-2" onclick="event.stopPropagation()">
+                                                <a 
+                                                    href="{{ route('mine-areas.show', $area->id) }}"
+                                                    class="inline-flex items-center px-3 py-1 text-sm bg-amber-900 text-amber-200 rounded hover:bg-amber-800 transition-colors"
+                                                >
+                                                    View
+                                                </a>
+                                                <button 
+                                                    wire:click="openEditModal({{ $area->id }})"
+                                                    class="inline-flex items-center px-3 py-1 text-sm bg-blue-900 text-blue-200 rounded hover:bg-blue-800 transition-colors"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button 
+                                                    wire:click="deleteMineArea({{ $area->id }})"
+                                                    wire:confirm="Are you sure you want to delete this mine area?"
+                                                    class="inline-flex items-center px-3 py-1 text-sm bg-red-900 text-red-200 rounded hover:bg-red-800 transition-colors"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="px-6 py-8 text-center text-gray-400">
+                                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                            </svg>
+                                            <p>No mine areas found. Create one to get started!</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="p-6 border-t border-gray-700">
+                        {{ $mineAreas->links() }}
+                    </div>
+                </div>
+            </div>
+
+        @elseif($viewMode === 'map' && !$isDrawing)
+            <!-- Map View (Browse Mode) -->
+            <div class="w-full flex">
+                <div class="flex-1 relative">
+                    <div id="mine-area-map" wire:ignore></div>
+                </div>
+            </div>
+
+        @else
+            <!-- Map View (Drawing Mode) -->
+            <div class="w-full flex">
+                <!-- Left Sidebar - Form -->
+                <div class="w-96 bg-gray-800 border-r border-gray-700 overflow-y-auto p-6 space-y-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-2">Create Mine Area</h2>
+                        <p class="text-gray-400 text-sm">Draw a boundary on the map, then fill in the details</p>
+                    </div>
+
+                    @if($boundaryCoordinates)
+                        <div class="bg-green-600/20 border border-green-600 rounded-lg p-3">
+                            <p class="text-green-300 text-sm">✓ Boundary drawn on map</p>
+                        </div>
+                    @else
+                        <div class="bg-yellow-600/20 border border-yellow-600 rounded-lg p-3">
+                            <p class="text-yellow-300 text-sm">⚠ Draw a boundary on the map to get started</p>
+                        </div>
+                    @endif
+
+                    <form wire:submit="saveMineAreaWithBoundary" class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Name *</label>
+                            <input 
+                                type="text"
+                                wire:model="name"
+                                placeholder="Mine area name"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                            @error('name') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                            <textarea 
+                                wire:model="description"
+                                placeholder="Area description"
+                                rows="2"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            ></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Location</label>
+                            <input 
+                                type="text"
+                                wire:model="location"
+                                placeholder="Location details"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Status *</label>
+                            <select 
+                                wire:model="status"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="planning">Planning</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Manager Name</label>
+                            <input 
+                                type="text"
+                                wire:model="manager_name"
+                                placeholder="Manager name"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                        </div>
+
+                        <div class="flex gap-2 pt-4 border-t border-gray-700">
+                            <button 
+                                type="button"
+                                wire:click="closeMapModal"
+                                class="flex-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="submit"
+                                class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                            >
+                                Save Area
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right: Map -->
+                <div class="flex-1 relative">
+                    <div id="mine-area-map" wire:ignore></div>
+                </div>
+            </div>
+        @endif
+    </div>
+
+    <!-- Create/Edit Modal -->
+    @if($showCreateModal || $showEditModal)
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+                <div class="sticky top-0 bg-gray-700 border-b border-gray-600 p-6 flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">
+                        {{ $editingMineAreaId ? 'Edit Mine Area' : 'Create New Mine Area' }}
+                    </h2>
+                    <button 
+                        wire:click="@if($editingMineAreaId) closeEditModal @else closeCreateModal @endif"
+                        class="text-gray-400 hover:text-gray-300"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form wire:submit="saveMineArea" class="p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">
+                                Name <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text"
+                                wire:model="name"
+                                placeholder="Enter mine area name"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                            @error('name') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">
+                                Status <span class="text-red-500">*</span>
+                            </label>
+                            <select 
+                                wire:model="status"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="planning">Planning</option>
+                            </select>
+                            @error('status') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                        <textarea 
+                            wire:model="description"
+                            placeholder="Describe the mine area"
+                            rows="3"
+                            class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        ></textarea>
+                        @error('description') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Location</label>
+                            <input 
+                                type="text"
+                                wire:model="location"
+                                placeholder="e.g., North Pit, South Zone"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                            @error('location') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Area Size (hectares)</label>
+                            <input 
+                                type="number"
+                                step="0.01"
+                                wire:model.live="area_size_hectares"
+                                placeholder="0.00"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                            @error('area_size_hectares') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Manager Name</label>
+                            <input 
+                                type="text"
+                                wire:model="manager_name"
+                                placeholder="Mining operations manager"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                            @error('manager_name') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Manager Contact</label>
+                            <input 
+                                type="text"
+                                wire:model="manager_contact"
+                                placeholder="Phone or email"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                            @error('manager_contact') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-600">
+                        <button 
+                            type="button"
+                            wire:click="@if($editingMineAreaId) closeEditModal @else closeCreateModal @endif"
+                            class="px-4 py-2 text-gray-300 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit"
+                            class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            {{ $editingMineAreaId ? 'Update' : 'Create' }} Mine Area
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- Leaflet and Drawing Tools -->
+    <script src="/vendor/leaflet.js"></script>
+    <script src="/vendor/leaflet-draw/leaflet.draw.umd.js"></script>
+
+    <script>
+        let mineAreaMap = null;
+        let drawnItems = null;
+        let isMapDrawMode = @json($isDrawing);
+        let isMapViewMode = @json($viewMode === 'map');
+
+
+        function initializeMineAreaMap() {
+            // Always re-initialize if map container exists and map is not set
+            const mapContainer = document.getElementById('mine-area-map');
+            if (!mapContainer) return;
+            if (mineAreaMap) {
+                mineAreaMap.invalidateSize();
+                return;
+            }
+            try {
+                mineAreaMap = L.map('mine-area-map').setView([-26.2041, 28.0473], 10);
+                // Add tile layers
+                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(mineAreaMap);
+                const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19,
+                    attribution: 'Esri'
+                });
+                L.control.layers({
+                    'Standard': osmLayer,
+                    'Satellite': satelliteLayer
+                }).addTo(mineAreaMap);
+                // Initialize drawing if in draw mode
+                if (isMapDrawMode) {
+                    drawnItems = new L.FeatureGroup();
+                    mineAreaMap.addLayer(drawnItems);
+                    const drawControl = new L.Control.Draw({
+                        position: 'topleft',
+                        draw: {
+                            polygon: true,
+                            rectangle: false,
+                            circle: false,
+                            marker: false,
+                            circlemarker: false,
+                            polyline: false
+                        },
+                        edit: {
+                            featureGroup: drawnItems,
+                            remove: true
+                        }
+                    });
+                    mineAreaMap.addControl(drawControl);
+                    mineAreaMap.on('draw:created', function(e) {
+                        const layer = e.layer;
+                        drawnItems.addLayer(layer);
+                        if (layer.getLatLngs) {
+                            const coords = layer.getLatLngs()[0].map(point => ({
+                                lat: point.lat,
+                                lng: point.lng
+                            }));
+                            @this.setBoundary(coords);
+                        }
+                    });
+                    mineAreaMap.on('draw:edited', function(e) {
+                        e.layers.eachLayer(function(layer) {
+                            if (layer.getLatLngs) {
+                                const coords = layer.getLatLngs()[0].map(point => ({
+                                    lat: point.lat,
+                                    lng: point.lng
+                                }));
+                                @this.setBoundary(coords);
+                            }
+                        });
+                    });
+                    mineAreaMap.on('draw:deleted', function(e) {
+                        @this.clearBoundary();
+                    });
+                }
+            } catch (error) {
+                console.error('Error initializing map:', error);
+            }
+        }
+
+        // Initialize on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(initializeMineAreaMap, 100);
+            });
+        } else {
+            setTimeout(initializeMineAreaMap, 100);
+        }
+
+        // Re-initialize on Livewire updates (always attempt)
+        document.addEventListener('livewire:updated', () => {
+            setTimeout(() => {
+                initializeMineAreaMap();
+            }, 100);
+        });
+    </script>
+</div>

@@ -79,14 +79,6 @@ class Team extends JetstreamTeam
     }
 
     /**
-     * Get the mine areas for this team.
-     */
-    public function mineAreas()
-    {
-        return $this->hasMany(MineArea::class);
-    }
-
-    /**
      * Get the alerts for this team.
      */
     public function alerts()

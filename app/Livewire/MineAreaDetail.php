@@ -1,0 +1,586 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\Alert;
+use App\Models\Geofence;
+use App\Models\Machine;
+use App\Models\MachineAreaAssignment;
+use App\Models\MineArea;
+use App\Models\MinePlanUpload;
+use App\Models\ProductionRecord;
+use App\Models\ProductionTarget;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+
+class MineAreaDetail extends Component
+{
+    use WithPagination, WithFileUploads;
+
+    public MineArea $mineArea;
+    public string $activeTab = 'overview';
+
+    // Machine Assignment
+    public bool $showAssignModal = false;
+    public ?int $selectedMachineId = null;
+    public string $assignmentReason = '';
+
+    // Production Tracking
+    public bool $showProductionModal = false;
+    public string $productionDate = '';
+    public string $productionShift = 'day';
+    public ?float $quantityProduced = null;
+    public ?float $targetQuantity = null;
+    public string $productionUnit = 'tonnes';
+    public ?int $productionMachineId = null;
+    public string $productionNotes = '';
+    public string $productionPeriod = 'week'; // week, month, quarter
+
+    // Production Target
+    public bool $showTargetModal = false;
+    public string $targetPeriodType = 'monthly';
+    public string $targetStartDate = '';
+    public string $targetEndDate = '';
+    public ?float $targetValue = null;
+    public string $targetUnit = 'tonnes';
+    public string $targetDescription = '';
+
+    // Mine Plan Upload
+    public bool $showUploadModal = false;
+    public string $planTitle = '';
+    public string $planDescription = '';
+    public $planFile = null;
+    public string $planFileType = 'pdf';
+    public string $planVersion = '1.0';
+    public string $planStatus = 'draft';
+    public string $planEffectiveDate = '';
+
+    // Area Alert
+    public bool $showAlertModal = false;
+    public string $alertTitle = '';
+    public string $alertDescription = '';
+    public string $alertType = 'area';
+    public string $alertPriority = 'medium';
+
+    // Geofence linking
+    public bool $showGeofenceModal = false;
+    public ?int $selectedGeofenceId = null;
+
+    protected function rules()
+    {
+        return [
+            'selectedMachineId' => 'required_if:showAssignModal,true|nullable|exists:machines,id',
+            'assignmentReason' => 'nullable|string|max:255',
+            'productionDate' => 'required_if:showProductionModal,true|nullable|date',
+            'productionShift' => 'in:day,night,continuous',
+            'quantityProduced' => 'required_if:showProductionModal,true|nullable|numeric|min:0',
+            'targetQuantity' => 'nullable|numeric|min:0',
+            'productionUnit' => 'in:tonnes,cubic_meters,loads,trips',
+            'productionMachineId' => 'nullable|exists:machines,id',
+            'targetPeriodType' => 'in:daily,weekly,monthly,quarterly,yearly',
+            'targetStartDate' => 'required_if:showTargetModal,true|nullable|date',
+            'targetEndDate' => 'required_if:showTargetModal,true|nullable|date|after_or_equal:targetStartDate',
+            'targetValue' => 'required_if:showTargetModal,true|nullable|numeric|min:0',
+            'planTitle' => 'required_if:showUploadModal,true|nullable|string|max:255',
+            'planFile' => 'required_if:showUploadModal,true|nullable|file|max:51200',
+            'alertTitle' => 'required_if:showAlertModal,true|nullable|string|max:255',
+            'alertDescription' => 'nullable|string|max:1000',
+            'alertPriority' => 'in:critical,high,medium,low',
+        ];
+    }
+
+    public function mount(MineArea $mineArea)
+    {
+        $team = Auth::user()->currentTeam;
+        if ($mineArea->team_id !== $team->id) {
+            abort(403);
+        }
+        $this->mineArea = $mineArea;
+        $this->productionDate = now()->toDateString();
+        $this->targetStartDate = now()->startOfMonth()->toDateString();
+        $this->targetEndDate = now()->endOfMonth()->toDateString();
+        $this->planEffectiveDate = now()->toDateString();
+    }
+
+    public function setTab(string $tab)
+    {
+        $this->activeTab = $tab;
+        $this->resetPage();
+    }
+
+    // === MACHINE ASSIGNMENT ===
+
+    public function openAssignModal()
+    {
+        $this->showAssignModal = true;
+        $this->selectedMachineId = null;
+        $this->assignmentReason = '';
+    }
+
+    public function closeAssignModal()
+    {
+        $this->showAssignModal = false;
+        $this->selectedMachineId = null;
+        $this->assignmentReason = '';
+    }
+
+    public function assignMachine()
+    {
+        $this->validate([
+            'selectedMachineId' => 'required|exists:machines,id',
+        ]);
+
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::where('team_id', $team->id)->findOrFail($this->selectedMachineId);
+
+        // Update machine's mine_area_id
+        $machine->update(['mine_area_id' => $this->mineArea->id]);
+
+        // Record assignment history
+        MachineAreaAssignment::create([
+            'team_id' => $team->id,
+            'machine_id' => $machine->id,
+            'mine_area_id' => $this->mineArea->id,
+            'assigned_by' => Auth::id(),
+            'assigned_at' => now(),
+            'reason' => $this->assignmentReason ?: null,
+        ]);
+
+        $this->closeAssignModal();
+        $this->dispatch('alert', type: 'success', message: "{$machine->name} assigned to {$this->mineArea->name}");
+    }
+
+    public function unassignMachine(int $machineId)
+    {
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::where('team_id', $team->id)->findOrFail($machineId);
+
+        // Close active assignment record
+        MachineAreaAssignment::where('machine_id', $machine->id)
+            ->where('mine_area_id', $this->mineArea->id)
+            ->whereNull('unassigned_at')
+            ->update(['unassigned_at' => now()]);
+
+        $machine->update(['mine_area_id' => null]);
+
+        $this->dispatch('alert', type: 'success', message: "{$machine->name} unassigned from {$this->mineArea->name}");
+    }
+
+    // === PRODUCTION TRACKING ===
+
+    public function openProductionModal()
+    {
+        $this->showProductionModal = true;
+        $this->productionDate = now()->toDateString();
+        $this->quantityProduced = null;
+        $this->targetQuantity = null;
+        $this->productionNotes = '';
+        $this->productionMachineId = null;
+    }
+
+    public function closeProductionModal()
+    {
+        $this->showProductionModal = false;
+    }
+
+    public function saveProductionRecord()
+    {
+        $this->validate([
+            'productionDate' => 'required|date',
+            'quantityProduced' => 'required|numeric|min:0',
+            'productionShift' => 'required|in:day,night,continuous',
+        ]);
+
+        $team = Auth::user()->currentTeam;
+
+        ProductionRecord::create([
+            'team_id' => $team->id,
+            'mine_area_id' => $this->mineArea->id,
+            'machine_id' => $this->productionMachineId ?: null,
+            'record_date' => $this->productionDate,
+            'shift' => $this->productionShift,
+            'quantity_produced' => $this->quantityProduced,
+            'target_quantity' => $this->targetQuantity,
+            'unit' => $this->productionUnit,
+            'notes' => $this->productionNotes ?: null,
+            'status' => 'completed',
+        ]);
+
+        $this->closeProductionModal();
+        $this->dispatch('alert', type: 'success', message: 'Production record saved successfully');
+    }
+
+    public function openTargetModal()
+    {
+        $this->showTargetModal = true;
+        $this->targetValue = null;
+        $this->targetDescription = '';
+    }
+
+    public function closeTargetModal()
+    {
+        $this->showTargetModal = false;
+    }
+
+    public function saveProductionTarget()
+    {
+        $this->validate([
+            'targetStartDate' => 'required|date',
+            'targetEndDate' => 'required|date|after_or_equal:targetStartDate',
+            'targetValue' => 'required|numeric|min:0',
+        ]);
+
+        $team = Auth::user()->currentTeam;
+
+        ProductionTarget::create([
+            'team_id' => $team->id,
+            'mine_area_id' => $this->mineArea->id,
+            'period_type' => $this->targetPeriodType,
+            'start_date' => $this->targetStartDate,
+            'end_date' => $this->targetEndDate,
+            'target_quantity' => $this->targetValue,
+            'unit' => $this->targetUnit,
+            'description' => $this->targetDescription ?: null,
+            'is_active' => true,
+        ]);
+
+        $this->closeTargetModal();
+        $this->dispatch('alert', type: 'success', message: 'Production target created successfully');
+    }
+
+    // === MINE PLAN UPLOADS ===
+
+    public function openUploadModal()
+    {
+        $this->showUploadModal = true;
+        $this->planTitle = '';
+        $this->planDescription = '';
+        $this->planFile = null;
+        $this->planVersion = '1.0';
+        $this->planStatus = 'draft';
+        $this->planEffectiveDate = now()->toDateString();
+    }
+
+    public function closeUploadModal()
+    {
+        $this->showUploadModal = false;
+        $this->planFile = null;
+    }
+
+    public function uploadMinePlan()
+    {
+        $this->validate([
+            'planTitle' => 'required|string|max:255',
+            'planFile' => 'required|file|max:51200',
+        ]);
+
+        $team = Auth::user()->currentTeam;
+
+        $file = $this->planFile;
+        $fileName = $file->getClientOriginalName();
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        // Determine file type category
+        $fileTypeMap = [
+            'pdf' => 'pdf',
+            'dwg' => 'dwg',
+            'dxf' => 'dxf',
+            'kml' => 'kml',
+            'kmz' => 'kmz',
+            'shp' => 'shapefile',
+            'png' => 'image',
+            'jpg' => 'image',
+            'jpeg' => 'image',
+            'gif' => 'image',
+            'tif' => 'image',
+            'tiff' => 'image',
+        ];
+        $fileType = $fileTypeMap[$extension] ?? $extension;
+
+        $path = $file->store("mine-plans/{$team->id}/{$this->mineArea->id}", 'public');
+
+        MinePlanUpload::create([
+            'team_id' => $team->id,
+            'mine_area_id' => $this->mineArea->id,
+            'uploaded_by' => Auth::id(),
+            'title' => $this->planTitle,
+            'description' => $this->planDescription ?: null,
+            'file_name' => $fileName,
+            'file_path' => $path,
+            'file_type' => $fileType,
+            'file_size' => $file->getSize(),
+            'version' => $this->planVersion,
+            'status' => $this->planStatus,
+            'effective_date' => $this->planEffectiveDate ?: null,
+        ]);
+
+        $this->closeUploadModal();
+        $this->dispatch('alert', type: 'success', message: 'Mine plan uploaded successfully');
+    }
+
+    public function deleteMinePlan(int $planId)
+    {
+        $team = Auth::user()->currentTeam;
+        $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
+
+        Storage::disk('public')->delete($plan->file_path);
+        $plan->delete();
+
+        $this->dispatch('alert', type: 'success', message: 'Mine plan deleted');
+    }
+
+    public function activateMinePlan(int $planId)
+    {
+        $team = Auth::user()->currentTeam;
+        $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
+        $plan->update(['status' => 'active']);
+
+        $this->dispatch('alert', type: 'success', message: 'Mine plan activated');
+    }
+
+    public function archiveMinePlan(int $planId)
+    {
+        $team = Auth::user()->currentTeam;
+        $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
+        $plan->update(['status' => 'archived']);
+
+        $this->dispatch('alert', type: 'success', message: 'Mine plan archived');
+    }
+
+    // === AREA-SPECIFIC ALERTS ===
+
+    public function openAlertModal()
+    {
+        $this->showAlertModal = true;
+        $this->alertTitle = '';
+        $this->alertDescription = '';
+        $this->alertType = 'area';
+        $this->alertPriority = 'medium';
+    }
+
+    public function closeAlertModal()
+    {
+        $this->showAlertModal = false;
+    }
+
+    public function createAreaAlert()
+    {
+        $this->validate([
+            'alertTitle' => 'required|string|max:255',
+            'alertPriority' => 'required|in:critical,high,medium,low',
+        ]);
+
+        $team = Auth::user()->currentTeam;
+
+        Alert::create([
+            'team_id' => $team->id,
+            'mine_area_id' => $this->mineArea->id,
+            'type' => $this->alertType,
+            'title' => $this->alertTitle,
+            'description' => $this->alertDescription ?: null,
+            'priority' => $this->alertPriority,
+            'status' => 'active',
+            'triggered_at' => now(),
+            'metadata' => [
+                'created_by' => Auth::id(),
+                'mine_area_name' => $this->mineArea->name,
+            ],
+        ]);
+
+        $this->closeAlertModal();
+        $this->dispatch('alert', type: 'success', message: 'Area alert created');
+    }
+
+    public function acknowledgeAlert(int $alertId)
+    {
+        $team = Auth::user()->currentTeam;
+        $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
+        $alert->acknowledge(Auth::id());
+
+        $this->dispatch('alert', type: 'success', message: 'Alert acknowledged');
+    }
+
+    public function resolveAlert(int $alertId)
+    {
+        $team = Auth::user()->currentTeam;
+        $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
+        $alert->resolve(Auth::id());
+
+        $this->dispatch('alert', type: 'success', message: 'Alert resolved');
+    }
+
+    // === GEOFENCE INTEGRATION ===
+
+    public function openGeofenceModal()
+    {
+        $this->showGeofenceModal = true;
+        $this->selectedGeofenceId = null;
+    }
+
+    public function closeGeofenceModal()
+    {
+        $this->showGeofenceModal = false;
+    }
+
+    public function linkGeofence()
+    {
+        $this->validate([
+            'selectedGeofenceId' => 'required|exists:geofences,id',
+        ]);
+
+        $team = Auth::user()->currentTeam;
+        $geofence = Geofence::where('team_id', $team->id)->findOrFail($this->selectedGeofenceId);
+        $geofence->update(['mine_area_id' => $this->mineArea->id]);
+
+        $this->closeGeofenceModal();
+        $this->dispatch('alert', type: 'success', message: "{$geofence->name} linked to {$this->mineArea->name}");
+    }
+
+    public function unlinkGeofence(int $geofenceId)
+    {
+        $team = Auth::user()->currentTeam;
+        $geofence = Geofence::where('team_id', $team->id)->findOrFail($geofenceId);
+        $geofence->update(['mine_area_id' => null]);
+
+        $this->dispatch('alert', type: 'success', message: "{$geofence->name} unlinked from area");
+    }
+
+    // === RENDER ===
+
+    public function render()
+    {
+        $team = Auth::user()->currentTeam;
+
+        // Refresh mine area with counts
+        $this->mineArea->loadCount(['machines', 'geofences', 'minePlanUploads', 'productionRecords']);
+
+        // Assigned machines
+        $assignedMachines = Machine::where('team_id', $team->id)
+            ->where('mine_area_id', $this->mineArea->id)
+            ->orderBy('name')
+            ->get();
+
+        // Available machines (not assigned to this area)
+        $availableMachines = Machine::where('team_id', $team->id)
+            ->where(function ($q) {
+                $q->whereNull('mine_area_id')
+                    ->orWhere('mine_area_id', '!=', $this->mineArea->id);
+            })
+            ->orderBy('name')
+            ->get();
+
+        // Assignment history
+        $assignmentHistory = MachineAreaAssignment::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $team->id)
+            ->with(['machine', 'assignedByUser'])
+            ->orderBy('assigned_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        // Production records
+        $productionRecords = ProductionRecord::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $team->id)
+            ->with('machine')
+            ->orderBy('record_date', 'desc')
+            ->paginate(15);
+
+        // Production summary
+        $productionSummary = $this->getProductionSummary($team->id);
+
+        // Active targets
+        $activeTargets = ProductionTarget::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $team->id)
+            ->where('is_active', true)
+            ->orderBy('start_date', 'desc')
+            ->get();
+
+        // Mine plan uploads
+        $minePlans = MinePlanUpload::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $team->id)
+            ->with('uploader')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Area alerts
+        $areaAlerts = Alert::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $team->id)
+            ->orderBy('triggered_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        $activeAlertCount = $areaAlerts->where('status', 'active')->count();
+
+        // Linked geofences  
+        $linkedGeofences = Geofence::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $team->id)
+            ->withCount('entries')
+            ->get();
+
+        // Available geofences (not linked)
+        $availableGeofences = Geofence::where('team_id', $team->id)
+            ->where(function ($q) {
+                $q->whereNull('mine_area_id')
+                    ->orWhere('mine_area_id', '!=', $this->mineArea->id);
+            })
+            ->orderBy('name')
+            ->get();
+
+        return view('livewire.mine-area-detail', [
+            'assignedMachines' => $assignedMachines,
+            'availableMachines' => $availableMachines,
+            'assignmentHistory' => $assignmentHistory,
+            'productionRecords' => $productionRecords,
+            'productionSummary' => $productionSummary,
+            'activeTargets' => $activeTargets,
+            'minePlans' => $minePlans,
+            'areaAlerts' => $areaAlerts,
+            'activeAlertCount' => $activeAlertCount,
+            'linkedGeofences' => $linkedGeofences,
+            'availableGeofences' => $availableGeofences,
+        ]);
+    }
+
+    private function getProductionSummary(int $teamId): array
+    {
+        $now = now();
+
+        $todayProduction = ProductionRecord::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $teamId)
+            ->where('record_date', $now->toDateString())
+            ->sum('quantity_produced');
+
+        $weekProduction = ProductionRecord::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $teamId)
+            ->whereBetween('record_date', [$now->startOfWeek()->toDateString(), $now->endOfWeek()->toDateString()])
+            ->sum('quantity_produced');
+
+        $monthProduction = ProductionRecord::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $teamId)
+            ->whereMonth('record_date', $now->month)
+            ->whereYear('record_date', $now->year)
+            ->sum('quantity_produced');
+
+        // Get active monthly target
+        $monthTarget = ProductionTarget::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $teamId)
+            ->where('is_active', true)
+            ->where('start_date', '<=', $now->toDateString())
+            ->where('end_date', '>=', $now->toDateString())
+            ->first();
+
+        $targetValue = $monthTarget ? $monthTarget->target_quantity : 0;
+        $targetProgress = $targetValue > 0 ? round(($monthProduction / $targetValue) * 100, 1) : 0;
+
+        return [
+            'today' => $todayProduction,
+            'week' => $weekProduction,
+            'month' => $monthProduction,
+            'target' => $targetValue,
+            'target_progress' => min($targetProgress, 100),
+            'target_unit' => $monthTarget->unit ?? 'tonnes',
+        ];
+    }
+}

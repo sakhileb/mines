@@ -14,7 +14,7 @@
             <h2 class="text-2xl font-semibold text-white">Mine Area Management</h2>
             <p class="text-gray-300">Define, edit, and monitor mine areas with geofencing, production targets, and shift management.</p>
             <img src="/images/screenshots/feature-mine-area.png" alt="Mine Area Screenshot" class="rounded-lg border border-gray-700">
-            <a href="{{ route('core-features.mine-area') }}" class="text-blue-400 hover:underline">Learn more</a>
+            <a href="{{ route('mine-areas') }}" class="text-blue-400 hover:underline">Learn more</a>
         </div>
         <div class="bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col gap-4">
             <h2 class="text-2xl font-semibold text-white">Maintenance & Alerts</h2>

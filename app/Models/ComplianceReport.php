@@ -26,10 +26,6 @@ class ComplianceReport extends Model
         'compliance_score' => 'float',
     ];
 
-    public function mineArea(): BelongsTo
-    {
-        return $this->belongsTo(MineArea::class);
-    }
 
     public function generator()
     {

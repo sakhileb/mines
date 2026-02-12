@@ -4,7 +4,6 @@ namespace App\Services\AI;
 
 use App\Models\Team;
 use App\Models\Machine;
-use App\Models\MineArea;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +20,7 @@ class FleetOptimizerAgent
 
         // Get all machines for the team
         $machines = Machine::where('team_id', $team->id)
-            ->with(['mineArea', 'healthStatus'])
+            ->with(['healthStatus'])
             ->get();
 
         // Analyze machine utilization
@@ -31,12 +30,6 @@ class FleetOptimizerAgent
         }
         if ($utilizationAnalysis['insights']) {
             $insights = array_merge($insights, $utilizationAnalysis['insights']);
-        }
-
-        // Analyze machine allocation
-        $allocationAnalysis = $this->analyzeAllocation($machines, $team);
-        if ($allocationAnalysis['recommendations']) {
-            $recommendations = array_merge($recommendations, $allocationAnalysis['recommendations']);
         }
 
         // Analyze idle machines
@@ -122,64 +115,6 @@ class FleetOptimizerAgent
             'recommendations' => $recommendations,
             'insights' => $insights,
         ];
-    }
-
-    protected function analyzeAllocation($machines, Team $team): array
-    {
-        $recommendations = [];
-        
-        // Get mine areas and their machine counts
-        $areaAllocations = MineArea::where('team_id', $team->id)
-            ->withCount('machines')
-            ->get();
-
-        $avgMachinesPerArea = $machines->count() / max($areaAllocations->count(), 1);
-
-        foreach ($areaAllocations as $area) {
-            $deviation = abs($area->machines_count - $avgMachinesPerArea);
-            
-            // Area is understaffed
-            if ($area->machines_count < $avgMachinesPerArea * 0.5 && $area->machines_count < 3) {
-                $recommendations[] = [
-                    'category' => 'fleet',
-                    'priority' => 'high',
-                    'title' => "Insufficient Fleet Allocation: {$area->name}",
-                    'description' => "Mine area {$area->name} has only {$area->machines_count} machines, which may cause production delays. Consider allocating more equipment.",
-                    'confidence_score' => 0.78,
-                    'estimated_efficiency_gain' => 25,
-                    'related_mine_area_id' => $area->id,
-                    'data' => [
-                        'current_machines' => $area->machines_count,
-                        'recommended_machines' => ceil($avgMachinesPerArea),
-                        'area_size' => $area->area_size_hectares ?? 0,
-                    ],
-                    'impact_analysis' => [
-                        'production_impact' => 'Potential 25% increase in output',
-                        'recommended_allocation' => ceil($avgMachinesPerArea) . ' machines',
-                    ],
-                ];
-            }
-
-            // Area is overstaffed
-            if ($area->machines_count > $avgMachinesPerArea * 2 && $areaAllocations->count() > 1) {
-                $recommendations[] = [
-                    'category' => 'fleet',
-                    'priority' => 'medium',
-                    'title' => "Excess Fleet Allocation: {$area->name}",
-                    'description' => "Mine area {$area->name} may have excessive equipment allocation. Consider redistributing to optimize across all areas.",
-                    'confidence_score' => 0.72,
-                    'estimated_efficiency_gain' => 15,
-                    'related_mine_area_id' => $area->id,
-                    'data' => [
-                        'current_machines' => $area->machines_count,
-                        'average_machines' => round($avgMachinesPerArea, 1),
-                        'excess_machines' => $area->machines_count - ceil($avgMachinesPerArea),
-                    ],
-                ];
-            }
-        }
-
-        return ['recommendations' => $recommendations];
     }
 
     protected function analyzeIdleMachines($machines): array

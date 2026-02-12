@@ -1,5 +1,7 @@
-<div class="py-8 animate-fade-in">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="h-screen flex flex-col bg-gray-900">
+    <!-- Header -->
+    <div class="bg-gray-800 border-b border-gray-700 p-6">
+        <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>

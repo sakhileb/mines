@@ -836,9 +836,9 @@
     <!-- Book Maintenance Modal -->
     @if($showBookingModal)
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeBookingModal">
-        <div class="bg-white rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" wire:click.stop>
+        <div class="bg-gray-800 rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700 text-gray-100 shadow-lg" wire:click.stop>
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Book Maintenance</h2>
+                <h2 class="text-2xl font-bold text-gray-100">Book Maintenance</h2>
                 <button wire:click="closeBookingModal" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

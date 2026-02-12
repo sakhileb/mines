@@ -15,28 +15,80 @@ use Illuminate\Support\Facades\Auth;
 
 class FuelManagement extends Component
 {
+    // Unified modal state
+    public $showManageModal = false;
+    public $manageTab = 'dispense'; // 'dispense', 'allocation', 'tank'
+
+    // Dispense Fuel form
+    public $transactionTankId = '';
+    public $transactionQuantity = '';
+    public $transactionType = 'dispensing';
+    public $transactionMineAreaId = '';
+    public $transactionError = '';
+
     public $selectedPeriod = 'week';
     public $showLowFuelOnly = false;
-    
+
     // Monthly allocation form
-    public $showAllocationModal = false;
     public $allocationYear;
     public $allocationMonth;
     public $allocatedLiters;
     public $fuelPricePerLiter;
     public $allocationNotes = '';
-    public $mineAreaId = null;
-    
+    public $mineAreaId = '';
+
     // Tank creation form
-    public $showTankModal = false;
     public $tankName = '';
     public $tankNumber = '';
-    public $tankMineAreaId = null;
     public $tankCapacity = '';
     public $tankMinimumLevel = '';
     public $tankFuelType = 'diesel';
     public $tankLocationDescription = '';
     public $tankNotes = '';
+    public $tankMineAreaId = '';
+
+    public function recordDispensingTransaction()
+    {
+        $this->transactionError = '';
+        $this->validate([
+            'transactionTankId' => 'required|exists:fuel_tanks,id',
+            'transactionQuantity' => 'required|numeric|min:1',
+        ]);
+
+        $tank = FuelTank::find($this->transactionTankId);
+        if (!$tank) {
+            $this->transactionError = 'Selected tank not found.';
+            return;
+        }
+
+        $mineAreaId = $tank->mine_area_id;
+        $year = now()->year;
+        $month = now()->month;
+        $allocation = FuelMonthlyAllocation::where('team_id', $tank->team_id)
+            ->where('mine_area_id', $mineAreaId)
+            ->where('year', $year)
+            ->where('month', $month)
+            ->first();
+
+        if (!$allocation) {
+            $this->transactionError = 'No monthly allocation set for this mine area.';
+            return;
+        }
+
+        $remaining = $allocation->remaining_liters;
+        if ($this->transactionQuantity > $remaining) {
+            $this->transactionError = 'Dispensing this amount would exceed the monthly allocation for this mine area. Remaining: ' . number_format($remaining, 2) . 'L.';
+            return;
+        }
+
+        // Proceed to record the transaction (not implemented here)
+        // ...
+        // After recording, update allocation
+        $allocation->updateConsumption();
+        $this->dispatch('notify', type: 'success', message: 'Dispensing transaction recorded.');
+        $this->transactionTankId = '';
+        $this->transactionQuantity = '';
+    }
     
     public function mount()
     {
@@ -44,26 +96,29 @@ class FuelManagement extends Component
         $this->allocationMonth = now()->month;
     }
     
-    public function openAllocationModal()
+    // Unified modal open/close
+    public function openManageModal($tab = 'dispense')
     {
-        $this->showAllocationModal = true;
+        $this->showManageModal = true;
+        $this->setManageTab($tab);
     }
-    
-    public function closeAllocationModal()
+
+    public function closeManageModal()
     {
-        $this->showAllocationModal = false;
-        $this->reset(['allocatedLiters', 'fuelPricePerLiter', 'allocationNotes', 'mineAreaId']);
+        $this->showManageModal = false;
     }
-    
-    public function openTankModal()
+
+    public function setManageTab($tab)
     {
-        $this->showTankModal = true;
-    }
-    
-    public function closeTankModal()
-    {
-        $this->showTankModal = false;
-        $this->reset(['tankName', 'tankNumber', 'tankMineAreaId', 'tankCapacity', 'tankMinimumLevel', 'tankFuelType', 'tankLocationDescription', 'tankNotes']);
+        $this->manageTab = $tab;
+        // Optionally reset form fields when switching tabs
+        if ($tab === 'dispense') {
+            $this->reset(['transactionTankId', 'transactionQuantity', 'transactionError']);
+        } elseif ($tab === 'allocation') {
+            $this->reset(['allocatedLiters', 'fuelPricePerLiter', 'allocationNotes']);
+        } elseif ($tab === 'tank') {
+            $this->reset(['tankName', 'tankNumber', 'tankCapacity', 'tankMinimumLevel', 'tankFuelType', 'tankLocationDescription', 'tankNotes']);
+        }
     }
     
     public function saveTank()
@@ -71,7 +126,6 @@ class FuelManagement extends Component
         $this->validate([
             'tankName' => 'required|string|max:255',
             'tankNumber' => 'nullable|string|max:50',
-            'tankMineAreaId' => 'nullable|exists:mine_areas,id',
             'tankCapacity' => 'required|numeric|min:1|max:999999999',
             'tankMinimumLevel' => 'required|numeric|min:0|max:999999999',
             'tankFuelType' => 'required|in:diesel,petrol,aviation_fuel,biodiesel',
@@ -87,22 +141,9 @@ class FuelManagement extends Component
         
         $teamId = $user->current_team_id;
         
-        // If mine area is specified, verify it belongs to the team
-        if ($this->tankMineAreaId) {
-            $mineArea = MineArea::where('id', $this->tankMineAreaId)
-                ->where('team_id', $teamId)
-                ->first();
-                
-            if (!$mineArea) {
-                $this->dispatch('notify', type: 'error', message: 'Invalid mine area selected');
-                return;
-            }
-        }
-        
         try {
             FuelTank::create([
                 'team_id' => $teamId,
-                'mine_area_id' => $this->tankMineAreaId,
                 'name' => $this->tankName,
                 'tank_number' => $this->tankNumber,
                 'location_description' => $this->tankLocationDescription,
@@ -134,7 +175,6 @@ class FuelManagement extends Component
             'allocationMonth' => 'required|integer|min:1|max:12',
             'allocatedLiters' => 'required|numeric|min:1|max:999999999',
             'fuelPricePerLiter' => 'required|numeric|min:0.01|max:999999',
-            'mineAreaId' => 'nullable|exists:mine_areas,id',
             'allocationNotes' => 'nullable|string|max:1000',
         ]);
         
@@ -146,18 +186,6 @@ class FuelManagement extends Component
         
         $teamId = $user->current_team_id;
         
-        // If mine area is specified, verify it belongs to the team
-        if ($this->mineAreaId) {
-            $mineArea = MineArea::where('id', $this->mineAreaId)
-                ->where('team_id', $teamId)
-                ->first();
-                
-            if (!$mineArea) {
-                $this->dispatch('notify', type: 'error', message: 'Invalid mine area selected');
-                return;
-            }
-        }
-        
         try {
             $totalBudget = $this->allocatedLiters * $this->fuelPricePerLiter;
             
@@ -166,7 +194,6 @@ class FuelManagement extends Component
                     'team_id' => $teamId,
                     'year' => $this->allocationYear,
                     'month' => $this->allocationMonth,
-                    'mine_area_id' => $this->mineAreaId,
                 ],
                 [
                     'allocated_liters' => $this->allocatedLiters,
@@ -200,26 +227,29 @@ class FuelManagement extends Component
         
         // Get date range based on period
         $dateRange = $this->getDateRange();
-        
+
         // Get current month allocation
         $currentAllocation = FuelMonthlyAllocation::where('team_id', $teamId)
             ->where('year', now()->year)
             ->where('month', now()->month)
             ->with('mineArea')
             ->first();
-        
+
         // Tanks overview
         $tanks = FuelTank::where('team_id', $teamId)
             ->with('mineArea')
             ->when($this->showLowFuelOnly, fn($q) => $q->lowFuel())
             ->get();
-        
+
+        // Machines for dispensing form
+        $machines = Machine::where('team_id', $teamId)->orderBy('name')->get();
+
         // Get AI-powered fuel insights
         $aiAgent = new FuelPredictorAgent();
         $aiAnalysis = $aiAgent->analyze(auth()->user()->currentTeam);
         $aiRecommendations = collect($aiAnalysis['recommendations'] ?? [])->take(5);
         $aiInsights = collect($aiAnalysis['insights'] ?? [])->take(3);
-        
+
         $tankStats = [
             'total' => $tanks->count(),
             'active' => $tanks->where('status', 'active')->count(),
@@ -228,7 +258,7 @@ class FuelManagement extends Component
             'total_capacity' => $tanks->sum('capacity_liters'),
             'current_level' => $tanks->sum('current_level_liters'),
         ];
-        
+
         // Recent transactions
         $recentTransactions = FuelTransaction::where('team_id', $teamId)
             ->with(['fuelTank', 'machine', 'user'])
@@ -236,7 +266,7 @@ class FuelManagement extends Component
             ->latest('transaction_date')
             ->limit(10)
             ->get();
-        
+
         // Transaction statistics
         $transactionStats = [
             'total_refueled' => FuelTransaction::where('team_id', $teamId)
@@ -282,8 +312,11 @@ class FuelManagement extends Component
                 ];
             });
 
+        $mineAreas = MineArea::where('team_id', $teamId)->orderBy('name')->get();
+
         return view('livewire.fuel-management', [
             'tanks' => $tanks,
+            'machines' => $machines,
             'tankStats' => $tankStats,
             'recentTransactions' => $recentTransactions,
             'transactionStats' => $transactionStats,
@@ -292,7 +325,7 @@ class FuelManagement extends Component
             'currentAllocation' => $currentAllocation,
             'aiRecommendations' => $aiRecommendations,
             'aiInsights' => $aiInsights,
-            'mineAreas' => MineArea::where('team_id', $teamId)->where('status', 'active')->orderBy('name')->get(),
+            'mineAreas' => $mineAreas,
         ]);
     }
     

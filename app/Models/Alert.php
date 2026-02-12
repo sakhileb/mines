@@ -21,7 +21,8 @@ class Alert extends Model
     protected $fillable = [
         'team_id',
         'machine_id',
-        'type', // engine, fuel, maintenance, geofence, temperature, etc.
+        'mine_area_id',
+        'type', // engine, fuel, maintenance, geofence, temperature, area, etc.
         'title',
         'description',
         'priority', // critical, high, medium, low
@@ -64,6 +65,14 @@ class Alert extends Model
     public function machine(): BelongsTo
     {
         return $this->belongsTo(Machine::class);
+    }
+
+    /**
+     * Get the mine area this alert is about
+     */
+    public function mineArea(): BelongsTo
+    {
+        return $this->belongsTo(MineArea::class);
     }
 
     /**

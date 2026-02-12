@@ -47,11 +47,6 @@ class FuelMonthlyAllocation extends Model
         return $this->belongsTo(Team::class);
     }
 
-    public function mineArea(): BelongsTo
-    {
-        return $this->belongsTo(MineArea::class);
-    }
-
     public function transactions(): HasMany
     {
         return $this->hasMany(FuelTransaction::class, 'monthly_allocation_id');
@@ -63,6 +58,14 @@ class FuelMonthlyAllocation extends Model
     public function getPeriodNameAttribute(): string
     {
         return date('F Y', mktime(0, 0, 0, $this->month, 1, $this->year));
+    }
+
+    /**
+     * Get the mine area associated with this allocation.
+     */
+    public function mineArea(): BelongsTo
+    {
+        return $this->belongsTo(MineArea::class, 'mine_area_id');
     }
 
     /**

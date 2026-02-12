@@ -2,277 +2,295 @@
 
 namespace App\Livewire;
 
-use App\Models\MineAreaProduction;
-use App\Models\OperatorFatigue;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Services\ProductionService;
+use App\Models\ProductionRecord;
+use App\Models\ProductionTarget;
+use App\Models\MineArea;
+use App\Models\Machine;
 use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class ProductionDashboard extends Component
 {
-    public string $dateFilter = 'day';
-    public ?string $startDate = null;
-    public ?string $endDate = null;
-    public bool $isCustomRange = false;
+    use WithPagination;
 
-    public function mount(): void
+    public $viewMode = 'overview'; // overview, records, targets, analytics
+    public $search = '';
+    public $dateFilter = 'month';
+    public $startDate = null;
+    public $endDate = null;
+    public $mineAreaFilter = null;
+    public $statusFilter = '';
+    public $showCreateModal = false;
+    public $showEditModal = false;
+    public $editingRecordId = null;
+
+    // Form fields
+    public $record_date;
+    public $shift = 'day';
+    public $quantity_produced = '';
+    public $target_quantity = '';
+    public $mine_area_id = null;
+    public $machine_id = null;
+    public $status = 'completed';
+    public $notes = '';
+
+    protected $productionService;
+    protected $team;
+
+    public function mount()
     {
-        // Set default dates based on filter
-        $this->updateDateRange();
+        $this->productionService = app(ProductionService::class);
+        $this->team = Auth::user()->currentTeam;
+        $this->record_date = Carbon::today()->format('Y-m-d');
+        $this->endDate = Carbon::today()->format('Y-m-d');
+        $this->startDate = Carbon::today()->subMonth()->format('Y-m-d');
     }
 
-    public function updatedDateFilter(): void
+    public function getProductionRecordsProperty()
     {
-        $this->isCustomRange = false;
-        $this->updateDateRange();
-    }
+        $query = ProductionRecord::forTeam($this->team->id);
 
-    public function updatedStartDate(): void
-    {
-        if ($this->startDate && $this->endDate) {
-            $this->isCustomRange = true;
-            $this->dateFilter = 'custom';
+        if ($this->search) {
+            $query->whereHas('mineArea', function ($q) {
+                $q->where('name', 'like', "%{$this->search}%");
+            })->orWhere('notes', 'like', "%{$this->search}%");
         }
-    }
 
-    public function updatedEndDate(): void
-    {
-        if ($this->startDate && $this->endDate) {
-            $this->isCustomRange = true;
-            $this->dateFilter = 'custom';
+        if ($this->mineAreaFilter) {
+            $query->where('mine_area_id', $this->mineAreaFilter);
         }
-    }
 
-    public function applyCustomRange(): void
-    {
-        if ($this->startDate && $this->endDate) {
-            $this->isCustomRange = true;
-            $this->dateFilter = 'custom';
+        if ($this->statusFilter) {
+            $query->where('status', $this->statusFilter);
         }
+
+        if ($this->dateFilter) {
+            $query->where('record_date', $this->dateFilter);
+        }
+
+        return $query->orderByDesc('record_date')->paginate(15);
     }
 
-    private function updateDateRange(): void
+    public function getStatisticsProperty()
     {
-        $now = Carbon::now();
+        return $this->productionService->getProductionStatistics(
+            $this->team->id,
+            Carbon::now()->subDays(30),
+            Carbon::now()
+        );
+    }
+
+    public function getTrendProperty()
+    {
+        return $this->productionService->getProductionTrend($this->team->id, 30);
+    }
+
+    public function getTargetsProperty()
+    {
+        return $this->productionService->getActiveTargets($this->team->id);
+    }
+
+    public function getForecastsProperty()
+    {
+        return $this->productionService->getRecentForecasts($this->team->id, 7);
+    }
+
+    public function getSummaryProperty()
+    {
+        $stats = $this->statistics;
+        $activeAreas = MineArea::forTeam($this->team->id)->where('status', 'active')->count();
         
-        switch ($this->dateFilter) {
-            case 'day':
-                $this->startDate = $now->toDateString();
-                $this->endDate = $now->toDateString();
-                break;
-            case 'week':
-                $this->startDate = $now->startOfWeek()->toDateString();
-                $this->endDate = $now->endOfWeek()->toDateString();
-                break;
-            case 'month':
-                $this->startDate = $now->startOfMonth()->toDateString();
-                $this->endDate = $now->endOfMonth()->toDateString();
-                break;
-            case 'year':
-                $this->startDate = $now->startOfYear()->toDateString();
-                $this->endDate = $now->endOfYear()->toDateString();
-                break;
-        }
-    }
-
-    private function getDateRange(): array
-    {
-        if ($this->isCustomRange && $this->startDate && $this->endDate) {
-            return [
-                Carbon::parse($this->startDate),
-                Carbon::parse($this->endDate)
-            ];
-        }
-
         return [
-            Carbon::parse($this->startDate),
-            Carbon::parse($this->endDate)
+            'total_loads' => $stats['total_records'] ?? 0,
+            'total_cycles' => $stats['completed_records'] ?? 0,
+            'total_tonnage' => round($stats['total_produced'] ?? 0, 2),
+            'total_bcm' => round($stats['total_produced'] ?? 0, 2),
+            'active_areas' => $activeAreas,
         ];
     }
 
-    public function getProductionSummary(): array
+    public function getMineAreasProperty()
     {
-        $team = Auth::user()->currentTeam;
-        [$start, $end] = $this->getDateRange();
-
-        $summary = MineAreaProduction::whereHas('mineArea', function ($query) use ($team) {
-                $query->where('team_id', $team->id);
-            })
-            ->whereBetween('recorded_date', [$start, $end])
-            ->select([
-                DB::raw('SUM(loads) as total_loads'),
-                DB::raw('SUM(cycles) as total_cycles'),
-                DB::raw('SUM(tonnage) as total_tonnage'),
-                DB::raw('SUM(bcm) as total_bcm'),
-                DB::raw('COUNT(DISTINCT mine_area_id) as active_areas'),
-            ])
-            ->first();
-
-        return [
-            'total_loads' => $summary->total_loads ?? 0,
-            'total_cycles' => $summary->total_cycles ?? 0,
-            'total_tonnage' => $summary->total_tonnage ?? 0,
-            'total_bcm' => $summary->total_bcm ?? 0,
-            'active_areas' => $summary->active_areas ?? 0,
-        ];
+        return MineArea::forTeam($this->team->id)->get();
     }
 
-    public function getDailyProductionChart(): array
+    public function getMachinesProperty()
     {
-        $team = Auth::user()->currentTeam;
-        [$start, $end] = $this->getDateRange();
+        return Machine::where('team_id', $this->team->id)->get();
+    }
 
-        $dailyData = MineAreaProduction::whereHas('mineArea', function ($query) use ($team) {
-                $query->where('team_id', $team->id);
-            })
-            ->whereBetween('recorded_date', [$start, $end])
-            ->select([
-                'recorded_date',
-                DB::raw('SUM(loads) as daily_loads'),
-                DB::raw('SUM(cycles) as daily_cycles'),
-                DB::raw('SUM(tonnage) as daily_tonnage'),
-                DB::raw('SUM(bcm) as daily_bcm'),
-            ])
-            ->groupBy('recorded_date')
-            ->orderBy('recorded_date')
-            ->get();
+    public function getDailyChartProperty()
+    {
+        $trend = $this->trend;
+        if (!$trend || $trend->isEmpty()) {
+            return [];
+        }
 
-        return $dailyData->map(function ($item) {
+        return $trend->map(function ($day) {
             return [
-                'date' => Carbon::parse($item->recorded_date)->format('M d'),
-                'loads' => $item->daily_loads ?? 0,
-                'cycles' => $item->daily_cycles ?? 0,
-                'tonnage' => $item->daily_tonnage ?? 0,
-                'bcm' => $item->daily_bcm ?? 0,
+                'date' => $day['date'],
+                'tonnage' => $day['produced'] ?? 0,
+                'loads' => $day['count'] ?? 0,
             ];
         })->toArray();
     }
 
-    public function getMaterialBreakdown(): array
+    public function getMaterialBreakdownProperty()
     {
-        $team = Auth::user()->currentTeam;
-        [$start, $end] = $this->getDateRange();
-
-        return MineAreaProduction::whereHas('mineArea', function ($query) use ($team) {
-                $query->where('team_id', $team->id);
-            })
-            ->whereBetween('recorded_date', [$start, $end])
-            ->whereNotNull('material_type')
-            ->select([
-                'material_type',
-                DB::raw('SUM(tonnage) as total_tonnage'),
-                DB::raw('SUM(loads) as total_loads'),
-                DB::raw('COUNT(*) as records'),
-            ])
-            ->groupBy('material_type')
-            ->orderByDesc('total_tonnage')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'material' => $item->material_type,
-                    'tonnage' => $item->total_tonnage ?? 0,
-                    'loads' => $item->total_loads ?? 0,
-                    'records' => $item->records,
-                ];
-            })
-            ->toArray();
+        // Placeholder implementation - can be enhanced with actual material tracking
+        return [];
     }
 
-    public function getAreaPerformance(): array
+    public function getFatigueDataProperty()
     {
-        $team = Auth::user()->currentTeam;
-        [$start, $end] = $this->getDateRange();
-
-        return MineAreaProduction::whereHas('mineArea', function ($query) use ($team) {
-                $query->where('team_id', $team->id);
-            })
-            ->with('mineArea:id,name,type')
-            ->whereBetween('recorded_date', [$start, $end])
-            ->select([
-                'mine_area_id',
-                DB::raw('SUM(loads) as total_loads'),
-                DB::raw('SUM(cycles) as total_cycles'),
-                DB::raw('SUM(tonnage) as total_tonnage'),
-                DB::raw('SUM(bcm) as total_bcm'),
-            ])
-            ->groupBy('mine_area_id')
-            ->orderByDesc('total_tonnage')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'area_name' => $item->mineArea->name ?? 'Unknown',
-                    'area_type' => $item->mineArea->type ?? 'Unknown',
-                    'loads' => $item->total_loads ?? 0,
-                    'cycles' => $item->total_cycles ?? 0,
-                    'tonnage' => $item->total_tonnage ?? 0,
-                    'bcm' => $item->total_bcm ?? 0,
-                ];
-            })
-            ->toArray();
+        // Placeholder implementation - can be enhanced with operator fatigue tracking
+        return [];
     }
 
-    public function getFatigueData(): array
+    public function getFatigueStatsProperty()
     {
-        $team = Auth::user()->currentTeam;
-        [$start, $end] = $this->getDateRange();
-
-        return OperatorFatigue::where('team_id', $team->id)
-            ->whereBetween('shift_date', [$start, $end])
-            ->with(['user:id,name', 'machine:id,name'])
-            ->orderByDesc('fatigue_score')
-            ->limit(15)
-            ->get()
-            ->map(function ($fatigue) {
-                return [
-                    'operator_name' => $fatigue->user->name ?? 'Unknown',
-                    'machine_name' => $fatigue->machine->name ?? null,
-                    'shift_type' => $fatigue->shift_type,
-                    'shift_date' => $fatigue->shift_date->format('M d'),
-                    'hours_worked' => $fatigue->hours_worked,
-                    'consecutive_days' => $fatigue->consecutive_days,
-                    'fatigue_score' => $fatigue->fatigue_score,
-                    'alert_level' => $fatigue->alert_level,
-                    'is_rested' => $fatigue->is_rested,
-                    'break_time' => $fatigue->break_time_minutes,
-                ];
-            })
-            ->toArray();
-    }
-
-    public function getFatigueStats(): array
-    {
-        $team = Auth::user()->currentTeam;
-        [$start, $end] = $this->getDateRange();
-
-        $stats = OperatorFatigue::where('team_id', $team->id)
-            ->whereBetween('shift_date', [$start, $end])
-            ->select([
-                DB::raw('SUM(CASE WHEN fatigue_score < 20 THEN 1 ELSE 0 END) as well_rested'),
-                DB::raw('SUM(CASE WHEN fatigue_score >= 20 AND fatigue_score < 40 THEN 1 ELSE 0 END) as needs_monitoring'),
-                DB::raw('SUM(CASE WHEN fatigue_score >= 40 AND fatigue_score < 60 THEN 1 ELSE 0 END) as high_fatigue'),
-                DB::raw('SUM(CASE WHEN fatigue_score >= 60 THEN 1 ELSE 0 END) as needs_rest'),
-            ])
-            ->first();
-
         return [
-            'well_rested' => $stats->well_rested ?? 0,
-            'needs_monitoring' => $stats->needs_monitoring ?? 0,
-            'high_fatigue' => $stats->high_fatigue ?? 0,
-            'needs_rest' => $stats->needs_rest ?? 0,
+            'well_rested' => 0,
+            'needs_monitoring' => 0,
+            'high_fatigue' => 0,
+            'needs_rest' => 0,
         ];
+    }
+
+    public function getAreaPerformanceProperty()
+    {
+        $mineAreas = $this->mineAreas;
+        if (!$mineAreas || $mineAreas->isEmpty()) {
+            return [];
+        }
+
+        return $mineAreas->map(function ($area) {
+            $records = ProductionRecord::where('team_id', $this->team->id)
+                ->where('mine_area_id', $area->id)
+                ->betweenDates(Carbon::parse($this->startDate), Carbon::parse($this->endDate))
+                ->get();
+
+            return [
+                'area_name' => $area->name,
+                'area_type' => $area->status ?? 'active',
+                'loads' => $records->count(),
+                'cycles' => $records->count(),
+                'tonnage' => $records->sum('quantity_produced') ?? 0,
+                'bcm' => $records->sum('quantity_produced') ?? 0, // Using quantity_produced as BCM proxy
+            ];
+        })->filter(function ($area) {
+            return $area['loads'] > 0;
+        })->values()->toArray();
+    }
+
+    public function openCreateModal()
+    {
+        $this->showCreateModal = true;
+        $this->resetForm();
+    }
+
+    public function closeCreateModal()
+    {
+        $this->showCreateModal = false;
+        $this->resetForm();
+    }
+
+    public function openEditModal($id)
+    {
+        $record = ProductionRecord::findOrFail($id);
+        $this->editingRecordId = $id;
+        $this->record_date = $record->record_date->format('Y-m-d');
+        $this->shift = $record->shift;
+        $this->quantity_produced = $record->quantity_produced;
+        $this->target_quantity = $record->target_quantity;
+        $this->mine_area_id = $record->mine_area_id;
+        $this->machine_id = $record->machine_id;
+        $this->status = $record->status;
+        $this->notes = $record->notes;
+        $this->showEditModal = true;
+    }
+
+    public function closeEditModal()
+    {
+        $this->showEditModal = false;
+        $this->resetForm();
+    }
+
+    public function saveRecord()
+    {
+        $validated = $this->validate([
+            'record_date' => 'required|date',
+            'shift' => 'required|in:day,night,continuous',
+            'quantity_produced' => 'required|numeric|min:0',
+            'target_quantity' => 'nullable|numeric|min:0',
+            'mine_area_id' => 'nullable|exists:mine_areas,id',
+            'machine_id' => 'nullable|exists:machines,id',
+            'status' => 'required|in:completed,in-progress,pending,paused',
+        ]);
+
+        if ($this->editingRecordId) {
+            $record = ProductionRecord::findOrFail($this->editingRecordId);
+            $this->productionService->updateProductionRecord($record, [
+                ...$validated,
+                'notes' => $this->notes,
+            ]);
+            $this->showEditModal = false;
+        } else {
+            $this->productionService->createProductionRecord($this->team->id, [
+                ...$validated,
+                'notes' => $this->notes,
+            ]);
+            $this->showCreateModal = false;
+        }
+
+        $this->resetForm();
+        $this->dispatch('record-saved');
+    }
+
+    public function deleteRecord($id)
+    {
+        $record = ProductionRecord::findOrFail($id);
+        $this->productionService->deleteProductionRecord($record);
+    }
+
+    public function resetForm()
+    {
+        $this->record_date = Carbon::today()->format('Y-m-d');
+        $this->shift = 'day';
+        $this->quantity_produced = '';
+        $this->target_quantity = '';
+        $this->mine_area_id = null;
+        $this->machine_id = null;
+        $this->status = 'completed';
+        $this->notes = '';
+        $this->editingRecordId = null;
+    }
+
+    public function switchView($mode)
+    {
+        $this->viewMode = $mode;
+        $this->resetPage();
     }
 
     public function render()
     {
         return view('livewire.production-dashboard', [
-            'summary' => $this->getProductionSummary(),
-            'dailyChart' => $this->getDailyProductionChart(),
-            'materialBreakdown' => $this->getMaterialBreakdown(),
-            'areaPerformance' => $this->getAreaPerformance(),
-            'fatigueData' => $this->getFatigueData(),
-            'fatigueStats' => $this->getFatigueStats(),
+            'records' => $this->productionRecords,
+            'summary' => $this->summary,
+            'statistics' => $this->statistics,
+            'trend' => $this->trend,
+            'targets' => $this->targets,
+            'forecasts' => $this->forecasts,
+            'mineAreas' => $this->mineAreas,
+            'machines' => $this->machines,
+            'dailyChart' => $this->dailyChart,
+            'materialBreakdown' => $this->materialBreakdown,
+            'fatigueData' => $this->fatigueData,
+            'fatigueStats' => $this->fatigueStats,
+            'areaPerformance' => $this->areaPerformance,
         ]);
     }
 }

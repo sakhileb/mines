@@ -47,11 +47,6 @@ class FuelTank extends Model
         return $this->belongsTo(Team::class);
     }
 
-    public function mineArea(): BelongsTo
-    {
-        return $this->belongsTo(MineArea::class);
-    }
-
     public function transactions(): HasMany
     {
         return $this->hasMany(FuelTransaction::class);

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Machine;
+use App\Models\MineArea;
 use App\Services\AI\FleetOptimizerAgent;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -11,47 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class Fleet extends Component
 {
-    public bool $showMineAreaAssignModal = false;
-    public ?int $assigningMineAreaMachineId = null;
-    public ?int $selectedMineAreaId = null;
-    public function openMineAreaAssignModal(int $machineId): void
-    {
-        $this->assigningMineAreaMachineId = $machineId;
-        $this->selectedMineAreaId = null;
-        $this->showMineAreaAssignModal = true;
-    }
-
-    public function closeMineAreaAssignModal(): void
-    {
-        $this->showMineAreaAssignModal = false;
-        $this->assigningMineAreaMachineId = null;
-        $this->selectedMineAreaId = null;
-    }
-
-    public function assignToMineArea(): void
-    {
-        if (!$this->assigningMineAreaMachineId || !$this->selectedMineAreaId) {
-            $this->dispatch('alert', message: 'Please select a mine area', type: 'error');
-            return;
-        }
-
-        $machine = \App\Models\Machine::find($this->assigningMineAreaMachineId);
-        $mineArea = \App\Models\MineArea::find($this->selectedMineAreaId);
-        if (!$machine || !$mineArea || $machine->team_id !== Auth::user()->currentTeam->id || $mineArea->team_id !== Auth::user()->currentTeam->id) {
-            abort(403);
-        }
-
-        // Use the MineAreaService to assign via the pivot table
-        try {
-            app(\App\Services\MineAreaService::class)->assignMachines($mineArea, [$machine->id]);
-            $this->dispatch('alert', message: "Machine '{$machine->name}' assigned to mine area '{$mineArea->name}'", type: 'success');
-        } catch (\Exception $e) {
-            $this->dispatch('alert', message: 'Assignment failed: ' . $e->getMessage(), type: 'error');
-            return;
-        }
-        $this->closeMineAreaAssignModal();
-    }
-
 public array $activityFeed = [];
 public bool $isLoading = true;
 use WithPagination;
@@ -64,6 +24,9 @@ use WithPagination;
     public bool $showAssignModal = false;
     public ?int $assigningMachineId = null;
     public ?int $selectedExcavatorId = null;
+    public bool $showMineAreaAssignModal = false;
+    public ?int $assigningMineAreaMachineId = null;
+    public ?int $selectedMineAreaId = null;
 
     // Create/Edit form properties
     public ?int $editingMachineId = null;
@@ -264,6 +227,46 @@ use WithPagination;
         $this->dispatch('alert', message: "Machine '{$machineName}' unassigned from excavator", type: 'success');
     }
 
+    public function openMineAreaAssignModal(int $machineId): void
+    {
+        $this->assigningMineAreaMachineId = $machineId;
+        $this->selectedMineAreaId = null;
+        $this->showMineAreaAssignModal = true;
+    }
+
+    public function closeMineAreaAssignModal(): void
+    {
+        $this->showMineAreaAssignModal = false;
+        $this->assigningMineAreaMachineId = null;
+        $this->selectedMineAreaId = null;
+    }
+
+    public function assignToMineArea(): void
+    {
+        if (!$this->assigningMineAreaMachineId || !$this->selectedMineAreaId) {
+            $this->dispatch('alert', message: 'Please select a mine area', type: 'error');
+            return;
+        }
+
+        $machine = Machine::find($this->assigningMineAreaMachineId);
+        
+        if (!$machine || $machine->team_id !== Auth::user()->currentTeam->id) {
+            abort(403);
+        }
+
+        $mineArea = MineArea::find($this->selectedMineAreaId);
+        if (!$mineArea || $mineArea->team_id !== Auth::user()->currentTeam->id) {
+            abort(403);
+        }
+
+        // Update machine's mine_area_id field
+        $machine->update(['mine_area_id' => $this->selectedMineAreaId]);
+        
+        $this->dispatch('alert', message: "Machine '{$machine->name}' assigned to '{$mineArea->name}'", type: 'success');
+        
+        $this->closeMineAreaAssignModal();
+    }
+
     private function calculateMachinePerformance(int $teamId): array
     {
         $machines = Machine::where('team_id', $teamId)->get();
@@ -348,6 +351,12 @@ use WithPagination;
             ->orderBy('name')
             ->get();
 
+        // Get all mine areas for assignment dropdown
+        $mineAreas = MineArea::where('team_id', $team->id)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
         $statusStats = [
             'active' => Machine::where('team_id', $team->id)->where('status', 'active')->count(),
             'idle' => Machine::where('team_id', $team->id)->where('status', 'idle')->count(),
@@ -381,7 +390,6 @@ use WithPagination;
 
         $this->isLoading = false;
 
-        $mineAreas = \App\Models\MineArea::where('team_id', $team->id)->where('status', 'active')->orderBy('name')->get();
         return view('livewire.fleet', [
             'machines' => $machinesQuery,
             'excavators' => $excavators,

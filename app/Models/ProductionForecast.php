@@ -8,34 +8,44 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProductionForecast extends Model
 {
     protected $fillable = [
+        'team_id',
         'mine_area_id',
         'forecast_date',
-        'material_name',
-        'predicted_tonnage',
-        'confidence_score',
-        'model_version',
-        'factors',
+        'forecasted_quantity',
+        'unit',
+        'confidence_level',
+        'forecast_method',
     ];
 
     protected $casts = [
-        'predicted_tonnage' => 'float',
-        'confidence_score' => 'float',
-        'factors' => 'json',
+        'forecasted_quantity' => 'decimal:2',
+        'confidence_level' => 'decimal:2',
         'forecast_date' => 'date',
+        'forecast_method' => 'array',
     ];
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
 
     public function mineArea(): BelongsTo
     {
         return $this->belongsTo(MineArea::class);
     }
 
-    public function getReliabilityLevel(): string
+    public function scopeForTeam($query, $teamId)
     {
-        if ($this->confidence_score >= 0.85) {
-            return 'High';
-        } elseif ($this->confidence_score >= 0.70) {
-            return 'Medium';
-        }
-        return 'Low';
+        return $query->where('team_id', $teamId);
+    }
+
+    public function scopeForDate($query, $date)
+    {
+        return $query->where('forecast_date', $date);
+    }
+
+    public function scopeHighConfidence($query, $threshold = 80)
+    {
+        return $query->where('confidence_level', '>=', $threshold);
     }
 }

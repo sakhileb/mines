@@ -41,11 +41,6 @@ class FuelBudget extends Model
         return $this->belongsTo(Team::class);
     }
 
-    public function mineArea(): BelongsTo
-    {
-        return $this->belongsTo(MineArea::class);
-    }
-
     /**
      * Get budget utilization percentage (money)
      */

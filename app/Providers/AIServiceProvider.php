@@ -8,7 +8,6 @@ use App\Services\AI\FleetOptimizerAgent;
 use App\Services\AI\RouteAdvisorAgent;
 use App\Services\AI\FuelPredictorAgent;
 use App\Services\AI\MaintenancePredictorAgent;
-use App\Services\AI\ProductionOptimizerAgent;
 use App\Services\AI\CostAnalyzerAgent;
 use App\Services\AI\AnomalyDetectorAgent;
 
@@ -24,7 +23,6 @@ class AIServiceProvider extends ServiceProvider
         $this->app->singleton(RouteAdvisorAgent::class);
         $this->app->singleton(FuelPredictorAgent::class);
         $this->app->singleton(MaintenancePredictorAgent::class);
-        $this->app->singleton(ProductionOptimizerAgent::class);
         $this->app->singleton(CostAnalyzerAgent::class);
         $this->app->singleton(AnomalyDetectorAgent::class);
 

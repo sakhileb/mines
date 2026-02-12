@@ -55,10 +55,6 @@ class AIPredictiveAlert extends Model
         return $this->belongsTo(Machine::class, 'related_machine_id');
     }
 
-    public function mineArea(): BelongsTo
-    {
-        return $this->belongsTo(MineArea::class, 'related_mine_area_id');
-    }
 
     public function acknowledger(): BelongsTo
     {

@@ -24,7 +24,6 @@ class AIOptimizationService
         protected RouteAdvisorAgent $routeAdvisor,
         protected FuelPredictorAgent $fuelPredictor,
         protected MaintenancePredictorAgent $maintenancePredictor,
-        protected ProductionOptimizerAgent $productionOptimizer,
         protected CostAnalyzerAgent $costAnalyzer,
         protected AnomalyDetectorAgent $anomalyDetector
     ) {
@@ -33,7 +32,6 @@ class AIOptimizationService
             AIAgent::TYPE_ROUTE_ADVISOR => $routeAdvisor,
             AIAgent::TYPE_FUEL_PREDICTOR => $fuelPredictor,
             AIAgent::TYPE_MAINTENANCE_PREDICTOR => $maintenancePredictor,
-            AIAgent::TYPE_PRODUCTION_OPTIMIZER => $productionOptimizer,
             AIAgent::TYPE_COST_ANALYZER => $costAnalyzer,
             AIAgent::TYPE_ANOMALY_DETECTOR => $anomalyDetector,
         ];

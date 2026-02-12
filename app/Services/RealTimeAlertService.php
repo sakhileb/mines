@@ -5,11 +5,9 @@ namespace App\Services;
 use App\Events\SensorReadingRecorded;
 use App\Events\MaintenanceAlertTriggered;
 use App\Events\ComplianceViolationDetected;
-use App\Events\ProductionAnomalyDetected;
 use App\Events\SensorStatusChanged;
 use App\Models\IoTSensor;
 use App\Models\Machine;
-use App\Models\MineArea;
 use App\Models\Notification;
 
 class RealTimeAlertService
@@ -103,26 +101,6 @@ class RealTimeAlertService
         if (!$isArray) {
             ComplianceViolationDetected::dispatch($violation, $teamId);
         }
-    }
-
-    /**
-     * Dispatch production anomaly alert
-     */
-    public function dispatchProductionAlert(MineArea $mineArea, $anomalyType, $severity, $data, $teamId)
-    {
-        // Create notification
-        Notification::create([
-            'team_id' => $teamId,
-            'type' => 'production_anomaly',
-            'title' => "Production Anomaly: {$mineArea->name}",
-            'message' => ucfirst(str_replace('_', ' ', $anomalyType)),
-            'alert_level' => $severity,
-            'data' => array_merge($data, ['anomaly_type' => $anomalyType]),
-            'action_url' => "/mine-areas/{$mineArea->id}",
-        ]);
-
-        // Broadcast via WebSocket
-        ProductionAnomalyDetected::dispatch($mineArea, $anomalyType, $severity, $data, $teamId);
     }
 
     /**

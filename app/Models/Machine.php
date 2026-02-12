@@ -114,21 +114,19 @@ class Machine extends Model
     }
 
     /**
-     * Get all mine areas this machine is assigned to
-     */
-    public function mineAreas(): BelongsToMany
-    {
-        return $this->belongsToMany(MineArea::class, 'mine_area_machine')
-            ->withPivot('assigned_at', 'notes')
-            ->withTimestamps();
-    }
-
-    /**
-     * Get the current mine area this machine is assigned to
+     * Get the mine area this machine is assigned to
      */
     public function mineArea(): BelongsTo
     {
-        return $this->belongsTo(MineArea::class, 'mine_area_id');
+        return $this->belongsTo(MineArea::class);
+    }
+
+    /**
+     * Get assignment history for this machine
+     */
+    public function areaAssignments(): HasMany
+    {
+        return $this->hasMany(MachineAreaAssignment::class);
     }
 
     /**

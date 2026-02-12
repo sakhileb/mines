@@ -173,11 +173,11 @@
     <!-- Role Management Modal -->
     <x-dialog-modal wire:model.live="currentlyManagingRole">
         <x-slot name="title">
-            {{ __('Manage Role') }}
+            <span class="text-gray-100">{{ __('Manage Role') }}</span>
         </x-slot>
 
         <x-slot name="content">
-            <div class="relative z-0 mt-1 border border-gray-200 rounded-lg cursor-pointer">
+            <div class="relative z-0 mt-1 border border-gray-700 bg-gray-800 rounded-lg cursor-pointer text-gray-100">
                 @foreach ($this->roles as $index => $role)
                     <button type="button" class="relative px-4 py-3 inline-flex w-full rounded-lg focus:z-10 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 {{ $index > 0 ? 'border-t border-gray-200 focus:border-none rounded-t-none' : '' }} {{ ! $loop->last ? 'rounded-b-none' : '' }}"
                                     wire:click="$set('currentRole', '{{ $role->key }}')">
@@ -219,11 +219,11 @@
     <!-- Leave Team Confirmation Modal -->
     <x-confirmation-modal wire:model.live="confirmingLeavingTeam">
         <x-slot name="title">
-            {{ __('Leave Team') }}
+            <span class="text-gray-100">{{ __('Leave Team') }}</span>
         </x-slot>
 
         <x-slot name="content">
-            {{ __('Are you sure you would like to leave this team?') }}
+            <span class="text-gray-100">{{ __('Are you sure you would like to leave this team?') }}</span>
         </x-slot>
 
         <x-slot name="footer">
@@ -240,11 +240,11 @@
     <!-- Remove Team Member Confirmation Modal -->
     <x-confirmation-modal wire:model.live="confirmingTeamMemberRemoval">
         <x-slot name="title">
-            {{ __('Remove Team Member') }}
+            <span class="text-gray-100">{{ __('Remove Team Member') }}</span>
         </x-slot>
 
         <x-slot name="content">
-            {{ __('Are you sure you would like to remove this person from the team?') }}
+            <span class="text-gray-100">{{ __('Are you sure you would like to remove this person from the team?') }}</span>
         </x-slot>
 
         <x-slot name="footer">
