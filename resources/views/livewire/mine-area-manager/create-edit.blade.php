@@ -665,6 +665,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
+    console.log('Hello World! Mine area map script loaded');
+    
     let mineAreaMap = null;
     let markerGroup = null;
     let currentCoordinates = [];
