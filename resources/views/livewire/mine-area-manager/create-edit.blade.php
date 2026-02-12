@@ -742,9 +742,280 @@
 
 <!-- Leaflet JS - loaded directly in component -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
-console.log('�🟢🟢 [CREATE-EDIT MAP] Script is executing! 🟢🟢🟢');
-console.log('[CREATE-EDIT MAP] typeof L:', typeof L);
-console.log('[CREATE-EDIT MAP] document.getElementById("map"):', document.getElementById('map'));
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('🟢 [CREATE-EDIT MAP] Script tag is executing!');
+console.log('═══════════════════════════════════════════════════════════════');
+
+(function() {
+    // Global state for map
+    let mineAreaMap = null;
+    let initRetryCount = 0;
+    const MAX_INIT_RETRIES = 50;
+    
+    // Mine area coordinates and drawing state
+    let currentCoordinates = [];
+    let markerGroup = L.featureGroup();
+
+    console.log('[CREATE-EDIT MAP] Script initialization started');
+
+    function initializeMineAreaMap() {
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log('🗺️  [CREATE-EDIT MAP] initializeMineAreaMap() called');
+        console.log('═══════════════════════════════════════════════════════════════');
+
+        // Check if Leaflet is loaded
+        console.log('[CREATE-EDIT MAP] Checking Leaflet availability...');
+        console.log('[CREATE-EDIT MAP] typeof L:', typeof L);
+        console.log('[CREATE-EDIT MAP] L.version:', typeof L !== 'undefined' ? L.version : 'NOT LOADED');
+
+        if (typeof L === 'undefined' || typeof L.map === 'undefined') {
+            initRetryCount++;
+            if (initRetryCount > MAX_INIT_RETRIES) {
+                console.error('❌ [CREATE-EDIT MAP] Leaflet failed to load after maximum retries');
+                const mapStatus = document.getElementById('map-status');
+                if (mapStatus) {
+                    mapStatus.innerHTML = '❌ Failed to load map library. Please refresh the page.';
+                    mapStatus.style.backgroundColor = '#dc2626';
+                }
+                return;
+            }
+            console.log(`⏳ [CREATE-EDIT MAP] Leaflet not loaded yet, retry ${initRetryCount}/${MAX_INIT_RETRIES}`);
+            setTimeout(initializeMineAreaMap, 200);
+            return;
+        }
+
+        console.log('✅ [CREATE-EDIT MAP] Leaflet loaded successfully');
+
+        // Get map container
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) {
+            console.error('❌ [CREATE-EDIT MAP] Map container not found, retrying...');
+            setTimeout(initializeMineAreaMap, 100);
+            return;
+        }
+
+        console.log('✅ [CREATE-EDIT MAP] Map container found');
+        console.log('[CREATE-EDIT MAP] Container dimensions:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+
+        // Clean up existing map if present
+        if (mineAreaMap) {
+            console.log('[CREATE-EDIT MAP] Removing existing map instance...');
+            try {
+                mineAreaMap.remove();
+                mineAreaMap = null;
+            } catch (e) {
+                console.error('[CREATE-EDIT MAP] Error removing old map:', e);
+            }
+        }
+
+        // Clear Leaflet state
+        if (mapContainer._leaflet_id) {
+            console.log('[CREATE-EDIT MAP] Clearing _leaflet_id...');
+            delete mapContainer._leaflet_id;
+        }
+
+        try {
+            console.log('🚀 [CREATE-EDIT MAP] Creating map instance...');
+
+            // Initialize map with proper options
+            mineAreaMap = L.map('map', {
+                preferCanvas: true,
+                maxZoom: 19,
+                minZoom: 2
+            }).setView(
+                [-25.7479, 28.2293],  // Default: Johannesburg area
+                10
+            );
+
+            console.log('✅ [CREATE-EDIT MAP] Map instance created');
+
+            // Add OpenStreetMap layer
+            console.log('[CREATE-EDIT MAP] Adding OpenStreetMap tile layer...');
+            const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors',
+                className: 'osm-tiles'
+            });
+            osmLayer.addTo(mineAreaMap);
+            console.log('✅ [CREATE-EDIT MAP] OSM layer added');
+
+            // Add satellite layer option
+            console.log('[CREATE-EDIT MAP] Adding satellite layer option...');
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: 'Esri, Maxar, Earthstar Geographics'
+            });
+            console.log('✅ [CREATE-EDIT MAP] Satellite layer added as option');
+
+            // Add layer control
+            L.control.layers({
+                'OpenStreetMap': osmLayer,
+                'Satellite': satelliteLayer
+            }, {}).addTo(mineAreaMap);
+            console.log('✅ [CREATE-EDIT MAP] Layer control added');
+
+            // Initialize marker group
+            markerGroup = L.featureGroup();
+            markerGroup.addTo(mineAreaMap);
+            console.log('✅ [CREATE-EDIT MAP] Marker group initialized');
+
+            // Handle map clicks to add coordinates
+            mineAreaMap.on('click', function(e) {
+                console.log('📍 [CREATE-EDIT MAP] Map clicked at:', e.latlng);
+                console.log('[CREATE-EDIT MAP] Current coordinate count:', currentCoordinates.length);
+
+                if (currentCoordinates.length < 4) {
+                    // Add new coordinate
+                    const lat = e.latlng.lat;
+                    const lon = e.latlng.lng;
+
+                    console.log(`[CREATE-EDIT MAP] Adding coordinate ${currentCoordinates.length + 1}: ${lat}, ${lon}`);
+
+                    // Create marker
+                    const marker = L.marker([lat, lon], {
+                        draggable: true,
+                        title: `Point ${currentCoordinates.length + 1}`
+                    }).bindPopup(`<strong>Point ${currentCoordinates.length + 1}</strong><br>Lat: ${lat.toFixed(6)}<br>Lon: ${lon.toFixed(6)}`)
+                    .addTo(markerGroup);
+
+                    // Store in Livewire component
+                    @this.addCoordinate();
+                    @this.set('tempLat', lat);
+                    @this.set('tempLon', lon);
+
+                    console.log('✅ [CREATE-EDIT MAP] Coordinate sent to Livewire component');
+                    console.log('[CREATE-EDIT MAP] Updated coordinates count:', currentCoordinates.length);
+                } else {
+                    console.log('⚠️  [CREATE-EDIT MAP] Maximum 4 coordinates reached, click ignored');
+                }
+            });
+
+            console.log('✅ [CREATE-EDIT MAP] Map click handler attached');
+
+            // Listen for coordinate clearing
+            if (typeof Livewire !== 'undefined') {
+                console.log('[CREATE-EDIT MAP] Setting up Livewire event listeners...');
+
+                Livewire.on('coordinatesCleared', () => {
+                    console.log('🧹 [CREATE-EDIT MAP] Clearing markers from map...');
+                    markerGroup.clearLayers();
+                    currentCoordinates = [];
+                    console.log('✅ [CREATE-EDIT MAP] Markers cleared');
+                });
+
+                Livewire.on('drawingToggled', (isDrawing) => {
+                    console.log(`[CREATE-EDIT MAP] Drawing mode: ${isDrawing ? 'ON' : 'OFF'}`);
+                    const mapDiv = document.getElementById('map');
+                    if (mapDiv) {
+                        mapDiv.style.cursor = isDrawing ? 'crosshair' : 'grab';
+                    }
+                });
+
+                console.log('✅ [CREATE-EDIT MAP] Livewire event listeners attached');
+            }
+
+            // Handle Livewire navigation to reinitialize
+            if (typeof document !== 'undefined') {
+                document.addEventListener('livewire:navigated', () => {
+                    console.log('[CREATE-EDIT MAP] Livewire navigation detected, may need to reinitialize');
+                });
+            }
+
+            // Trigger map resize after initialization
+            setTimeout(() => {
+                if (mineAreaMap) {
+                    console.log('[CREATE-EDIT MAP] Running invalidateSize...');
+                    mineAreaMap.invalidateSize();
+                    console.log('✅ [CREATE-EDIT MAP] Map size validated');
+                }
+            }, 250);
+
+            // Update status
+            const mapStatus = document.getElementById('map-status');
+            if (mapStatus) {
+                mapStatus.innerHTML = '✅ Map ready - Click to add coordinates';
+                mapStatus.style.backgroundColor = '#059669';
+                mapStatus.style.color = '#fff';
+            }
+
+            console.log('═══════════════════════════════════════════════════════════════');
+            console.log('✅✅✅ [CREATE-EDIT MAP] Map initialization SUCCESSFUL!');
+            console.log('═══════════════════════════════════════════════════════════════');
+
+        } catch (error) {
+            console.error('❌❌❌ [CREATE-EDIT MAP] CRITICAL ERROR during map initialization!');
+            console.error('[CREATE-EDIT MAP] Error:', error);
+            console.error('[CREATE-EDIT MAP] Error message:', error.message);
+            console.error('[CREATE-EDIT MAP] Stack:', error.stack);
+
+            const mapStatus = document.getElementById('map-status');
+            if (mapStatus) {
+                mapStatus.innerHTML = '❌ Error initializing map: ' + error.message;
+                mapStatus.style.backgroundColor = '#dc2626';
+                mapStatus.style.color = '#fff';
+            }
+        }
+    }
+
+    // Initialization logic
+    console.log('[CREATE-EDIT MAP] Setting up initialization triggers...');
+    console.log('[CREATE-EDIT MAP] document.readyState:', document.readyState);
+
+    // Try immediate initialization if Leaflet is already loaded
+    if (typeof L !== 'undefined') {
+        console.log('[CREATE-EDIT MAP] Leaflet available immediately, initializing...');
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeMineAreaMap);
+        } else {
+            initializeMineAreaMap();
+        }
+    } else {
+        console.log('[CREATE-EDIT MAP] Leaflet not available yet, waiting...');
+        // Wait for Leaflet to load
+        const leafletCheckInterval = setInterval(() => {
+            if (typeof L !== 'undefined') {
+                console.log('[CREATE-EDIT MAP] Leaflet loaded, clearing interval');
+                clearInterval(leafletCheckInterval);
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initializeMineAreaMap);
+                } else {
+                    initializeMineAreaMap();
+                }
+            }
+        }, 100);
+
+        // Timeout failsafe
+        setTimeout(() => {
+            if (typeof L === 'undefined') {
+                console.error('[CREATE-EDIT MAP] Leaflet failed to load after 5 seconds');
+                const mapStatus = document.getElementById('map-status');
+                if (mapStatus) {
+                    mapStatus.innerHTML = '❌ Failed to load Leaflet library. Please check your internet connection.';
+                    mapStatus.style.backgroundColor = '#dc2626';
+                }
+            }
+        }, 5000);
+    }
+
+    // Re-initialize on Livewire navigation if needed
+    document.addEventListener('livewire:navigated', () => {
+        console.log('[CREATE-EDIT MAP] livewire:navigated detected');
+        if (mineAreaMap) {
+            console.log('[CREATE-EDIT MAP] Map already initialized, just refreshing view...');
+            setTimeout(() => {
+                if (mineAreaMap) {
+                    mineAreaMap.invalidateSize();
+                }
+            }, 250);
+        }
+    });
+
+})();
+
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('🟢 [CREATE-EDIT MAP] Script execution completed!');
+console.log('═══════════════════════════════════════════════════════════════');
 </script>
