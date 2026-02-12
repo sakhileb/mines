@@ -150,7 +150,7 @@
                                     <div class="flex items-center justify-between p-3 hover:bg-gray-700">
                                         <div class="flex-1">
                                             <p class="text-sm font-medium text-white">Point {{ $index + 1 }}</p>
-                                            <p class="text-xs text-gray-400">{{ $coord['lat'] }}, {{ $coord['lon'] }}</p>
+                                            <p class="text-xs text-gray-400">{{ $coord['lat'] ?? 'N/A' }}, {{ $coord['lon'] ?? 'N/A' }}</p>
                                         </div>
                                         <button 
                                             wire:click="removeCoordinate({{ $index }})"
