@@ -757,9 +757,23 @@ console.log('══════════════════════�
     
     // Mine area coordinates and drawing state
     let currentCoordinates = [];
-    let markerGroup = L.featureGroup();
+    let markerGroup = null;  // Will be initialized after map is created
 
     console.log('[CREATE-EDIT MAP] Script initialization started');
+    console.log('[CREATE-EDIT MAP] Checking map container visibility...');
+    
+    // Debug: Check if map container is visible
+    const mapContainer = document.getElementById('map');
+    if (mapContainer) {
+        const rect = mapContainer.getBoundingClientRect();
+        console.log('[CREATE-EDIT MAP] Map container found:');
+        console.log('  - Display:', window.getComputedStyle(mapContainer).display);
+        console.log('  - Visibility:', window.getComputedStyle(mapContainer).visibility);
+        console.log('  - Height:', mapContainer.offsetHeight, 'px');
+        console.log('  - Width:', mapContainer.offsetWidth, 'px');
+        console.log('  - Position:', rect.top, rect.left);
+        console.log('  - Background:', window.getComputedStyle(mapContainer).backgroundColor);
+    }
 
     function initializeMineAreaMap() {
         console.log('═══════════════════════════════════════════════════════════════');
@@ -839,8 +853,21 @@ console.log('══════════════════════�
                 attribution: '© OpenStreetMap contributors',
                 className: 'osm-tiles'
             });
+            
+            // Debug tile loading
+            osmLayer.on('loading', function() {
+                console.log('[CREATE-EDIT MAP] 🔄 OSM tiles loading...');
+            });
+            osmLayer.on('load', function() {
+                console.log('[CREATE-EDIT MAP] ✅ OSM tiles loaded successfully');
+            });
+            osmLayer.on('tileerror', function(error) {
+                console.error('[CREATE-EDIT MAP] ❌ Tile loading error:', error);
+            });
+            
             osmLayer.addTo(mineAreaMap);
             console.log('✅ [CREATE-EDIT MAP] OSM layer added');
+            console.log('[CREATE-EDIT MAP] Map view set to: [-25.7479, 28.2293] zoom 10');
 
             // Add satellite layer option
             console.log('[CREATE-EDIT MAP] Adding satellite layer option...');
@@ -850,44 +877,72 @@ console.log('══════════════════════�
             });
             console.log('✅ [CREATE-EDIT MAP] Satellite layer added as option');
 
-            // Add layer control
-            L.control.layers({
-                'OpenStreetMap': osmLayer,
-                'Satellite': satelliteLayer
-            }, {}).addTo(mineAreaMap);
             console.log('✅ [CREATE-EDIT MAP] Layer control added');
 
-            // Initialize marker group
+            // Initialize marker group AFTER map is created
             markerGroup = L.featureGroup();
             markerGroup.addTo(mineAreaMap);
-            console.log('✅ [CREATE-EDIT MAP] Marker group initialized');
+            console.log('✅ [CREATE-EDIT MAP] Marker group initialized after map creation');
 
             // Handle map clicks to add coordinates
             mineAreaMap.on('click', function(e) {
-                console.log('📍 [CREATE-EDIT MAP] Map clicked at:', e.latlng);
+                console.log('═══════════════════════════════════════════════════════════════');
+                console.log('📍 [CREATE-EDIT MAP] MAP CLICK DETECTED!');
+                console.log('═══════════════════════════════════════════════════════════════');
+                console.log('[CREATE-EDIT MAP] Clicked at:', e.latlng);
                 console.log('[CREATE-EDIT MAP] Current coordinate count:', currentCoordinates.length);
+                console.log('[CREATE-EDIT MAP] Marker group exists:', !!markerGroup);
+
+                if (!markerGroup) {
+                    console.error('[CREATE-EDIT MAP] ❌ Marker group not ready!');
+                    return;
+                }
 
                 if (currentCoordinates.length < 4) {
                     // Add new coordinate
                     const lat = e.latlng.lat;
                     const lon = e.latlng.lng;
+                    
+                    // Add to local tracking
+                    currentCoordinates.push({lat, lon});
 
-                    console.log(`[CREATE-EDIT MAP] Adding coordinate ${currentCoordinates.length + 1}: ${lat}, ${lon}`);
+                    console.log(`[CREATE-EDIT MAP] Adding coordinate ${currentCoordinates.length}: ${lat}, ${lon}`);
 
                     // Create marker
                     const marker = L.marker([lat, lon], {
-                        draggable: true,
-                        title: `Point ${currentCoordinates.length + 1}`
-                    }).bindPopup(`<strong>Point ${currentCoordinates.length + 1}</strong><br>Lat: ${lat.toFixed(6)}<br>Lon: ${lon.toFixed(6)}`)
+                        draggable: false,
+                        title: `Point ${currentCoordinates.length}`
+                    }).bindPopup(`<strong>Point ${currentCoordinates.length}</strong><br>Lat: ${lat.toFixed(6)}<br>Lon: ${lon.toFixed(6)}`)
                     .addTo(markerGroup);
+                    
+                    marker.openPopup();
+                    console.log('[CREATE-EDIT MAP] ✅ Marker created and added');
 
                     // Store in Livewire component
-                    @this.addCoordinate();
-                    @this.set('tempLat', lat);
-                    @this.set('tempLon', lon);
+                    if (typeof Livewire !== 'undefined' && typeof Livewire.find !== 'undefined') {
+                        console.log('[CREATE-EDIT MAP] Updating Livewire component...');
+                        const component = Livewire.find(Array.from(document.querySelectorAll('[wire\\:id]'))[0]?.getAttribute('wire:id'));
+                        if (component) {
+                            component.set('tempLat', lat);
+                            component.set('tempLon', lon);
+                            setTimeout(() => {
+                                component.call('addCoordinate');
+                            }, 100);
+                            console.log('✅ [CREATE-EDIT MAP] Livewire component updated');
+                        } else {
+                            console.log('[CREATE-EDIT MAP] Using @this reference instead');
+                            @this.set('tempLat', lat);
+                            @this.set('tempLon', lon);
+                            @this.addCoordinate();
+                        }
+                    } else {
+                        console.log('[CREATE-EDIT MAP] Using @this reference');
+                        @this.set('tempLat', lat);
+                        @this.set('tempLon', lon);
+                        @this.addCoordinate();
+                    }
 
-                    console.log('✅ [CREATE-EDIT MAP] Coordinate sent to Livewire component');
-                    console.log('[CREATE-EDIT MAP] Updated coordinates count:', currentCoordinates.length);
+                    console.log('✅ [CREATE-EDIT MAP] Coordinate sent to Livewire');
                 } else {
                     console.log('⚠️  [CREATE-EDIT MAP] Maximum 4 coordinates reached, click ignored');
                 }
@@ -936,7 +991,7 @@ console.log('══════════════════════�
             // Update status
             const mapStatus = document.getElementById('map-status');
             if (mapStatus) {
-                mapStatus.innerHTML = '✅ Map ready - Click to add coordinates';
+                mapStatus.innerHTML = '✅ Map ready - Click to add coordinates (Up to 4 points)';
                 mapStatus.style.backgroundColor = '#059669';
                 mapStatus.style.color = '#fff';
             }
@@ -944,6 +999,15 @@ console.log('══════════════════════�
             console.log('═══════════════════════════════════════════════════════════════');
             console.log('✅✅✅ [CREATE-EDIT MAP] Map initialization SUCCESSFUL!');
             console.log('═══════════════════════════════════════════════════════════════');
+            
+            // Verify map is working
+            console.log('[CREATE-EDIT MAP] VERIFICATION:');
+            console.log('  - Map object exists:', !!mineAreaMap);
+            console.log('  - Map container visible:', mapContainer.offsetHeight > 0 && mapContainer.offsetWidth > 0);
+            console.log('  - Marker group exists:', !!markerGroup);
+            console.log('  - Zoom level:', mineAreaMap.getZoom());
+            console.log('  - Center:', mineAreaMap.getCenter());
+            console.log('[CREATE-EDIT MAP] Map is ready for interaction. Click on the map to add points.');
 
         } catch (error) {
             console.error('❌❌❌ [CREATE-EDIT MAP] CRITICAL ERROR during map initialization!');
@@ -953,9 +1017,21 @@ console.log('══════════════════════�
 
             const mapStatus = document.getElementById('map-status');
             if (mapStatus) {
-                mapStatus.innerHTML = '❌ Error initializing map: ' + error.message;
+                mapStatus.innerHTML = `❌ Error: ${error.message} <br><a href="javascript:location.reload()" style="color: #fff; text-decoration: underline;">Click to reload page</a>`;
                 mapStatus.style.backgroundColor = '#dc2626';
                 mapStatus.style.color = '#fff';
+                mapStatus.style.padding = '1rem';
+                mapStatus.style.cursor = 'pointer';
+            }
+            
+            // Log container info for debugging
+            const mapDiv = document.getElementById('map');
+            if (mapDiv) {
+                console.error('[CREATE-EDIT MAP] Container info at error:');
+                console.error('  - Height:', mapDiv.offsetHeight);
+                console.error('  - Width:', mapDiv.offsetWidth);
+                console.error('  - Parent height:', mapDiv.parentElement?.offsetHeight);
+                console.error('  - Parent width:', mapDiv.parentElement?.offsetWidth);
             }
         }
     }
