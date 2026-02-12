@@ -1,61 +1,5 @@
 <div>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-
     <style>
-        #map {
-            min-height: 384px;
-            height: 384px !important;
-            width: 100% !important;
-            position: relative;
-            z-index: 10 !important;
-            display: block !important;
-            background-color: #1f2937 !important;
-            border-radius: 0.5rem;
-        }
-        
-        #map * {
-            box-sizing: border-box;
-        }
-        
-        .leaflet-container {
-            background: #1f2937 !important;
-            font-family: inherit;
-            height: 100% !important;
-            width: 100% !important;
-            position: relative !important;
-            z-index: 10 !important;
-        }
-        
-        .leaflet-popup-content-wrapper {
-            background-color: #374151;
-            color: #f3f4f6;
-        }
-        
-        .leaflet-popup-tip {
-            background-color: #374151;
-        }
-        
-        /* Ensure map parent doesn't hide the map */
-        #map-status {
-            z-index: 5 !important;
-        }
-        
-        .leaflet-pane {
-            z-index: 11 !important;
-        }
-        
-        .leaflet-tile-pane {
-            z-index: 2 !important;
-        }
-        
-        .leaflet-marker-pane {
-            z-index: 6 !important;
-        }
-        
-        .leaflet-popup-pane {
-            z-index: 7 !important;
-        }
     </style>
 
     <div class="space-y-6">
@@ -141,30 +85,7 @@
                 <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-semibold text-white">Location</h2>
-                        @if(count($coordinates) < 4)
-                            <button 
-                                wire:click="toggleDrawing"
-                                class="px-4 py-2 rounded-lg font-medium transition flex items-center gap-2
-                                    @if($isDrawing) 
-                                        bg-red-600 text-white hover:bg-red-700 shadow-lg ring-2 ring-red-400
-                                    @else 
-                                        bg-blue-600 text-white hover:bg-blue-700
-                                    @endif
-                                "
-                            >
-                                @if($isDrawing)
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                    Stop Drawing
-                                @else
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
-                                    </svg>
-                                    {{ count($coordinates) === 0 ? 'Start Drawing on Map' : 'Add More Points' }}
-                                @endif
-                            </button>
-                        @else
+                        @if(count($coordinates) >= 4)
                             <span class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -174,35 +95,9 @@
                         @endif
                     </div>
 
-                    <!-- Drawing Instructions -->
-                    @if($isDrawing)
-                        <div class="mb-4 p-3 bg-blue-500 bg-opacity-20 border border-blue-500 border-opacity-50 rounded-lg animate-pulse">
-                            <p class="text-sm text-blue-300 font-medium flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
-                                </svg>
-                                Click anywhere on the map to add a coordinate point ({{ 4 - count($coordinates) }} remaining)
-                            </p>
-                        </div>
-                    @else
-                        <p class="text-sm text-gray-400 mb-4">
-                            📍 Enter exactly 4 GPS coordinates to define the mine area boundary. Click "Start Drawing" to add points by clicking on the map.
-                        </p>
-                    @endif
-
-                    <!-- Map Container -->
-                    <div 
-                        id="map" 
-                        wire:ignore 
-                        class="w-full rounded-lg border mb-4 bg-gray-900 transition-all
-                        @if($isDrawing) 
-                            border-blue-500 shadow-lg shadow-blue-500/30 ring-2 ring-blue-400
-                        @else 
-                            border-gray-700
-                        @endif
-        "
-        style="height: 384px;"
-                    ></div>
+                    <p class="text-sm text-gray-400 mb-4">
+                        📍 Enter exactly 4 GPS coordinates to define the mine area boundary.
+                    </p>
 
                     <!-- Coordinates List -->
                     <div class="space-y-2">
@@ -276,7 +171,7 @@
                     </div>
 
                     <!-- Manual Coordinate Input -->
-                    <div class="mt-4 pt-4 border-t border-gray-700">
+                    <div class="mt-0 pt-0 border-t-0 border-gray-700">
                         <label class="block text-sm font-medium text-gray-300 mb-2">
                             Enter GPS Coordinates
                             <span class="text-xs text-gray-500">(e.g., -25.7479, 28.1872 for Pretoria)</span>
@@ -735,84 +630,4 @@
     @endif
 </div>
 
-<!-- Leaflet JS - loaded directly in component -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-<script>
-(function() {
-    let mineAreaMap = null;
-    let markerGroup = null;
-    let currentCoordinates = [];
-
-    function initializeMap() {
-        if (typeof L === 'undefined') {
-            setTimeout(initializeMap, 100);
-            return;
-        }
-
-        const mapContainer = document.getElementById('map');
-        if (!mapContainer) return;
-
-        if (mineAreaMap) {
-            return;
-        }
-
-        try {
-            mineAreaMap = L.map('map').setView([-25.7479, 28.2293], 10);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(mineAreaMap);
-
-            markerGroup = L.featureGroup().addTo(mineAreaMap);
-
-            mineAreaMap.on('click', function(e) {
-                if (currentCoordinates.length < 4 && markerGroup) {
-                    const lat = e.latlng.lat;
-                    const lon = e.latlng.lng;
-                    
-                    currentCoordinates.push({lat, lon});
-
-                    L.marker([lat, lon]).bindPopup(`Point ${currentCoordinates.length}<br>${lat.toFixed(6)}, ${lon.toFixed(6)}`).addTo(markerGroup);
-
-                    @this.set('tempLat', lat);
-                    @this.set('tempLon', lon);
-                    @this.addCoordinate();
-                }
-            });
-
-            setTimeout(() => {
-                if (mineAreaMap) {
-                    mineAreaMap.invalidateSize();
-                }
-            }, 300);
-
-        } catch (error) {
-            console.error('Map initialization error:', error);
-        }
-    }
-
-    if (typeof L !== 'undefined') {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeMap);
-        } else {
-            initializeMap();
-        }
-    } else {
-        const checkLeaflet = setInterval(() => {
-            if (typeof L !== 'undefined') {
-                clearInterval(checkLeaflet);
-                initializeMap();
-            }
-        }, 100);
-    }
-
-    document.addEventListener('livewire:navigated', () => {
-        if (mineAreaMap) {
-            setTimeout(() => mineAreaMap.invalidateSize(), 300);
-        }
-    });
-})();
-</script>
