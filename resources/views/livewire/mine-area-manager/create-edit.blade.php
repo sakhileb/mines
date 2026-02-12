@@ -1,5 +1,32 @@
 <div>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
     <style>
+        #mine-area-map {
+            min-height: 384px;
+            height: 384px !important;
+            width: 100% !important;
+            position: relative;
+            display: block !important;
+            background-color: #1f2937 !important;
+            border-radius: 0.5rem;
+            z-index: 10 !important;
+        }
+
+        #mine-area-map .leaflet-container {
+            background: #1f2937 !important;
+            height: 100% !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background-color: #374151;
+            color: #f3f4f6;
+        }
+
+        .leaflet-popup-tip {
+            background-color: #374151;
+        }
     </style>
 
     <div class="space-y-6">
@@ -96,8 +123,11 @@
                     </div>
 
                     <p class="text-sm text-gray-400 mb-4">
-                        📍 Enter exactly 4 GPS coordinates to define the mine area boundary.
+                        📍 Enter exactly 4 GPS coordinates to define the mine area boundary. Click on the map to add points.
                     </p>
+
+                    <!-- Map Container -->
+                    <div id="mine-area-map" wire:ignore class="w-full rounded-lg border mb-4 bg-gray-900 border-gray-700" style="height: 384px;"></div>
 
                     <!-- Coordinates List -->
                     <div class="space-y-2">
@@ -171,7 +201,7 @@
                     </div>
 
                     <!-- Manual Coordinate Input -->
-                    <div class="mt-0 pt-0 border-t-0 border-gray-700">
+                    <div class="mt-4 pt-4 border-t border-gray-700">
                         <label class="block text-sm font-medium text-gray-300 mb-2">
                             Enter GPS Coordinates
                             <span class="text-xs text-gray-500">(e.g., -25.7479, 28.1872 for Pretoria)</span>
@@ -209,7 +239,7 @@
                             </button>
                         </div>
                         <p class="text-xs text-amber-400 mt-2">
-                            💡 Tip: You need exactly 4 coordinates to define a complete mine area boundary. The map updates in real-time as you add points!
+                            💡 Tip: You need exactly 4 coordinates to define a complete mine area boundary. Click on the map or enter coordinates manually to add points!
                         </p>
                     </div>
                 </div>
@@ -629,5 +659,120 @@
     </div>
     @endif
 </div>
+
+<!-- Leaflet JS - loaded after component closing div to avoid morphdom stripping -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    let mineAreaMap = null;
+    let markerGroup = null;
+    let currentCoordinates = [];
+    let initRetryCount = 0;
+    const MAX_INIT_RETRIES = 50;
+
+    function initializeMineAreaMap() {
+        // Check if Leaflet is loaded
+        if (typeof window.L === 'undefined' && typeof L === 'undefined') {
+            initRetryCount++;
+            if (initRetryCount > MAX_INIT_RETRIES) {
+                console.error('Leaflet failed to load after maximum retries');
+                return;
+            }
+            console.log('Leaflet not loaded yet, retry', initRetryCount);
+            setTimeout(initializeMineAreaMap, 200);
+            return;
+        }
+
+        // Check if map container exists
+        const mapContainer = document.getElementById('mine-area-map');
+        if (!mapContainer) {
+            console.log('Map container not found, retrying...');
+            setTimeout(initializeMineAreaMap, 100);
+            return;
+        }
+
+        // Check if map is already initialized
+        if (mineAreaMap) {
+            console.log('Map already initialized');
+            return;
+        }
+
+        try {
+            // Initialize map centered on South Africa
+            mineAreaMap = L.map('mine-area-map').setView([-25.7479, 28.2293], 10);
+
+            // Add OpenStreetMap tiles
+            const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            });
+
+            // Add satellite layer as option
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: 'Esri, Maxar, Earthstar Geographics'
+            });
+
+            osmLayer.addTo(mineAreaMap);
+
+            // Layer control
+            L.control.layers({
+                'Standard': osmLayer,
+                'Satellite': satelliteLayer
+            }).addTo(mineAreaMap);
+
+            // Initialize marker group
+            markerGroup = L.featureGroup().addTo(mineAreaMap);
+
+            // Map click handler to add coordinates
+            mineAreaMap.on('click', function(e) {
+                if (currentCoordinates.length < 4 && markerGroup) {
+                    const lat = e.latlng.lat;
+                    const lon = e.latlng.lng;
+                    
+                    currentCoordinates.push({lat, lon});
+
+                    // Add marker to map
+                    L.marker([lat, lon])
+                        .bindPopup(`Point ${currentCoordinates.length}<br>${lat.toFixed(6)}, ${lon.toFixed(6)}`)
+                        .addTo(markerGroup)
+                        .openPopup();
+
+                    // Update Livewire component
+                    @this.set('tempLat', lat);
+                    @this.set('tempLon', lon);
+                    @this.addCoordinate();
+                }
+            });
+
+            // Refresh map size
+            setTimeout(() => {
+                if (mineAreaMap) {
+                    mineAreaMap.invalidateSize();
+                }
+            }, 300);
+
+            console.log('Mine area map initialized successfully');
+
+        } catch (error) {
+            console.error('Error initializing map:', error);
+        }
+    }
+
+    // Initialize map on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeMineAreaMap);
+    } else {
+        initializeMineAreaMap();
+    }
+
+    // Re-initialize on Livewire navigation
+    document.addEventListener('livewire:navigated', () => {
+        if (mineAreaMap) {
+            setTimeout(() => mineAreaMap.invalidateSize(), 300);
+        }
+    });
+</script>
 
 
