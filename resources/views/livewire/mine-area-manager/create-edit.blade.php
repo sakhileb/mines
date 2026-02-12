@@ -126,8 +126,16 @@
                         📍 Enter exactly 4 GPS coordinates to define the mine area boundary. Click on the map to add points.
                     </p>
 
-                    <!-- Map Container -->
-                    <div id="mine-area-map" wire:ignore class="w-full rounded-lg border mb-4 bg-gray-900 border-gray-700" style="height: 384px;"></div>
+                    <!-- Loading Indicator -->
+                    <div id="map-loading" class="w-full rounded-lg border mb-4 bg-gray-900 border-gray-700 flex items-center justify-center" style="height: 384px;">
+                        <div class="text-center">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                            <p class="text-gray-400 text-sm">Loading map...</p>
+                        </div>
+                    </div>
+
+                    <!-- Map Container (Hidden until loaded) -->
+                    <div id="mine-area-map" wire:ignore class="w-full rounded-lg border mb-4 bg-gray-900 border-gray-700" style="height: 384px; display: none;"></div>
 
                     <!-- Coordinates List -->
                     <div class="space-y-2">
@@ -674,37 +682,52 @@
     const MAX_INIT_RETRIES = 50;
 
     function initializeMineAreaMap() {
+        console.log('[MAP] Initialization attempt', initRetryCount + 1);
+        
         // Check if Leaflet is loaded
         if (typeof window.L === 'undefined' && typeof L === 'undefined') {
             initRetryCount++;
             if (initRetryCount > MAX_INIT_RETRIES) {
-                console.error('Leaflet failed to load after maximum retries');
+                console.error('[MAP] Leaflet failed to load after maximum retries');
+                const loadingEl = document.getElementById('map-loading');
+                if (loadingEl) {
+                    loadingEl.innerHTML = '<div class="text-red-400 text-sm">Failed to load map library</div>';
+                }
                 return;
             }
-            console.log('Leaflet not loaded yet, retry', initRetryCount);
+            console.log('[MAP] Leaflet not loaded yet, retrying...', initRetryCount);
             setTimeout(initializeMineAreaMap, 200);
             return;
         }
 
+        console.log('[MAP] Leaflet available, checking container...');
+
         // Check if map container exists
         const mapContainer = document.getElementById('mine-area-map');
         if (!mapContainer) {
-            console.log('Map container not found, retrying...');
+            console.log('[MAP] Map container not found, retrying...');
             setTimeout(initializeMineAreaMap, 100);
             return;
         }
 
+        console.log('[MAP] Container found, checking dimensions:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+
         // Check if map is already initialized
         if (mineAreaMap) {
-            console.log('Map already initialized');
+            console.log('[MAP] Map already initialized');
             return;
         }
 
         try {
+            console.log('[MAP] Creating map instance...');
+            
             // Initialize map centered on South Africa
             mineAreaMap = L.map('mine-area-map').setView([-25.7479, 28.2293], 10);
 
+            console.log('[MAP] Map created successfully');
+
             // Add OpenStreetMap tiles
+            console.log('[MAP] Adding OSM tile layer...');
             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap contributors'
@@ -717,6 +740,7 @@
             });
 
             osmLayer.addTo(mineAreaMap);
+            console.log('[MAP] OSM layer added');
 
             // Layer control
             L.control.layers({
@@ -726,6 +750,7 @@
 
             // Initialize marker group
             markerGroup = L.featureGroup().addTo(mineAreaMap);
+            console.log('[MAP] Marker group created');
 
             // Map click handler to add coordinates
             mineAreaMap.on('click', function(e) {
@@ -734,6 +759,7 @@
                     const lon = e.latlng.lng;
                     
                     currentCoordinates.push({lat, lon});
+                    console.log('[MAP] Coordinate added:', lat, lon);
 
                     // Add marker to map
                     L.marker([lat, lon])
@@ -748,21 +774,42 @@
                 }
             });
 
+            console.log('[MAP] Click handler attached');
+
             // Refresh map size
             setTimeout(() => {
                 if (mineAreaMap) {
+                    console.log('[MAP] Invalidating map size...');
                     mineAreaMap.invalidateSize();
+                    console.log('[MAP] Size invalidated');
                 }
             }, 300);
 
-            console.log('Mine area map initialized successfully');
+            // Hide loading indicator and show map
+            const loadingEl = document.getElementById('map-loading');
+            const mapEl = document.getElementById('mine-area-map');
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+                console.log('[MAP] Loading indicator hidden');
+            }
+            if (mapEl) {
+                mapEl.style.display = 'block';
+                console.log('[MAP] Map container shown');
+            }
+
+            console.log('[MAP] ✅ Map initialized successfully!');
 
         } catch (error) {
-            console.error('Error initializing map:', error);
+            console.error('[MAP] ❌ Error initializing map:', error);
+            const loadingEl = document.getElementById('map-loading');
+            if (loadingEl) {
+                loadingEl.innerHTML = `<div class="text-red-400 text-sm">Map Error: ${error.message}</div>`;
+            }
         }
     }
 
     // Initialize map on page load
+    console.log('[MAP] Document ready state:', document.readyState);
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeMineAreaMap);
     } else {
@@ -771,8 +818,12 @@
 
     // Re-initialize on Livewire navigation
     document.addEventListener('livewire:navigated', () => {
+        console.log('[MAP] Livewire navigation detected');
         if (mineAreaMap) {
-            setTimeout(() => mineAreaMap.invalidateSize(), 300);
+            setTimeout(() => {
+                mineAreaMap.invalidateSize();
+                console.log('[MAP] Map resized after navigation');
+            }, 300);
         }
     });
 </script>
