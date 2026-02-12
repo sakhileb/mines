@@ -672,7 +672,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
+    // IMMEDIATE EXECUTION TEST
+    window.mapDebugTest = true;
+    console.error('🔴 SCRIPT EXECUTION TEST - If you see this error, the script is running!');
     console.log('Hello World! Mine area map script loaded');
+    
+    if (!window.L) {
+        console.error('❌ LEAFLET NOT LOADED! Leaflet library failed to load from CDN.');
+    } else {
+        console.log('✅ Leaflet is available:', window.L);
+    }
     
     let mineAreaMap = null;
     let markerGroup = null;
@@ -681,35 +690,36 @@
     const MAX_INIT_RETRIES = 50;
 
     function initializeMineAreaMap() {
+        console.error('🔴 initializeMineAreaMap called! Attempt', initRetryCount + 1);
         console.log('[MAP] Initialization attempt', initRetryCount + 1);
         
         // Check if Leaflet is loaded
         if (typeof window.L === 'undefined' && typeof L === 'undefined') {
             initRetryCount++;
             if (initRetryCount > MAX_INIT_RETRIES) {
-                console.error('[MAP] Leaflet failed to load after maximum retries');
+                console.error('[MAP] ❌ CRITICAL: Leaflet failed to load after maximum retries');
                 const loadingEl = document.getElementById('map-loading');
                 if (loadingEl) {
-                    loadingEl.innerHTML = '<div class="text-red-400 text-sm">Failed to load map library</div>';
+                    loadingEl.innerHTML = '<div class="text-red-400 text-sm">❌ Failed to load Leaflet library - check CDN connection</div>';
                 }
                 return;
             }
-            console.log('[MAP] Leaflet not loaded yet, retrying...', initRetryCount);
+            console.warn('[MAP] Leaflet not loaded yet, retrying...', initRetryCount);
             setTimeout(initializeMineAreaMap, 200);
             return;
         }
 
-        console.log('[MAP] Leaflet available, checking container...');
+        console.log('[MAP] ✅ Leaflet available, checking container...');
 
         // Check if map container exists
         const mapContainer = document.getElementById('mine-area-map');
         if (!mapContainer) {
-            console.log('[MAP] Map container not found, retrying...');
+            console.error('[MAP] ❌ CRITICAL: Map container #mine-area-map not found in DOM!');
             setTimeout(initializeMineAreaMap, 100);
             return;
         }
 
-        console.log('[MAP] Container found, checking dimensions:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+        console.log('[MAP] ✅ Container found, dimensions:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
 
         // Check if map is already initialized
         if (mineAreaMap) {
