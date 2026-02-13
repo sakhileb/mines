@@ -508,6 +508,18 @@
         </div>
     @endif
 
+
+    <!-- Map Loading Indicator -->
+    <div id="map-loading" class="absolute inset-0 flex items-center justify-center bg-gray-800 z-[999]" wire:ignore style="display: none;">
+        <div class="text-center">
+            <svg class="animate-spin h-12 w-12 text-amber-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-300 text-sm">Loading map...</p>
+        </div>
+    </div>
+
     <!-- Leaflet and Drawing Tools -->
     <script src="/vendor/leaflet.js"></script>
     <script src="/vendor/leaflet-draw/leaflet.draw.umd.js"></script>
@@ -515,34 +527,90 @@
     <script>
         let mineAreaMap = null;
         let drawnItems = null;
+        let geofenceLayerGroup;
+        let initRetryCount = 0;
+        const MAX_INIT_RETRIES = 50;
         let isMapDrawMode = @json($isDrawing);
         let isMapViewMode = @json($viewMode === 'map');
+        let geofences = [];
+        try {
+            geofences = @json($geofences ?? []);
+        } catch(e) {
+            geofences = [];
+        }
 
+        function renderGeofences() {
+            if (!geofenceLayerGroup) return;
+            geofenceLayerGroup.clearLayers();
+            geofences.forEach(geofence => {
+                try {
+                    let coords;
+                    if (typeof geofence.coordinates === 'string') {
+                        coords = JSON.parse(geofence.coordinates);
+                    } else {
+                        coords = geofence.coordinates;
+                    }
+                    if (coords && coords.length > 0) {
+                        const latlngs = coords.map(c => [c.lat, c.lng]);
+                        const color = geofence.geofence_type === 'restricted' ? '#ef4444' : geofence.geofence_type === 'safe' ? '#22c55e' : '#f59e0b';
+                        const polygon = L.polygon(latlngs, {
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 0.2,
+                            weight: 2
+                        }).addTo(geofenceLayerGroup);
+                        polygon.bindPopup(`<strong>${geofence.name}</strong><br>${geofence.geofence_type}`);
+                    }
+                } catch (e) {
+                    console.error('Error rendering geofence:', geofence.name, e);
+                }
+            });
+        }
 
         function initializeMineAreaMap() {
-            // Always re-initialize if map container exists and map is not set
             const mapContainer = document.getElementById('mine-area-map');
+            const loadingEl = document.getElementById('map-loading');
             if (!mapContainer) return;
             if (mineAreaMap) {
                 mineAreaMap.invalidateSize();
+                if (loadingEl) loadingEl.style.display = 'none';
                 return;
+            }
+            if (loadingEl) loadingEl.style.display = '';
+            // Check if Leaflet is loaded
+            if (typeof window.L === 'undefined' && typeof L === 'undefined') {
+                initRetryCount++;
+                if (initRetryCount > MAX_INIT_RETRIES) {
+                    if (loadingEl) {
+                        loadingEl.innerHTML = '<div class="text-center"><p class="text-red-400 mb-2">Map library failed to load</p><p class="text-gray-400 text-sm">Leaflet library could not be loaded from CDN</p><button onclick="location.reload()" class="mt-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded">Retry</button></div>';
+                    }
+                    return;
+                }
+                setTimeout(initializeMineAreaMap, 200);
+                return;
+            }
+            if (typeof L === 'undefined' && typeof window.L !== 'undefined') {
+                window.L = window.L;
             }
             try {
                 mineAreaMap = L.map('mine-area-map').setView([-26.2041, 28.0473], 10);
-                // Add tile layers
                 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '© OpenStreetMap contributors'
-                }).addTo(mineAreaMap);
+                });
                 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     maxZoom: 19,
-                    attribution: 'Esri'
+                    attribution: 'Esri, Maxar, Earthstar Geographics'
                 });
+                osmLayer.addTo(mineAreaMap);
                 L.control.layers({
                     'Standard': osmLayer,
                     'Satellite': satelliteLayer
                 }).addTo(mineAreaMap);
-                // Initialize drawing if in draw mode
+                geofenceLayerGroup = L.layerGroup().addTo(mineAreaMap);
+                renderGeofences();
+                if (loadingEl) loadingEl.style.display = 'none';
+                // Drawing mode
                 if (isMapDrawMode) {
                     drawnItems = new L.FeatureGroup();
                     mineAreaMap.addLayer(drawnItems);
@@ -590,7 +658,15 @@
                 }
             } catch (error) {
                 console.error('Error initializing map:', error);
+                if (loadingEl) {
+                    loadingEl.innerHTML = '<div class="text-center"><p class="text-red-400 mb-2">Failed to load map</p><p class="text-gray-400 text-sm">Please refresh the page</p></div>';
+                }
             }
+            setTimeout(() => {
+                if (mineAreaMap) {
+                    mineAreaMap.invalidateSize();
+                }
+            }, 250);
         }
 
         // Initialize on load
@@ -602,7 +678,7 @@
             setTimeout(initializeMineAreaMap, 100);
         }
 
-        // Re-initialize on Livewire updates (always attempt)
+        // Re-initialize on Livewire updates
         document.addEventListener('livewire:updated', () => {
             setTimeout(() => {
                 initializeMineAreaMap();
