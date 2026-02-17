@@ -558,9 +558,14 @@
                             </select>
                             @error('tankMineAreaId') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
+                        <div>
+                            <label class="block font-medium mb-1">Minimum Level (Liters)</label>
+                            <input type="number" min="0" wire:model.live="tankMinimumLevel" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                            @error('tankMinimumLevel') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
                         <div class="flex justify-end gap-2">
                             <button type="button" wire:click="closeManageModal" class="btn btn-ghost">Cancel</button>
-                            <button type="button" class="btn btn-primary" wire:click="saveTank" wire:loading.attr="disabled" wire:target="saveTank">Add Tank</button>
+                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="saveTank">Add Tank</button>
                         </div>
                     </form>
                 @endif
