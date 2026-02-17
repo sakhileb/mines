@@ -1294,7 +1294,8 @@
             try {
                 const target = e.target;
                 if (!target) return;
-                const isMachineSelect = (target.matches && target.matches('select[wire\:model.live="selectedMachine"]')) || target.id === 'machine-select';
+            // Prefer checking the element id (stable) and fall back to attribute check
+            const isMachineSelect = (target.id === 'machine-select') || (target.getAttribute && target.getAttribute('wire:model.live') === 'selectedMachine');
                 if (!isMachineSelect) return;
 
                 // If a machine was chosen (non-empty value), hide the overlay and
