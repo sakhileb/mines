@@ -1,6 +1,12 @@
 import Alpine from 'alpinejs';
 window.Alpine = Alpine;
-Alpine.start();
+// Do not call `Alpine.start()` here because Livewire v3 bundles Alpine
+// and will initialize it. Starting Alpine twice triggers duplicate-instance
+// warnings. Mark this Alpine instance as coming from Livewire to avoid
+// Livewire's duplicate detection.
+if (window.Alpine) {
+	window.Alpine.__fromLivewire = true;
+}
 import './bootstrap';
 import './animations';  // Enhanced UX/UI animations
 import './livewire-realtime';

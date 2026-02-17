@@ -1130,69 +1130,39 @@
         }
         
         // Listen for Livewire component updates
-        document.addEventListener('livewire:updated', (e) => {
-            console.log('Livewire updated, refreshing data from DOM...');
-            try {
-                // Re-run the attribute parsing/normalization so we always have
-                // consistent `{lat, lng}` objects regardless of raw JSON shape
-                loadDataFromAttributes();
-                        if (route.waypoints && route.waypoints.length > 0) {
-                            // Validate and normalize waypoints
-                            const latlngs = [];
-                            for (let i = 0; i < route.waypoints.length; i++) {
-                                const wp = route.waypoints[i];
-                                const nn = normalizeCoord(wp) || (Array.isArray(wp) ? { lat: wp[0], lng: wp[1] } : wp);
-                                if (!nn || typeof nn.lat === 'undefined' || typeof nn.lng === 'undefined' || !isFinite(nn.lat) || !isFinite(nn.lng)) continue;
-                                latlngs.push([Number(nn.lat), Number(nn.lng)]);
-                            }
-
-                            if (latlngs.length >= 2) {
-                                // Enhanced route polyline with better styling
-                                try {
-                                    const polyline = L.polyline(latlngs, {
-                                        color: route.color || '#f59e0b',
-                                        weight: 3,
-                                        opacity: 0.9,
-                                        lineCap: 'round',
-                                        lineJoin: 'round',
-                                        className: 'replay-route',
-                                        dashArray: routeIndex === 0 && route.name === 'Auto-calculated Route' ? '8, 4' : 'none'
-                                    }).bindPopup(`
-                                        <div class="bg-white p-2 rounded">
-                                            <strong>${route.name}</strong><br>
-                                            ${route.waypoints?.length || 0} waypoints<br>
-                                            From: ${route.start_location}<br>
-                                            To: ${route.end_location}
-                                        </div>
-                                    `);
-
-                                    polyline.addTo(window.replayMap);
-                                    window.routePolylines.push(polyline);
-                                } catch (err) {
-                                    console.error('Failed to add route polyline (skipping):', err, { route, latlngs });
-                                }
-                            } else {
-                                console.warn('Route skipped - not enough valid waypoints:', route.name, route.waypoints?.length || 0);
-                            }
-                        }
-                console.log('Machine selected event');
-                // Wait a moment for Livewire to re-render, then load new data
-                setTimeout(() => {
+        function initializeLivewireListeners() {
+            document.addEventListener('livewire:updated', (e) => {
+                console.log('Livewire updated, refreshing data from DOM...');
+                try {
+                    // Re-run the attribute parsing/normalization so we always have
+                    // consistent `{lat, lng}` objects regardless of raw JSON shape
                     loadDataFromAttributes();
-                    if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
-                            renderMapElements();
-                            // Center map on selected machine's first position
-                            centerOnSelectedMachine();
-                        hideMapOverlay();
-                        updateTimerDisplay();
-                    } else {
-                        showMapOverlay();
-                    }
-                }, 100);
+                    console.log('Machine selected event');
+
+                    // Wait a moment for Livewire to re-render, then load new data
+                    setTimeout(() => {
+                        try {
+                            loadDataFromAttributes();
+                            if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
+                                renderMapElements();
+                                // Center map on selected machine's first position
+                                centerOnSelectedMachine();
+                                hideMapOverlay();
+                                updateTimerDisplay();
+                            } else {
+                                showMapOverlay();
+                            }
+                        } catch (err) {
+                            console.error('Error processing livewire:updated timeout:', err);
+                        }
+                    }, 150);
+                } catch (err) {
+                    console.error('Error handling livewire:updated:', err);
+                }
             });
 
-            // Listen for Livewire updates
-            @this.on('replay-loaded', () => {
+            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
+                @this.on('replay-loaded', () => {
                 console.log('Replay loaded event');
                 // Wait for Livewire to fully re-render the data attributes
                 setTimeout(() => {
@@ -1220,9 +1190,11 @@
                         console.error('Error in replay-loaded handler:', err);
                     }
                 }, 150); // Increased timeout to ensure data is available
-            });
+                });
+            }
 
-            @this.on('show-routes', () => {
+            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
+                @this.on('show-routes', () => {
                 console.log('Show routes event received');
                 setTimeout(() => {
                     try {
@@ -1238,9 +1210,11 @@
                         console.error('Error showing routes:', err);
                     }
                 }, 120);
-            });
+                });
+            }
 
-            @this.on('replay-seek', (data) => {
+            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
+                @this.on('replay-seek', (data) => {
                 try {
                     const position = typeof data?.position === 'number' ? data.position : 0;
                     if (position >= 0 && Array.isArray(window.pathCoordinates) && position < window.pathCoordinates.length) {
@@ -1251,24 +1225,26 @@
                 } catch (err) {
                     console.error('Error during seek:', err);
                 }
-            });
+                });
+            }
 
             // Handle play/pause for timer update and marker position
             let playbackInterval = null;
-            
-            @this.on('replay-play', () => {
+
+            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
+                @this.on('replay-play', () => {
                 console.log('Replay playing');
                 if (playbackInterval) clearInterval(playbackInterval);
-                
+
                 playbackInterval = setInterval(() => {
                     try {
                         const currentPos = @this?.currentPosition;
                         const totalPositions = @this?.totalPositions || 0;
-                        
+
                         if (typeof currentPos === 'number' && currentPos >= 0) {
                             updateTimerDisplay();
                             updateMachineMarker(currentPos);
-                            
+
                             // Auto-increment position if not at end
                             if (currentPos < totalPositions - 1) {
                                 @this.set('currentPosition', currentPos + 1);
@@ -1281,17 +1257,21 @@
                         console.error('Error during playback:', err);
                     }
                 }, 100);
-            });
+                });
+            }
 
-            @this.on('replay-pause', () => {
+            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
+                @this.on('replay-pause', () => {
                 console.log('Replay paused');
                 if (playbackInterval) {
                     clearInterval(playbackInterval);
                     playbackInterval = null;
                 }
-            });
+                });
+            }
 
-            @this.on('replay-stop', () => {
+            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
+                @this.on('replay-stop', () => {
                 console.log('Replay stopped');
                 if (playbackInterval) {
                     clearInterval(playbackInterval);
@@ -1303,7 +1283,8 @@
                 } catch (err) {
                     console.error('Error during stop:', err);
                 }
-            });
+                });
+            }
         }
         
         // Call initialization when DOM is ready
