@@ -51,7 +51,7 @@
             <!-- Machine Selection -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Select Machine</label>
-                <select wire:model.live="selectedMachine" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500">
+                <select id="machine-select" wire:model.live="selectedMachine" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500">
                     <option value="">-- Choose a Machine --</option>
                     @foreach($machines as $machineType => $machineGroup)
                         <optgroup label="{{ strtoupper(str_replace('_', ' ', $machineType)) }}">
@@ -1286,6 +1286,46 @@
         } else {
             initializeLivewireListeners();
         }
+
+        // When a machine is selected in the sidebar, automatically center the map
+        // and hide the overlay prompt. Use event delegation so listeners survive
+        // Livewire DOM updates.
+        document.addEventListener('change', (e) => {
+            try {
+                const target = e.target;
+                if (!target) return;
+                const isMachineSelect = (target.matches && target.matches('select[wire\:model.live="selectedMachine"]')) || target.id === 'machine-select';
+                if (!isMachineSelect) return;
+
+                // If a machine was chosen (non-empty value), hide the overlay and
+                // attempt to center the map if we have coordinates already.
+                const val = target.value;
+                if (val && val !== '') {
+                    // Allow Livewire a moment to update any data attributes
+                    setTimeout(() => {
+                        try {
+                            loadDataFromAttributes();
+                            if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
+                                renderMapElements();
+                                centerOnSelectedMachine();
+                                hideMapOverlay();
+                                updateTimerDisplay();
+                            } else {
+                                // No path data yet — still remove the instruction overlay so user can click Load Replay
+                                hideMapOverlay();
+                            }
+                        } catch (err) {
+                            console.error('Error handling machine select change:', err);
+                        }
+                    }, 120);
+                } else {
+                    // If user cleared selection, show overlay again
+                    showMapOverlay();
+                }
+            } catch (err) {
+                console.error('Error in machine select change listener:', err);
+            }
+        });
         
         // Initialize map
         initReplayMap();
