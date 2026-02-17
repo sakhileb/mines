@@ -1,4 +1,3 @@
-<div>
 <div class="h-screen flex flex-col bg-slate-900" 
      data-path-coords="{{ json_encode($pathCoordinates ?? []) }}"
      data-geofences="{{ json_encode($geofences ?? []) }}"
@@ -102,14 +101,6 @@
                     Routes
                 </button>
             </div>
-
-            <!-- Recent Activities (for selected machine / date range) -->
-            @if($showActivities)
-                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-sm font-semibold text-white">Recent Activities</h4>
-                        <button wire:click="hideRecentActivities" class="text-xs text-gray-400 hover:text-gray-300">Close</button>
-                    </div>
                     @if(count($machineActivities) > 0)
                         <ul class="space-y-2 text-sm text-gray-300 max-h-64 overflow-y-auto">
                             @foreach($machineActivities as $act)
@@ -292,7 +283,6 @@
                 @endif
             </div>
 
-            @endif
         </div>
 
         <!-- Map Container -->
@@ -354,6 +344,14 @@
         window.pathCoordinates = [];
         window.geofences = [];
         window.routes = [];
+        // sensible defaults for client-side options (used by centering/panning logic)
+        // Disable smooth animation by default for automatic centering to avoid
+        // Leaflet renderer errors during rapid DOM updates. Users can enable
+        // smooth pan via the UI checkbox which is bound to Livewire.
+        window.smoothPan = false;
+        window.showTrail = true;
+        // Throttle timestamp to avoid rapid repeated renders
+        window._replayLastRenderAt = 0;
         window.initRetryCount = 0;
         const MAX_INIT_RETRIES = 50;
         
@@ -364,6 +362,7 @@
         window.routePolylines = [];
         window.trailPolyline = null;
         window.machineType = '';
+        window._replayHasInvalidLayer = false;
 
         // Helper: normalize various coordinate formats to {lat, lng}
         function normalizeCoord(coord) {
@@ -373,11 +372,19 @@
                 if (typeof coord.lat === 'number' && typeof coord.lng === 'number') return { lat: coord.lat, lng: coord.lng };
                 if (typeof coord.latitude === 'number' && typeof coord.longitude === 'number') return { lat: coord.latitude, lng: coord.longitude };
                 // If array-like [lat, lng] or [lng, lat]
-                if (Array.isArray(coord) && coord.length >= 2) {
-                    const a = Number(coord[0]);
-                    const b = Number(coord[1]);
-                    if (!Number.isNaN(a) && !Number.isNaN(b)) return { lat: a, lng: b };
-                }
+                    if (Array.isArray(coord) && coord.length >= 2) {
+                        const a = Number(coord[0]);
+                        const b = Number(coord[1]);
+                        if (!Number.isNaN(a) && !Number.isNaN(b)) {
+                            // Detect whether array is [lat, lng] or GeoJSON [lng, lat]
+                            const isLatA = a >= -90 && a <= 90 && b >= -180 && b <= 180;
+                            const isLatB = b >= -90 && b <= 90 && a >= -180 && a <= 180;
+                            if (isLatA) return { lat: a, lng: b };
+                            if (isLatB) return { lat: b, lng: a };
+                            // Fallback: assume first is lat
+                            return { lat: a, lng: b };
+                        }
+                    }
                 // If object with nested coordinates (GeoJSON style)
                 if (coord.coordinates) return normalizeCoord(coord.coordinates);
             }
@@ -457,6 +464,11 @@
                             return Object.assign({}, r, { waypoints: [] });
                         }
                     });
+
+                    if (window.routes && window.routes.length > 0) {
+                        console.log('Raw routes payload:', rawRoutes.slice(0,5));
+                        console.log('Normalized routes:', window.routes.slice(0,5));
+                    }
                     
                     // Clear the snapped coordinate cache when new data is loaded
                     window.snappedCoordinateCache = {};
@@ -600,18 +612,85 @@
                 }
                 if (skipped > 0) console.log(`Skipped ${skipped} invalid path points when rendering`);
                 
-                if (pathLatLngs.length < 2) {
+                // Filter to ensure only finite numeric lat/lng pairs are passed to Leaflet
+                const validPathLatLngs = pathLatLngs.filter(pt => Array.isArray(pt) && pt.length >= 2 && isFinite(Number(pt[0])) && isFinite(Number(pt[1]))).map(pt => [Number(pt[0]), Number(pt[1])]);
+                if (validPathLatLngs.length < 2) {
                     console.warn('Not enough valid path points to render polyline');
                 } else {
-                    window.pathPolyline = L.polyline(pathLatLngs, {
-                    color: '#fbbf24',
-                    weight: 3,
-                    opacity: 0.7,
-                    dashArray: '5, 5',
-                    className: 'replay-path',
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                    }).addTo(window.replayMap);
+                    try {
+                        // Convert to L.latLng objects and validate thoroughly before adding
+                        const latLngObjs = validPathLatLngs.map(pt => L.latLng(Number(pt[0]), Number(pt[1])));
+                        const anyInvalid = latLngObjs.some(ll => !ll || !isFinite(Number(ll.lat)) || !isFinite(Number(ll.lng)));
+                        if (anyInvalid) {
+                            console.error('Aborting path polyline: found invalid lat/lng after conversion', latLngObjs);
+                        } else {
+                            // Add when map is ready to avoid renderer race conditions
+                            if (window.replayMap && typeof window.replayMap.whenReady === 'function') {
+                                window.replayMap.whenReady(() => {
+                                    try {
+                                        const projected = latLngObjs.map(ll => {
+                                            try { return window.replayMap.latLngToLayerPoint(ll); } catch (e) { return null; }
+                                        });
+                                        const validProjected = projected.filter(p => p && isFinite(Number(p.x)) && isFinite(Number(p.y)));
+                                        if (validProjected.length < 2) {
+                                            console.error('Aborting path polyline: insufficient valid projected points', {
+                                                latLngObjs: latLngObjs.slice(0,20),
+                                                projected: projected.slice(0,20)
+                                            });
+                                            window._replayHasInvalidLayer = true;
+                                            return;
+                                        }
+
+                                        window.pathPolyline = L.polyline(latLngObjs, {
+                                            color: '#fbbf24',
+                                            weight: 3,
+                                            opacity: 0.7,
+                                            dashArray: '5, 5',
+                                            className: 'replay-path',
+                                            lineCap: 'round',
+                                            lineJoin: 'round'
+                                        }).addTo(window.replayMap);
+                                    } catch (innerErr) {
+                                        console.error('Failed to add path polyline inside whenReady:', innerErr, {
+                                            latLngObjs: latLngObjs.slice(0,20)
+                                        });
+                                        window._replayHasInvalidLayer = true;
+                                    }
+                                });
+                            } else {
+                                try {
+                                    const projected = latLngObjs.map(ll => {
+                                        try { return window.replayMap.latLngToLayerPoint(ll); } catch (e) { return null; }
+                                    });
+                                    const validProjected = projected.filter(p => p && isFinite(Number(p.x)) && isFinite(Number(p.y)));
+                                    if (validProjected.length < 2) {
+                                        console.error('Aborting path polyline (no whenReady): insufficient projections', {
+                                            latLngObjs: latLngObjs.slice(0,20),
+                                            projected: projected.slice(0,20)
+                                        });
+                                        window._replayHasInvalidLayer = true;
+                                    } else {
+                                        window.pathPolyline = L.polyline(latLngObjs, {
+                                            color: '#fbbf24',
+                                            weight: 3,
+                                            opacity: 0.7,
+                                            dashArray: '5, 5',
+                                            className: 'replay-path',
+                                            lineCap: 'round',
+                                            lineJoin: 'round'
+                                        }).addTo(window.replayMap);
+                                    }
+                                } catch (innerErr) {
+                                    console.error('Failed to add path polyline (no whenReady):', innerErr, {
+                                        latLngObjs: latLngObjs.slice(0,20)
+                                    });
+                                    window._replayHasInvalidLayer = true;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to prepare path polyline for map:', e);
+                    }
                 }
                 
                 console.log('Path rendered with', pathLatLngs.length, 'points (snapped to routes)');
@@ -692,43 +771,72 @@
                 
                 window.routes.forEach((route, routeIndex) => {
                     if (route.waypoints && route.waypoints.length > 0) {
-                        // Handle multiple waypoint formats: {latitude, longitude}, {lat, lng}, or [lat, lng]
+                        // Normalize waypoints using normalizeCoord to handle array or object formats
                         const latlngs = route.waypoints.map(wp => {
-                            if (Array.isArray(wp) && wp.length >= 2) {
-                                // Array format: [lat, lng]
-                                return [wp[0], wp[1]];
-                            } else if (wp && typeof wp === 'object') {
-                                // Object format: {latitude, longitude} or {lat, lng}
-                                const lat = wp.latitude ?? wp.lat;
-                                const lng = wp.longitude ?? wp.lng;
-                                if (lat !== undefined && lng !== undefined) {
-                                    return [lat, lng];
-                                }
-                            }
-                            return null;
-                        }).filter(coord => coord !== null); // Remove invalid coordinates
+                            const nn = normalizeCoord(wp);
+                            return nn ? [Number(nn.lat), Number(nn.lng)] : null;
+                        }).filter(coord => coord !== null);
                         
-                        if (latlngs.length >= 2) {
-                            // Enhanced route polyline with better styling
-                            const polyline = L.polyline(latlngs, {
-                                color: route.color || '#f59e0b',
-                                weight: 3,
-                                opacity: 0.9,
-                                lineCap: 'round',
-                                lineJoin: 'round',
-                                className: 'replay-route',
-                                dashArray: routeIndex === 0 && route.name === 'Auto-calculated Route' ? '8, 4' : 'none' // Dashed for auto-calculated routes
-                            }).bindPopup(`
-                                <div class="bg-white p-2 rounded">
-                                    <strong>${route.name}</strong><br>
-                                    ${route.waypoints?.length || 0} waypoints<br>
-                                    From: ${route.start_location}<br>
-                                    To: ${route.end_location}
-                                </div>
-                            `);
-                            
-                            polyline.addTo(window.replayMap);
-                            window.routePolylines.push(polyline);
+                        // Ensure route latlngs are numeric
+                        const validRouteLatlngs = latlngs.filter(pt => Array.isArray(pt) && pt.length >= 2 && isFinite(Number(pt[0])) && isFinite(Number(pt[1]))).map(pt => [Number(pt[0]), Number(pt[1])]);
+                        if (validRouteLatlngs.length >= 2) {
+                            try {
+                                const latLngObjs = validRouteLatlngs.map(pt => L.latLng(Number(pt[0]), Number(pt[1])));
+                                const anyInvalid = latLngObjs.some(ll => !ll || !isFinite(Number(ll.lat)) || !isFinite(Number(ll.lng)));
+                                if (anyInvalid) {
+                                    console.error('Aborting route polyline: invalid lat/lngs', latLngObjs);
+                                } else {
+                                    const createAndAdd = () => {
+                                        try {
+                                            const projected = latLngObjs.map(ll => {
+                                                try { return window.replayMap.latLngToLayerPoint(ll); } catch (e) { return null; }
+                                            });
+                                            const validProjected = projected.filter(p => p && isFinite(Number(p.x)) && isFinite(Number(p.y)));
+                                            if (validProjected.length < 2) {
+                                                console.error('Aborting route polyline: insufficient valid projected points', {
+                                                    latLngObjs: latLngObjs.slice(0,20),
+                                                    projected: projected.slice(0,20)
+                                                });
+                                                window._replayHasInvalidLayer = true;
+                                                return;
+                                            }
+
+                                            const polyline = L.polyline(latLngObjs, {
+                                                color: route.color || '#f59e0b',
+                                                weight: 3,
+                                                opacity: 0.9,
+                                                lineCap: 'round',
+                                                lineJoin: 'round',
+                                                className: 'replay-route',
+                                                dashArray: routeIndex === 0 && route.name === 'Auto-calculated Route' ? '8, 4' : 'none'
+                                            }).bindPopup(`
+                                                <div class="bg-white p-2 rounded">
+                                                    <strong>${route.name}</strong><br>
+                                                    ${route.waypoints?.length || 0} waypoints<br>
+                                                    From: ${route.start_location}<br>
+                                                    To: ${route.end_location}
+                                                </div>
+                                            `);
+
+                                            polyline.addTo(window.replayMap);
+                                            window.routePolylines.push(polyline);
+                                        } catch (innerErr) {
+                                            console.error('Failed to add route polyline inside createAndAdd:', innerErr, {
+                                                latLngObjs: latLngObjs.slice(0,20)
+                                            });
+                                            window._replayHasInvalidLayer = true;
+                                        }
+                                    };
+
+                                    if (window.replayMap && typeof window.replayMap.whenReady === 'function') {
+                                        window.replayMap.whenReady(createAndAdd);
+                                    } else {
+                                        createAndAdd();
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Failed to prepare route polyline for map:', e);
+                            }
                         }
                     }
                 });
@@ -911,6 +1019,11 @@
         function zoomToRouteArea() {
             if (!window.replayMap) return;
 
+            if (window._replayHasInvalidLayer) {
+                console.warn('zoomToRouteArea: skipping because an invalid layer was detected');
+                return;
+            }
+
             // Build bounds from any valid coordinates we have
             try {
                 const bounds = L.latLngBounds([]);
@@ -944,11 +1057,36 @@
                     return;
                 }
 
-                if (bounds.isValid && bounds.isValid()) {
-                    window.replayMap.fitBounds(bounds, { padding: [50, 50] });
-                    console.log('Map zoomed to route area');
-                } else {
-                    console.warn('zoomToRouteArea: computed bounds are not valid');
+                try {
+                    // Prefer using the existing path polyline bounds if available
+                    let effectiveBounds = bounds;
+                    try {
+                        if (window.pathPolyline && typeof window.pathPolyline.getBounds === 'function') {
+                            const pb = window.pathPolyline.getBounds();
+                            if (pb && typeof pb.isValid === 'function' ? pb.isValid() : true) {
+                                effectiveBounds = pb;
+                            }
+                        }
+                    } catch (e) {
+                        // ignore and fall back to computed bounds
+                    }
+
+                    const isValid = typeof effectiveBounds.isValid === 'function' ? effectiveBounds.isValid() : (added > 0);
+                    if (isValid) {
+                        // Defer fitBounds slightly to reduce collisions with layer add animations
+                        setTimeout(() => {
+                            try {
+                                window.replayMap.fitBounds(effectiveBounds, { padding: [50, 50] });
+                                console.log('Map zoomed to route area');
+                            } catch (fbErr) {
+                                console.error('Error applying fitBounds (deferred):', fbErr);
+                            }
+                        }, 40);
+                    } else {
+                        console.warn('zoomToRouteArea: computed bounds are not valid');
+                    }
+                } catch (e) {
+                    console.error('Error applying fitBounds:', e);
                 }
             } catch (err) {
                 console.error('Error building bounds for zoomToRouteArea:', err);
@@ -960,6 +1098,11 @@
             try {
                 if (!window.replayMap) return;
 
+                if (window._replayHasInvalidLayer) {
+                    console.warn('centerOnSelectedMachine: skipping because an invalid layer was detected');
+                    return;
+                }
+
                 // Prefer first path coordinate
                 if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
                     // Find first valid coordinate
@@ -967,10 +1110,17 @@
                     if (firstValid) {
                         const lat = Number(firstValid.lat);
                         const lng = Number(firstValid.lng);
-                        if (window.smoothPan) {
-                            window.replayMap.panTo([lat, lng], { animate: true, duration: 0.6 });
-                        } else {
-                            window.replayMap.setView([lat, lng], 14);
+                        // Defer centering slightly and use whenReady to avoid renderer collisions
+                        try {
+                            if (window.replayMap && typeof window.replayMap.whenReady === 'function') {
+                                window.replayMap.whenReady(() => setTimeout(() => {
+                                    try { window.replayMap.setView([lat, lng], 14, { animate: false }); } catch (e) { console.warn('setView failed during whenReady:', e); }
+                                }, 40));
+                            } else {
+                                setTimeout(() => { try { window.replayMap.setView([lat, lng], 14, { animate: false }); } catch (e) { console.warn('setView failed:', e); } }, 40);
+                            }
+                        } catch (e) {
+                            console.warn('Error scheduling centerOnSelectedMachine setView:', e);
                         }
                         return;
                     }
@@ -984,11 +1134,7 @@
                         let lat = wp.latitude ?? wp.lat ?? (Array.isArray(wp) ? wp[0] : undefined);
                         let lng = wp.longitude ?? wp.lng ?? (Array.isArray(wp) ? wp[1] : undefined);
                         if (typeof lat !== 'undefined' && typeof lng !== 'undefined') {
-                            if (window.smoothPan) {
-                                window.replayMap.panTo([lat, lng], { animate: true, duration: 0.6 });
-                            } else {
-                                window.replayMap.setView([lat, lng], 14);
-                            }
+                            window.replayMap.setView([lat, lng], 14, { animate: false });
                         }
                     }
                 }
@@ -1110,22 +1256,31 @@
             }
         }
 
-        // Render map elements when data is loaded
+        // Render map elements when data is loaded (throttled)
         function renderMapElements() {
+            var now = Date.now();
+            if (now - (window._replayLastRenderAt || 0) < 180) {
+                // Prevent spamming Leaflet with rapid updates which can trigger
+                // renderer exceptions during animations.
+                console.log('Skipping render: throttled');
+                return;
+            }
+            window._replayLastRenderAt = now;
+
             console.log('=== Rendering map elements ===');
             console.log('Path coordinates:', window.pathCoordinates?.length || 0);
             console.log('Routes available:', window.routes?.length || 0);
             console.log('Geofences:', window.geofences?.length || 0);
-            
+
             renderPathOnMap();
             renderGeofencesOnMap();
             renderRoutesOnMap();
             zoomToRouteArea();
-            
+
             if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
                 updateMachineMarker(0);
             }
-            
+
             console.log('=== Map rendering complete ===');
         }
         
@@ -1161,128 +1316,137 @@
                 }
             });
 
-            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
-                @this.on('replay-loaded', () => {
-                console.log('Replay loaded event');
-                // Wait for Livewire to fully re-render the data attributes
-                setTimeout(() => {
-                    try {
-                        loadDataFromAttributes();
-                        console.log('After loading attributes:', {
-                            pathCoords: window.pathCoordinates?.length || 0,
-                            geofences: window.geofences?.length || 0,
-                            routes: window.routes?.length || 0
-                        });
+            // Register global Livewire event handlers (use Livewire.on when available)
+            if (typeof Livewire !== 'undefined' && typeof Livewire.on === 'function') {
+                let playbackInterval = null;
 
-                        if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
-                            console.log('Rendering map elements with path data...');
-                            renderMapElements();
-                            // Center on the selected machine for immediate context
-                            centerOnSelectedMachine();
-                            hideMapOverlay();
+                Livewire.on('replay-loaded', () => {
+                    console.log('Replay loaded event');
+                    setTimeout(() => {
+                        try {
+                            loadDataFromAttributes();
+                            console.log('After loading attributes:', {
+                                pathCoords: window.pathCoordinates?.length || 0,
+                                geofences: window.geofences?.length || 0,
+                                routes: window.routes?.length || 0
+                            });
+
+                            if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
+                                console.log('Rendering map elements with path data...');
+                                renderMapElements();
+                                centerOnSelectedMachine();
+                                hideMapOverlay();
+                                updateTimerDisplay();
+                                console.log('Map rendering completed');
+                            } else {
+                                console.log('No path coordinates available yet');
+                                showMapOverlay();
+                            }
+                        } catch (err) {
+                            console.error('Error in replay-loaded handler:', err);
+                        }
+                    }, 150);
+                });
+
+                Livewire.on('show-routes', () => {
+                    console.log('Show routes event received');
+                    setTimeout(() => {
+                        try {
+                            loadDataFromAttributes();
+                            if (Array.isArray(window.routes) && window.routes.length > 0) {
+                                renderRoutesOnMap();
+                                zoomToRouteArea();
+                                hideMapOverlay();
+                            } else {
+                                console.log('No routes available to show');
+                            }
+                        } catch (err) {
+                            console.error('Error showing routes:', err);
+                        }
+                    }, 120);
+                });
+
+                Livewire.on('replay-seek', (data) => {
+                    try {
+                        const position = typeof data?.position === 'number' ? data.position : 0;
+                        if (position >= 0 && Array.isArray(window.pathCoordinates) && position < window.pathCoordinates.length) {
+                            console.log('Seeking to position', position);
+                            updateMachineMarker(position);
                             updateTimerDisplay();
-                            console.log('Map rendering completed');
-                        } else {
-                            console.log('No path coordinates available yet');
-                            showMapOverlay();
                         }
                     } catch (err) {
-                        console.error('Error in replay-loaded handler:', err);
+                        console.error('Error during seek:', err);
                     }
-                }, 150); // Increased timeout to ensure data is available
                 });
-            }
 
-            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
-                @this.on('show-routes', () => {
-                console.log('Show routes event received');
-                setTimeout(() => {
-                    try {
-                        loadDataFromAttributes();
-                        if (Array.isArray(window.routes) && window.routes.length > 0) {
-                            renderRoutesOnMap();
-                            zoomToRouteArea();
-                            hideMapOverlay();
-                        } else {
-                            console.log('No routes available to show');
-                        }
-                    } catch (err) {
-                        console.error('Error showing routes:', err);
-                    }
-                }, 120);
-                });
-            }
+                Livewire.on('replay-play', (payload) => {
+                    console.log('Replay playing');
+                    if (playbackInterval) clearInterval(playbackInterval);
 
-            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
-                @this.on('replay-seek', (data) => {
-                try {
-                    const position = typeof data?.position === 'number' ? data.position : 0;
-                    if (position >= 0 && Array.isArray(window.pathCoordinates) && position < window.pathCoordinates.length) {
-                        console.log('Seeking to position', position);
-                        updateMachineMarker(position);
-                        updateTimerDisplay();
-                    }
-                } catch (err) {
-                    console.error('Error during seek:', err);
-                }
-                });
-            }
+                    // Playback driven by client but authoritative state stored server-side.
+                    // We rely on the nearest Livewire component reference (set when a machine was selected)
+                    // to update `currentPosition` on the server via `set`.
+                    const speed = (payload && payload.speed) ? Number(payload.speed) : 1;
+                    const delay = Math.max(100, Math.round(1000 / Math.max(0.1, speed)));
 
-            // Handle play/pause for timer update and marker position
-            let playbackInterval = null;
+                    playbackInterval = setInterval(() => {
+                        try {
+                            const slider = document.getElementById('replay-slider');
+                            let currentPos = slider ? parseInt(slider.value, 10) : NaN;
+                            if (Number.isNaN(currentPos)) currentPos = 0;
+                            const totalPositions = (window.pathCoordinates || []).length || 0;
 
-            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
-                @this.on('replay-play', () => {
-                console.log('Replay playing');
-                if (playbackInterval) clearInterval(playbackInterval);
-
-                playbackInterval = setInterval(() => {
-                    try {
-                        const currentPos = @this?.currentPosition;
-                        const totalPositions = @this?.totalPositions || 0;
-
-                        if (typeof currentPos === 'number' && currentPos >= 0) {
                             updateTimerDisplay();
                             updateMachineMarker(currentPos);
 
-                            // Auto-increment position if not at end
                             if (currentPos < totalPositions - 1) {
-                                @this.set('currentPosition', currentPos + 1);
+                                const nextPos = currentPos + 1;
+                                if (window.currentLivewireComponentRef && typeof window.currentLivewireComponentRef.set === 'function') {
+                                    try {
+                                        window.currentLivewireComponentRef.set('currentPosition', nextPos);
+                                    } catch (e) {
+                                        // fallback: update slider and marker locally
+                                        if (slider) slider.value = nextPos;
+                                        updateMachineMarker(nextPos);
+                                    }
+                                } else {
+                                    if (slider) slider.value = nextPos;
+                                    updateMachineMarker(nextPos);
+                                }
                             } else {
-                                // Reached end, pause playback
-                                @this.call('pause');
+                                // Reached end, attempt to pause server playback
+                                if (window.currentLivewireComponentRef && typeof window.currentLivewireComponentRef.call === 'function') {
+                                    try { window.currentLivewireComponentRef.call('pause'); } catch (e) {}
+                                }
                             }
+                        } catch (err) {
+                            console.error('Error during playback:', err);
                         }
+                    }, delay);
+                });
+
+                Livewire.on('replay-pause', () => {
+                    console.log('Replay paused');
+                    try {
+                        if (playbackInterval) {
+                            clearInterval(playbackInterval);
+                            playbackInterval = null;
+                        }
+                    } catch (e) {}
+                });
+
+                Livewire.on('replay-stop', () => {
+                    console.log('Replay stopped');
+                    try {
+                        if (playbackInterval) {
+                            clearInterval(playbackInterval);
+                            playbackInterval = null;
+                        }
+                        updateMachineMarker(0);
+                        updateTimerDisplay();
                     } catch (err) {
-                        console.error('Error during playback:', err);
+                        console.error('Error during stop:', err);
                     }
-                }, 100);
-                });
-            }
-
-            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
-                @this.on('replay-pause', () => {
-                console.log('Replay paused');
-                if (playbackInterval) {
-                    clearInterval(playbackInterval);
-                    playbackInterval = null;
-                }
-                });
-            }
-
-            if (typeof @this !== 'undefined' && @this && typeof @this.on === 'function') {
-                @this.on('replay-stop', () => {
-                console.log('Replay stopped');
-                if (playbackInterval) {
-                    clearInterval(playbackInterval);
-                    playbackInterval = null;
-                }
-                try {
-                    updateMachineMarker(0);
-                    updateTimerDisplay();
-                } catch (err) {
-                    console.error('Error during stop:', err);
-                }
                 });
             }
         }
@@ -1297,6 +1461,94 @@
         // When a machine is selected in the sidebar, automatically center the map
         // and hide the overlay prompt. Use event delegation so listeners survive
         // Livewire DOM updates.
+        // Find the Livewire component instance associated with an element
+        function findLivewireComponentForElement(el) {
+            try {
+                if (!el || typeof el.closest !== 'function' || typeof Livewire === 'undefined') return null;
+                const compEl = el.closest('[wire\\:id]');
+                if (!compEl) return null;
+                const compId = compEl.getAttribute('wire:id');
+                if (!compId || typeof Livewire.find !== 'function') return null;
+                return Livewire.find(compId);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Request the server to load replay data for the selected machine, scoped to the
+        // Livewire component instance nearest to the provided element.
+        function requestLoadReplayForElement(el, machineId) {
+            try {
+                const comp = findLivewireComponentForElement(el);
+                if (comp) {
+                    // remember for playback controls
+                    window.currentLivewireComponentRef = comp;
+                    try {
+                        // Ensure server property is set
+                        if (typeof comp.set === 'function') {
+                            comp.set('selectedMachine', machineId);
+                        }
+                        // Call the loadReplay method on that component
+                        if (typeof comp.call === 'function') {
+                            comp.call('loadReplay');
+                            // After requesting the server to load, poll attributes and
+                            // center the map once path/route data becomes available.
+                            waitForPathAndCenter(el, 12, 150);
+                            return;
+                        }
+                    } catch (err) {
+                        console.warn('Component-specific loadReplay failed, falling back to emit', err);
+                    }
+                }
+
+                // Fallback: global emit
+                if (typeof Livewire !== 'undefined' && typeof Livewire.emit === 'function') {
+                    Livewire.emit('loadReplay');
+                    waitForPathAndCenter(el, 12, 150);
+                }
+            } catch (e) {
+                console.warn('requestLoadReplayForElement error', e);
+            }
+        }
+
+        // Poll the DOM attributes for path/route data after requesting a server
+        // load. This helps us center the map as soon as data is present instead
+        // of waiting for the exact timing of Livewire lifecycle events.
+        function waitForPathAndCenter(el, maxAttempts, intervalMs) {
+            maxAttempts = typeof maxAttempts === 'number' ? maxAttempts : 10;
+            intervalMs = typeof intervalMs === 'number' ? intervalMs : 150;
+            let attempts = 0;
+            const iv = setInterval(() => {
+                attempts++;
+                try {
+                    loadDataFromAttributes();
+                    // If path coords or routes are present, render & center
+                    if ((window.pathCoordinates && window.pathCoordinates.length > 0) || (window.routes && window.routes.length > 0)) {
+                        clearInterval(iv);
+                        try {
+                            renderMapElements();
+                        } catch (e) {
+                            console.warn('Deferred render failed:', e);
+                        }
+                        try {
+                            centerOnSelectedMachine();
+                        } catch (e) {
+                            console.warn('Deferred center failed:', e);
+                        }
+                        return;
+                    }
+                    if (attempts >= maxAttempts) {
+                        clearInterval(iv);
+                        // As a last resort, attempt to center optimistically
+                        try { centerOnSelectedMachine(); } catch (e) {}
+                    }
+                } catch (err) {
+                    console.warn('waitForPathAndCenter polling error:', err);
+                }
+            }, intervalMs);
+            return iv;
+        }
+
         document.addEventListener('change', (e) => {
             try {
                 const target = e.target;
@@ -1312,6 +1564,10 @@
                     // Allow Livewire a moment to update any data attributes
                     setTimeout(() => {
                         try {
+                            // Ask Livewire to load replay data for the selected machine (scoped to nearest component).
+                            requestLoadReplayForElement(target, val);
+
+                            // Also re-read attributes in case data was preloaded and render immediately.
                             loadDataFromAttributes();
                             if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
                                 renderMapElements();
@@ -1354,7 +1610,11 @@
                             // Make sure we have the latest data
                             loadDataFromAttributes();
                             if (typeof Livewire !== 'undefined') {
-                                Livewire.dispatch('replay-seek', { position: position });
+                                if (typeof Livewire.emit === 'function') {
+                                    Livewire.emit('replay-seek', { position: position });
+                                } else if (typeof Livewire.dispatch === 'function') {
+                                    Livewire.dispatch('replay-seek', { position: position });
+                                }
                             }
                         }
                     } catch (err) {
@@ -1455,5 +1715,4 @@
             transform: scale(1.1);
         }
     </style>
-</div>
 </div>
