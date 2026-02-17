@@ -580,15 +580,30 @@
                 if (window.pathPolyline) {
                     window.replayMap.removeLayer(window.pathPolyline);
                 }
-                
                 // Create path polyline with snapped coordinates to stay on routes
                 // Cache the snapped path to avoid recalculating on every render
-                const pathLatLngs = window.pathCoordinates.map((coord, index) => {
-                    const snapped = snapCoordinateToRoute(coord);
-                    return [snapped.lat, snapped.lng];
-                });
+                const pathLatLngs = [];
+                let skipped = 0;
+                for (let i = 0; i < window.pathCoordinates.length; i++) {
+                    const coord = window.pathCoordinates[i];
+                    const normalized = normalizeCoord(coord) || coord;
+                    if (!normalized || typeof normalized.lat === 'undefined' || typeof normalized.lng === 'undefined') {
+                        skipped++;
+                        continue;
+                    }
+                    const snapped = snapCoordinateToRoute({ lat: Number(normalized.lat), lng: Number(normalized.lng) });
+                    if (!snapped || typeof snapped.lat === 'undefined' || typeof snapped.lng === 'undefined' || !isFinite(snapped.lat) || !isFinite(snapped.lng)) {
+                        skipped++;
+                        continue;
+                    }
+                    pathLatLngs.push([Number(snapped.lat), Number(snapped.lng)]);
+                }
+                if (skipped > 0) console.log(`Skipped ${skipped} invalid path points when rendering`);
                 
-                window.pathPolyline = L.polyline(pathLatLngs, {
+                if (pathLatLngs.length < 2) {
+                    console.warn('Not enough valid path points to render polyline');
+                } else {
+                    window.pathPolyline = L.polyline(pathLatLngs, {
                     color: '#fbbf24',
                     weight: 3,
                     opacity: 0.7,
@@ -596,7 +611,8 @@
                     className: 'replay-path',
                     lineCap: 'round',
                     lineJoin: 'round'
-                }).addTo(window.replayMap);
+                    }).addTo(window.replayMap);
+                }
                 
                 console.log('Path rendered with', pathLatLngs.length, 'points (snapped to routes)');
                 
@@ -893,25 +909,50 @@
         }
         
         function zoomToRouteArea() {
-            if (!window.replayMap || !Array.isArray(window.pathCoordinates) || window.pathCoordinates.length === 0) return;
-            
-            // Create bounds from path coordinates
-            const bounds = L.latLngBounds(window.pathCoordinates.map(coord => [coord.lat, coord.lng]));
-            
-            // Also add geofence bounds
-            if (Array.isArray(window.geofences)) {
-                window.geofences.forEach(geofence => {
-                    if (geofence.coordinates && geofence.coordinates.length > 0) {
-                        geofence.coordinates.forEach(coord => {
-                            bounds.extend([coord[0] || coord.lat, coord[1] || coord.lng]);
+            if (!window.replayMap) return;
+
+            // Build bounds from any valid coordinates we have
+            try {
+                const bounds = L.latLngBounds([]);
+                let added = 0;
+
+                if (Array.isArray(window.pathCoordinates)) {
+                    window.pathCoordinates.forEach(coord => {
+                        const n = normalizeCoord(coord);
+                        if (n && typeof n.lat !== 'undefined' && typeof n.lng !== 'undefined' && isFinite(n.lat) && isFinite(n.lng)) {
+                            bounds.extend([Number(n.lat), Number(n.lng)]);
+                            added++;
+                        }
+                    });
+                }
+
+                if (Array.isArray(window.geofences)) {
+                    window.geofences.forEach(geofence => {
+                        const coords = geofence.coordinates || [];
+                        coords.forEach(c => {
+                            const nn = normalizeCoord(c);
+                            if (nn && typeof nn.lat !== 'undefined' && typeof nn.lng !== 'undefined' && isFinite(nn.lat) && isFinite(nn.lng)) {
+                                bounds.extend([Number(nn.lat), Number(nn.lng)]);
+                                added++;
+                            }
                         });
-                    }
-                });
+                    });
+                }
+
+                if (added === 0) {
+                    console.warn('zoomToRouteArea: No valid coordinates to build bounds');
+                    return;
+                }
+
+                if (bounds.isValid && bounds.isValid()) {
+                    window.replayMap.fitBounds(bounds, { padding: [50, 50] });
+                    console.log('Map zoomed to route area');
+                } else {
+                    console.warn('zoomToRouteArea: computed bounds are not valid');
+                }
+            } catch (err) {
+                console.error('Error building bounds for zoomToRouteArea:', err);
             }
-            
-            // Fit map to bounds with padding
-            window.replayMap.fitBounds(bounds, { padding: [50, 50] });
-            console.log('Map zoomed to route area');
         }
 
         // Center map on the first available path coordinate or on the first route waypoint
@@ -1091,64 +1132,49 @@
         // Listen for Livewire component updates
         document.addEventListener('livewire:updated', (e) => {
             console.log('Livewire updated, refreshing data from DOM...');
-            
-            // Get the main component div
-            const componentDiv = document.querySelector('[data-path-coords]');
-            if (!componentDiv) {
-                console.log('Component div not found');
-                return;
-            }
-            
-            // Extract data from data attributes
             try {
-                const pathCoordsStr = componentDiv.getAttribute('data-path-coords');
-                const geofencesStr = componentDiv.getAttribute('data-geofences');
-                const routesStr = componentDiv.getAttribute('data-routes');
-                
-                window.pathCoordinates = pathCoordsStr ? JSON.parse(pathCoordsStr) : [];
-                window.geofences = geofencesStr ? JSON.parse(geofencesStr) : [];
-                window.routes = routesStr ? JSON.parse(routesStr) : [];
-                
-                console.log('Updated path coordinates:', window.pathCoordinates?.length || 0);
-                console.log('Updated geofences:', window.geofences?.length || 0);
-                console.log('Updated routes:', window.routes?.length || 0);
-                
-                if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
-                    console.log('Data available, rendering map...');
-                    renderMapElements();
-                    hideMapOverlay();
-                    updateTimerDisplay();
-                } else {
-                    console.log('No data available, showing overlay');
-                    showMapOverlay();
-                }
-            } catch (err) {
-                console.error('Error parsing data from attributes:', err);
-            }
-        });
-        
-        // Livewire event listeners
-        window.addEventListener('livewire:navigated', () => {
-            window.pathCoordinates = @json($pathCoordinates ?? []);
-            window.geofences = @json($geofences ?? []);
-            window.routes = @json($routes ?? []);
-            
-            if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
-                renderMapElements();
-                hideMapOverlay();
-            } else {
-                showMapOverlay();
-            }
-        });
+                // Re-run the attribute parsing/normalization so we always have
+                // consistent `{lat, lng}` objects regardless of raw JSON shape
+                loadDataFromAttributes();
+                        if (route.waypoints && route.waypoints.length > 0) {
+                            // Validate and normalize waypoints
+                            const latlngs = [];
+                            for (let i = 0; i < route.waypoints.length; i++) {
+                                const wp = route.waypoints[i];
+                                const nn = normalizeCoord(wp) || (Array.isArray(wp) ? { lat: wp[0], lng: wp[1] } : wp);
+                                if (!nn || typeof nn.lat === 'undefined' || typeof nn.lng === 'undefined' || !isFinite(nn.lat) || !isFinite(nn.lng)) continue;
+                                latlngs.push([Number(nn.lat), Number(nn.lng)]);
+                            }
 
-        // Defer Livewire component event listeners until component is ready
-        function initializeLivewireListeners() {
-            if (typeof @this === 'undefined') {
-                setTimeout(initializeLivewireListeners, 100);
-                return;
-            }
+                            if (latlngs.length >= 2) {
+                                // Enhanced route polyline with better styling
+                                try {
+                                    const polyline = L.polyline(latlngs, {
+                                        color: route.color || '#f59e0b',
+                                        weight: 3,
+                                        opacity: 0.9,
+                                        lineCap: 'round',
+                                        lineJoin: 'round',
+                                        className: 'replay-route',
+                                        dashArray: routeIndex === 0 && route.name === 'Auto-calculated Route' ? '8, 4' : 'none'
+                                    }).bindPopup(`
+                                        <div class="bg-white p-2 rounded">
+                                            <strong>${route.name}</strong><br>
+                                            ${route.waypoints?.length || 0} waypoints<br>
+                                            From: ${route.start_location}<br>
+                                            To: ${route.end_location}
+                                        </div>
+                                    `);
 
-            @this.on('machine-selected', () => {
+                                    polyline.addTo(window.replayMap);
+                                    window.routePolylines.push(polyline);
+                                } catch (err) {
+                                    console.error('Failed to add route polyline (skipping):', err, { route, latlngs });
+                                }
+                            } else {
+                                console.warn('Route skipped - not enough valid waypoints:', route.name, route.waypoints?.length || 0);
+                            }
+                        }
                 console.log('Machine selected event');
                 // Wait a moment for Livewire to re-render, then load new data
                 setTimeout(() => {
