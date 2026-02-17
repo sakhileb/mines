@@ -122,11 +122,12 @@
         @if($alerts->count() > 0)
             <div class="space-y-3">
                 @foreach ($alerts as $alert)
-                    <div class="bg-slate-800 rounded-lg border {{ 
-                        $alert->priority === 'critical' ? 'border-red-700 bg-red-900/10' : 
-                        ($alert->priority === 'high' ? 'border-orange-700 bg-orange-900/10' : 
-                        ($alert->priority === 'medium' ? 'border-yellow-700 bg-yellow-900/10' : 'border-slate-700')) 
-                    }} p-4 hover:border-blue-600 transition">
+                    @php
+                        $priorityClasses = $alert->priority === 'critical' ? 'border-red-700 bg-red-900/10' : ($alert->priority === 'high' ? 'border-orange-700 bg-orange-900/10' : ($alert->priority === 'medium' ? 'border-yellow-700 bg-yellow-900/10' : 'border-slate-700'));
+                        $attentionClass = $alert->status === 'attention' ? 'border-red-700 bg-red-900/10' : '';
+                    @endphp
+
+                    <div class="bg-slate-800 rounded-lg border {{ $priorityClasses }} {{ $attentionClass }} p-4 hover:border-blue-600 transition">
                         <div class="flex items-start justify-between gap-4">
                             <!-- Alert Info -->
                             <div class="flex-1">
@@ -144,7 +145,8 @@
                                     <span class="px-2 py-1 text-xs font-semibold rounded {{ 
                                         $alert->status === 'new' ? 'bg-green-900 text-green-300' : 
                                         ($alert->status === 'acknowledged' ? 'bg-blue-900 text-blue-300' : 
-                                        ($alert->status === 'resolved' ? 'bg-slate-700 text-slate-300' : 'bg-slate-600 text-slate-400')) 
+                                        ($alert->status === 'resolved' ? 'bg-slate-700 text-slate-300' : 
+                                        ($alert->status === 'attention' ? 'bg-red-900 text-red-300' : 'bg-slate-600 text-slate-400'))) 
                                     }}">
                                         {{ ucfirst($alert->status) }}
                                     </span>
@@ -295,6 +297,61 @@
                             <div class="text-slate-300">{{ $selectedAlert->resolved_at->format('M d, Y H:i') }}</div>
                         </div>
                     @endif
+
+                    {{-- Location / Context --}}
+                    <div>
+                        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Location</div>
+                        <div class="text-slate-300 text-sm">
+                            @if(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['latitude']) && isset($selectedAlert->metadata['longitude']))
+                                {{ $selectedAlert->metadata['latitude'] }}, {{ $selectedAlert->metadata['longitude'] }}
+                                <a href="https://maps.google.com/?q={{ $selectedAlert->metadata['latitude'] }},{{ $selectedAlert->metadata['longitude'] }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
+                            @elseif($selectedAlert->machine && $selectedAlert->machine->last_location_latitude)
+                                {{ $selectedAlert->machine->last_location_latitude }}, {{ $selectedAlert->machine->last_location_longitude }}
+                                <a href="https://maps.google.com/?q={{ $selectedAlert->machine->last_location_latitude }},{{ $selectedAlert->machine->last_location_longitude }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
+                            @else
+                                <span class="text-slate-500">No coordinates available</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Geofence</div>
+                        <div class="text-slate-300">
+                            @if(isset($selectedAlert->geofence) && $selectedAlert->geofence)
+                                {{ $selectedAlert->geofence->name }}
+                            @elseif(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['geofence_name']))
+                                {{ $selectedAlert->metadata['geofence_name'] }}
+                            @else
+                                <span class="text-slate-500">N/A</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Mine Area</div>
+                        <div class="text-slate-300">
+                            @if($selectedAlert->mineArea)
+                                <a href="{{ route('mine-areas.show', $selectedAlert->mineArea->id) }}" class="text-amber-400 hover:text-amber-300">{{ $selectedAlert->mineArea->name }}</a>
+                            @else
+                                <span class="text-slate-500">N/A</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Mine Area Managers</div>
+                        <div class="text-slate-300 text-sm">
+                            @if(!empty($mineAreaManagers) && count($mineAreaManagers) > 0)
+                                <ul class="list-disc pl-5">
+                                    @foreach($mineAreaManagers as $mgr)
+                                        <li class="text-slate-300">{{ $mgr['name'] }} <span class="text-slate-500">({{ $mgr['role'] }})</span> — <a href="mailto:{{ $mgr['email'] }}" class="text-amber-400">{{ $mgr['email'] }}</a></li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <span class="text-slate-500">No managers assigned</span>
+                            @endif
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex gap-2 justify-end mt-6 pt-4 border-t border-slate-700">
@@ -304,6 +361,32 @@
                     >
                         Close
                     </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Dismiss Confirmation Modal -->
+    @if($showDismissConfirm && isset($pendingDismissAlertId))
+        @php $pendingAlert = \App\Models\Alert::find($pendingDismissAlertId); @endphp
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-slate-800 rounded-lg border border-slate-700 p-6 w-96 max-h-80 overflow-y-auto">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-white">Confirm Dismissal</h3>
+                    <p class="text-sm text-slate-400 mt-2">This alert appears unresolved. Dismissing it will remove it from the active list even though the underlying issue is not resolved.</p>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="text-sm text-slate-300">
+                        <strong>{{ $pendingAlert?->title }}</strong>
+                        <div class="text-slate-400 text-xs mt-1">{{ $pendingAlert?->description }}</div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 justify-end mt-6 pt-4 border-t border-slate-700">
+                    <button wire:click="cancelDismiss" class="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-600">Cancel</button>
+                    <button wire:click="confirmDismiss('highlight')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500">Keep & Highlight</button>
+                    <button wire:click="confirmDismiss('dismiss')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Dismiss anyway</button>
                 </div>
             </div>
         </div>

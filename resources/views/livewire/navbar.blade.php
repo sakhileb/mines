@@ -2,27 +2,59 @@
     <div class="px-6 py-4 flex justify-between items-center">
         <!-- Left Section -->
         <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-bold text-white">
-                @if (request()->routeIs('dashboard'))
-                    Dashboard
-                @elseif (request()->routeIs('fleet*'))
-                    Fleet Management
-                @elseif (request()->routeIs('map*'))
-                    Live Map
-                @elseif (request()->routeIs('geofences*'))
-                    Geofences
-                @elseif (request()->routeIs('reports*'))
-                    Reports
-                @elseif (request()->routeIs('alerts*'))
-                    Alerts
-                @elseif (request()->routeIs('integrations*'))
-                    Integrations
-                @elseif (request()->routeIs('settings*'))
-                    Settings
-                @else
-                    Mines
-                @endif
-            </h1>
+            @php
+                $routeName = optional(request()->route())->getName();
+                $mapping = [
+                    'dashboard' => 'Dashboard',
+                    'fleet' => 'Fleet Management',
+                    'fleet.replay' => 'Fleet Replay',
+                    'fleet.route-planning' => 'Route Planning',
+                    'map' => 'Live Map',
+                    'geofences' => 'Geofences',
+                    'geofences.show' => 'Geofence Details',
+                    'mine-areas' => 'Mine Areas',
+                    'mine-areas.show' => 'Mine Area',
+                    'reports' => 'Reports',
+                    'report-generator' => 'Generate Report',
+                    'alerts' => 'Alerts',
+                    'production' => 'Production',
+                    'fuel' => 'Fuel Management',
+                    'maintenance' => 'Maintenance',
+                    'ai-optimization' => 'AI Optimization',
+                    'ai-analytics' => 'AI Analytics',
+                    'documentation' => 'Documentation',
+                    'integrations' => 'Integrations',
+                    'billing.index' => 'Billing',
+                    'settings' => 'Settings',
+                    'team.settings' => 'Team Settings',
+                ];
+
+                $pageTitle = null;
+                if ($routeName && isset($mapping[$routeName])) {
+                    $pageTitle = $mapping[$routeName];
+                } else {
+                    // Fallbacks by pattern matching
+                    if (str_starts_with($routeName ?? '', 'fleet')) {
+                        $pageTitle = 'Fleet Management';
+                    } elseif (str_starts_with($routeName ?? '', 'geofences')) {
+                        $pageTitle = 'Geofences';
+                    } elseif (str_starts_with($routeName ?? '', 'mine-areas')) {
+                        $pageTitle = 'Mine Areas';
+                    } elseif (str_starts_with($routeName ?? '', 'reports')) {
+                        $pageTitle = 'Reports';
+                    } elseif (str_starts_with($routeName ?? '', 'ai-')) {
+                        $pageTitle = 'AI';
+                    }
+                }
+
+                // Final fallback: use first URI segment
+                if (! $pageTitle) {
+                    $firstSegment = explode('/', trim(request()->path(), '/'))[0] ?? null;
+                    $pageTitle = $firstSegment ? ucfirst(str_replace('-', ' ', $firstSegment)) : 'Mines';
+                }
+            @endphp
+
+            <h1 class="text-2xl font-bold text-white">{{ $pageTitle }}</h1>
         </div>
 
         <!-- Right Section -->

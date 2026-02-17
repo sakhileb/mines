@@ -83,40 +83,72 @@
     <div class="max-w-7xl mx-auto p-6">
         <div class="mb-8">
             <h2 class="text-lg font-semibold text-white mb-2">Mine Area Map</h2>
-            <div id="mine-area-detail-map" style="height: 400px; width: 100%; background: #1f2937; border-radius: 0.5rem; border: 1px solid #374151;"></div>
+            <div id="mine-area-detail-map" wire:ignore style="height: 400px; width: 100%; background: #1f2937; border-radius: 0.5rem; border: 1px solid #374151;"></div>
         </div>
     <!-- Leaflet Map Scripts -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const mapContainer = document.getElementById('mine-area-detail-map');
-            if (!mapContainer) return;
-            // Center coordinates
-            const lat = {{ $mineArea->latitude ?? 'null' }};
-            const lng = {{ $mineArea->longitude ?? 'null' }};
-            const boundary = @json($mineArea->metadata['boundary_coordinates'] ?? null);
-            let center = [-26.2041, 28.0473];
-            let zoom = 13;
-            if (lat && lng) {
-                center = [lat, lng];
-            }
-            const map = L.map('mine-area-detail-map').setView(center, zoom);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            // Add marker for center
-            if (lat && lng) {
-                L.marker([lat, lng]).addTo(map).bindPopup('Center: ' + lat.toFixed(6) + ', ' + lng.toFixed(6));
-            }
-            // Add polygon for boundary
-            if (boundary && Array.isArray(boundary) && boundary.length > 2) {
-                const polygonLatLngs = boundary.map(pt => [pt.lat, pt.lng]);
-                const polygon = L.polygon(polygonLatLngs, {color: '#f59e42', fillOpacity: 0.2}).addTo(map);
-                map.fitBounds(polygon.getBounds(), {padding: [30, 30]});
-            }
-        });
+            (function () {
+                const lat = {{ $mineArea->latitude ?? 'null' }};
+                const lng = {{ $mineArea->longitude ?? 'null' }};
+                const boundary = @json($mineArea->metadata['boundary_coordinates'] ?? null);
+
+                function createMap() {
+                    const mapContainer = document.getElementById('mine-area-detail-map');
+                    if (!mapContainer || typeof L === 'undefined') return null;
+
+                    // If map already exists globally, do not recreate
+                    if (window._mineAreaDetailMap) return window._mineAreaDetailMap;
+
+                    let center = [-26.2041, 28.0473];
+                    let zoom = 13;
+                    if (lat && lng) {
+                        center = [lat, lng];
+                    }
+
+                    const map = L.map(mapContainer).setView(center, zoom);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    if (lat && lng) {
+                        L.marker([lat, lng]).addTo(map).bindPopup('Center: ' + lat.toFixed(6) + ', ' + lng.toFixed(6));
+                    }
+
+                    if (boundary && Array.isArray(boundary) && boundary.length > 2) {
+                        const polygonLatLngs = boundary.map(pt => [pt.lat, pt.lng]);
+                        const polygon = L.polygon(polygonLatLngs, {color: '#f59e42', fillOpacity: 0.2}).addTo(map);
+                        map.fitBounds(polygon.getBounds(), {padding: [30, 30]});
+                    }
+
+                    // store instance globally so Livewire won't lose reference when DOM updates
+                    window._mineAreaDetailMap = map;
+                    return map;
+                }
+
+                function ensureMapVisible() {
+                    const map = window._mineAreaDetailMap || createMap();
+                    if (map) {
+                        setTimeout(() => map.invalidateSize(), 50);
+                    }
+                }
+
+                document.addEventListener('livewire:load', function () {
+                    createMap();
+                });
+
+                // After any Livewire DOM update, ensure map resizes and is visible
+                document.addEventListener('livewire:update', function () {
+                    ensureMapVisible();
+                });
+
+                // Fallback for initial non-Livewire page load
+                document.addEventListener('DOMContentLoaded', function () {
+                    createMap();
+                });
+            })();
     </script>
 
         {{-- OVERVIEW TAB --}}

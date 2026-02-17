@@ -39,19 +39,34 @@ class ProductionDashboard extends Component
 
     protected $productionService;
     protected $team;
+    public $teamId = 0;
 
     public function mount()
     {
         $this->productionService = app(ProductionService::class);
         $this->team = Auth::user()->currentTeam;
+        $this->teamId = $this->team?->id ?? 0;
         $this->record_date = Carbon::today()->format('Y-m-d');
         $this->endDate = Carbon::today()->format('Y-m-d');
         $this->startDate = Carbon::today()->subMonth()->format('Y-m-d');
     }
 
+    /**
+     * Ensure services and team are available after Livewire hydration.
+     */
+    public function hydrate()
+    {
+        if (! $this->productionService) {
+            $this->productionService = app(ProductionService::class);
+        }
+
+        $this->team = Auth::user()->currentTeam;
+        $this->teamId = $this->team?->id ?? $this->teamId;
+    }
+
     public function getProductionRecordsProperty()
     {
-        $query = ProductionRecord::forTeam($this->team->id);
+        $query = ProductionRecord::forTeam($this->teamId);
 
         if ($this->search) {
             $query->whereHas('mineArea', function ($q) {
@@ -77,7 +92,7 @@ class ProductionDashboard extends Component
     public function getStatisticsProperty()
     {
         return $this->productionService->getProductionStatistics(
-            $this->team->id,
+            $this->teamId,
             Carbon::now()->subDays(30),
             Carbon::now()
         );
@@ -85,23 +100,23 @@ class ProductionDashboard extends Component
 
     public function getTrendProperty()
     {
-        return $this->productionService->getProductionTrend($this->team->id, 30);
+        return $this->productionService->getProductionTrend($this->teamId, 30);
     }
 
     public function getTargetsProperty()
     {
-        return $this->productionService->getActiveTargets($this->team->id);
+        return $this->productionService->getActiveTargets($this->teamId);
     }
 
     public function getForecastsProperty()
     {
-        return $this->productionService->getRecentForecasts($this->team->id, 7);
+        return $this->productionService->getRecentForecasts($this->teamId, 7);
     }
 
     public function getSummaryProperty()
     {
         $stats = $this->statistics;
-        $activeAreas = MineArea::forTeam($this->team->id)->where('status', 'active')->count();
+        $activeAreas = MineArea::forTeam($this->teamId)->where('status', 'active')->count();
         
         return [
             'total_loads' => $stats['total_records'] ?? 0,
@@ -114,12 +129,12 @@ class ProductionDashboard extends Component
 
     public function getMineAreasProperty()
     {
-        return MineArea::forTeam($this->team->id)->get();
+        return MineArea::forTeam($this->teamId)->get();
     }
 
     public function getMachinesProperty()
     {
-        return Machine::where('team_id', $this->team->id)->get();
+        return Machine::where('team_id', $this->teamId)->get();
     }
 
     public function getDailyChartProperty()
@@ -168,7 +183,7 @@ class ProductionDashboard extends Component
         }
 
         return $mineAreas->map(function ($area) {
-            $records = ProductionRecord::where('team_id', $this->team->id)
+                $records = ProductionRecord::where('team_id', $this->teamId)
                 ->where('mine_area_id', $area->id)
                 ->betweenDates(Carbon::parse($this->startDate), Carbon::parse($this->endDate))
                 ->get();
@@ -239,7 +254,7 @@ class ProductionDashboard extends Component
             ]);
             $this->showEditModal = false;
         } else {
-            $this->productionService->createProductionRecord($this->team->id, [
+            $this->productionService->createProductionRecord($this->teamId, [
                 ...$validated,
                 'notes' => $this->notes,
             ]);

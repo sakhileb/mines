@@ -462,19 +462,33 @@
                                         </svg>
                                     </button>
                                 @else
+                                    @php
+                                        $isExcavator = in_array(strtolower($machine->machine_type ?? ''), ['excavator','digger','loader']);
+                                        $assignedAdtCount = $adts->where('excavator_id', $machine->id)->count();
+                                    @endphp
+
                                     <button wire:click="openAssignModal({{ $machine->id }})" 
                                             class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs flex items-center gap-1 font-medium transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                         </svg>
-                                        Assign to Excavator
+                                        @if($isExcavator)
+                                            Manage ADTs ({{ $assignedAdtCount }})
+                                        @else
+                                            Assign to Excavator
+                                        @endif
                                     </button>
+
                                     <button wire:click="openMineAreaAssignModal({{ $machine->id }})"
-                                            class="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 text-xs flex items-center gap-1 font-medium transition-colors">
+                                        class="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 text-xs flex items-center gap-1 font-medium transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7v6a2 2 0 01-2 2H8m8-8h-8a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V7z" />
                                         </svg>
-                                        Assign to Mine Area
+                                        @if($machine->mine_area_id)
+                                            Change Mine Area
+                                        @else
+                                            Assign to Mine Area
+                                        @endif
                                     </button>
                                 @endif
                             </div>
@@ -749,21 +763,49 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Select Excavator</label>
-                    <select 
-                        wire:model="selectedExcavatorId"
-                        class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500"
-                    >
-                        <option value="">Choose an excavator...</option>
-                        @foreach ($excavators as $excavator)
-                            <option value="{{ $excavator->id }}">
-                                {{ $excavator->name }} ({{ ucfirst($excavator->machine_type) }})
-                            </option>
-                        @endforeach
-                    </select>
-                    
-                    @if (count($excavators) === 0)
-                        <p class="text-gray-400 text-sm mt-2">No excavators available. Create an excavator machine first.</p>
+                    @if($assignMode === 'assign_adts_to_excavator')
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Select ADTs to assign</label>
+                        <div class="max-h-48 overflow-auto border border-gray-700 rounded p-2 bg-gray-900">
+                            @if($adts->count() === 0)
+                                <p class="text-gray-400 text-sm">No ADTs available. Create ADT machines first.</p>
+                            @else
+                                @foreach($adts as $adt)
+                                    <label class="flex items-center gap-2 text-sm text-gray-200 py-1">
+                                        <input type="checkbox" wire:model="selectedAdtIds" value="{{ $adt->id }}" class="form-checkbox h-4 w-4 text-amber-500" />
+                                        <span>{{ $adt->name }} ({{ ucfirst($adt->machine_type) }})</span>
+                                    </label>
+                                @endforeach
+                            @endif
+                        </div>
+                    @else
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Select Excavator</label>
+                        <select 
+                            wire:model="selectedExcavatorId"
+                            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500"
+                        >
+                            <option value="">Choose an excavator...</option>
+                            @php $assigning = \App\Models\Machine::find($assigningMachineId); @endphp
+                            @foreach ($excavators as $excavator)
+                                @php
+                                    $disableOption = false;
+                                    $bigTypes = ['excavator','dozer','loader','grader','bulldozer'];
+                                    if ($assigning && in_array(strtolower($assigning->machine_type ?? ''), $bigTypes) && in_array(strtolower($excavator->machine_type ?? ''), $bigTypes)) {
+                                        $disableOption = true;
+                                    }
+                                @endphp
+                                <option value="{{ $excavator->id }}" @if($disableOption) disabled title="Cannot assign big machines to another big machine" @endif>
+                                    {{ $excavator->name }} ({{ ucfirst($excavator->machine_type) }}) @if($disableOption) — not allowed @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        
+                        @if (count($excavators) === 0)
+                            <p class="text-gray-400 text-sm mt-2">No excavators available. Create an excavator machine first.</p>
+                        @else
+                            @if($assigning && in_array(strtolower($assigning->machine_type ?? ''), ['excavator','dozer','loader','grader','bulldozer']))
+                                <p class="text-xs text-gray-400 mt-2">Note: Assigning big machines to other big machines is not allowed. Valid excavators/haulers will be selectable.</p>
+                            @endif
+                        @endif
                     @endif
                 </div>
 
@@ -778,9 +820,13 @@
                     <button 
                         wire:click="assignToExcavator"
                         class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                        @if(count($excavators) === 0) disabled @endif
+                        @if($assignMode === 'assign_adts_to_excavator' && count($adts) === 0) disabled @endif
                     >
-                        Assign
+                        @if($assignMode === 'assign_adts_to_excavator')
+                            Save ADT Assignments
+                        @else
+                            Assign
+                        @endif
                     </button>
                 </div>
             </div>

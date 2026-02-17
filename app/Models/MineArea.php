@@ -16,6 +16,9 @@ class MineArea extends Model
         'name',
         'description',
         'location',
+        'coordinates',
+        'center_latitude',
+        'center_longitude',
         'latitude',
         'longitude',
         'area_size_hectares',
@@ -28,6 +31,8 @@ class MineArea extends Model
     protected $casts = [
         'latitude' => 'float',
         'longitude' => 'float',
+        'center_latitude' => 'float',
+        'center_longitude' => 'float',
         'area_size_hectares' => 'float',
         'metadata' => 'array',
     ];

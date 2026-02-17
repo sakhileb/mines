@@ -1,9 +1,11 @@
+<div>
 <div class="h-screen flex flex-col bg-gray-900">
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/vendor/leaflet-draw/leaflet.draw.css" />
 
     <style>
-        #mine-area-map {
+        #mine-area-map,
+        #mine-area-draw-map {
             background: #1f2937;
             min-height: 400px;
             height: 100%;
@@ -21,7 +23,7 @@
 
     <!-- Header -->
     <div class="bg-gray-800 border-b border-gray-700 p-6">
-        <div class="max-w-7xl mx-auto">
+            <div class="w-full px-6">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold text-white">Mine Areas</h1>
@@ -29,7 +31,7 @@
                 </div>
                 <div class="flex gap-2">
                     @if($viewMode === 'map' && $isDrawing)
-                        <button 
+                        <button type="button"
                             wire:click="switchToListMode" 
                             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                         >
@@ -39,7 +41,7 @@
                             View List
                         </button>
                     @elseif($viewMode === 'list')
-                        <button 
+                        <button type="button"
                             wire:click="openCreateMapModal" 
                             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
@@ -48,7 +50,7 @@
                             </svg>
                             Draw on Map
                         </button>
-                        <button 
+                        <button type="button"
                             wire:click="openCreateModal" 
                             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
@@ -70,12 +72,6 @@
                     >
                         List View
                     </button>
-                    <button 
-                        wire:click="switchToMapMode"
-                        class="px-4 py-2 rounded-lg transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    >
-                        Map View
-                    </button>
                 </div>
             @endif
         </div>
@@ -86,7 +82,7 @@
         @if($viewMode === 'list')
             <!-- List View -->
             <div class="w-full flex flex-col overflow-auto">
-                <div class="bg-gray-800 m-6 rounded-lg shadow space-y-4">
+                <div class="bg-gray-800 w-full px-6 py-6 rounded-lg shadow space-y-4">
                     <!-- Stats Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 border-b border-gray-700">
                         <div class="bg-gray-800 rounded-lg p-4 shadow border border-gray-700">
@@ -138,7 +134,7 @@
                             <thead class="bg-gray-700 border-b border-gray-600">
                                 <tr>
                                     <th class="px-6 py-3 text-left">
-                                        <button wire:click="toggleSort('name')" class="flex items-center gap-2 font-semibold text-white">
+                                        <button type="button" wire:click="toggleSort('name')" class="flex items-center gap-2 font-semibold text-white">
                                             Name
                                             @if($sortBy === 'name')
                                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -157,7 +153,7 @@
                                     <th class="px-6 py-3 text-center font-semibold text-white">Alerts</th>
                                     <th class="px-6 py-3 text-center font-semibold text-white">Plans</th>
                                     <th class="px-6 py-3 text-left">
-                                        <button wire:click="toggleSort('status')" class="flex items-center gap-2 font-semibold text-white">
+                                        <button type="button" wire:click="toggleSort('status')" class="flex items-center gap-2 font-semibold text-white">
                                             Status
                                             @if($sortBy === 'status')
                                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -234,13 +230,13 @@
                                                 >
                                                     View
                                                 </a>
-                                                <button 
+                                                <button type="button"
                                                     wire:click="openEditModal({{ $area->id }})"
                                                     class="inline-flex items-center px-3 py-1 text-sm bg-blue-900 text-blue-200 rounded hover:bg-blue-800 transition-colors"
                                                 >
                                                     Edit
                                                 </button>
-                                                <button 
+                                                <button type="button"
                                                     wire:click="deleteMineArea({{ $area->id }})"
                                                     wire:confirm="Are you sure you want to delete this mine area?"
                                                     class="inline-flex items-center px-3 py-1 text-sm bg-red-900 text-red-200 rounded hover:bg-red-800 transition-colors"
@@ -299,7 +295,7 @@
                         </div>
                     @endif
 
-                    <form wire:submit="saveMineAreaWithBoundary" class="space-y-3">
+                    <form wire:submit.prevent="saveMineAreaWithBoundary" class="space-y-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">Name *</label>
                             <input 
@@ -373,7 +369,7 @@
 
                 <!-- Right: Map -->
                 <div class="flex-1 relative">
-                    <div id="mine-area-map" wire:ignore></div>
+                    <div id="mine-area-draw-map" wire:ignore style="min-height:400px; height:520px; width:100%;"></div>
                 </div>
             </div>
         @endif
@@ -387,7 +383,7 @@
                     <h2 class="text-xl font-bold text-white">
                         {{ $editingMineAreaId ? 'Edit Mine Area' : 'Create New Mine Area' }}
                     </h2>
-                    <button 
+                    <button type="button"
                         wire:click="@if($editingMineAreaId) closeEditModal @else closeCreateModal @endif"
                         class="text-gray-400 hover:text-gray-300"
                     >
@@ -520,6 +516,11 @@
         </div>
     </div>
 
+    <!-- Map Hint (temporary visual hint) -->
+    <div id="map-hint" class="pointer-events-none fixed top-6 right-6 z-[1000] bg-yellow-600 text-black text-sm px-3 py-2 rounded shadow-lg" style="display: none;">
+        <span id="map-hint-text">Map detected but failed to initialize.</span>
+    </div>
+
     <!-- Leaflet and Drawing Tools -->
     <script src="/vendor/leaflet.js"></script>
     <script src="/vendor/leaflet-draw/leaflet.draw.umd.js"></script>
@@ -530,6 +531,7 @@
         let geofenceLayerGroup;
         let initRetryCount = 0;
         const MAX_INIT_RETRIES = 50;
+        // These server-side flags are initial state only; determine active container dynamically
         let isMapDrawMode = @json($isDrawing);
         let isMapViewMode = @json($viewMode === 'map');
         let geofences = [];
@@ -567,10 +569,38 @@
             });
         }
 
+        function getActiveMapContainerId() {
+            const drawEl = document.getElementById('mine-area-draw-map');
+            const browseEl = document.getElementById('mine-area-map');
+            function isVisible(el) {
+                if (!el) return false;
+                const rect = el.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).display !== 'none' && el.offsetParent !== null;
+            }
+
+            if (isVisible(drawEl)) return 'mine-area-draw-map';
+            if (isVisible(browseEl)) return 'mine-area-map';
+            // fallback: prefer draw if present
+            if (drawEl) return 'mine-area-draw-map';
+            return 'mine-area-map';
+        }
+
         function initializeMineAreaMap() {
-            const mapContainer = document.getElementById('mine-area-map');
+            const targetId = getActiveMapContainerId();
+            const mapContainer = document.getElementById(targetId);
             const loadingEl = document.getElementById('map-loading');
             if (!mapContainer) return;
+            // If an existing map was created on a different container, remove it so we can recreate on the current container
+            if (mineAreaMap && mineAreaMap._container && mineAreaMap._container.id !== targetId) {
+                try {
+                    mineAreaMap.remove();
+                } catch (e) {
+                    console.warn('Error removing previous map instance', e);
+                }
+                mineAreaMap = null;
+                drawnItems = null;
+                geofenceLayerGroup = null;
+            }
             if (mineAreaMap) {
                 mineAreaMap.invalidateSize();
                 if (loadingEl) loadingEl.style.display = 'none';
@@ -584,6 +614,8 @@
                     if (loadingEl) {
                         loadingEl.innerHTML = '<div class="text-center"><p class="text-red-400 mb-2">Map library failed to load</p><p class="text-gray-400 text-sm">Leaflet library could not be loaded from CDN</p><button onclick="location.reload()" class="mt-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded">Retry</button></div>';
                     }
+                    // show a short visual hint to the user
+                    if (window.showMapHint) window.showMapHint('Map detected but failed to initialize. Check console for details.');
                     return;
                 }
                 setTimeout(initializeMineAreaMap, 200);
@@ -593,7 +625,7 @@
                 window.L = window.L;
             }
             try {
-                mineAreaMap = L.map('mine-area-map').setView([-26.2041, 28.0473], 10);
+                mineAreaMap = L.map(targetId).setView([-26.2041, 28.0473], 10);
                 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '© OpenStreetMap contributors'
@@ -607,57 +639,112 @@
                     'Standard': osmLayer,
                     'Satellite': satelliteLayer
                 }).addTo(mineAreaMap);
+                // Ensure default icon/image path points to the packaged draw images
+                try {
+                    if (L.Icon && L.Icon.Default) {
+                        L.Icon.Default.imagePath = '/vendor/leaflet-draw/images/';
+                        if (L.Icon.Default.prototype && L.Icon.Default.prototype.options) {
+                            L.Icon.Default.prototype.options.imagePath = '/vendor/leaflet-draw/images/';
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Could not set Leaflet default image path', e);
+                }
+
                 geofenceLayerGroup = L.layerGroup().addTo(mineAreaMap);
                 renderGeofences();
                 if (loadingEl) loadingEl.style.display = 'none';
-                // Drawing mode
-                if (isMapDrawMode) {
-                    drawnItems = new L.FeatureGroup();
-                    mineAreaMap.addLayer(drawnItems);
-                    const drawControl = new L.Control.Draw({
-                        position: 'topleft',
-                        draw: {
-                            polygon: true,
-                            rectangle: false,
-                            circle: false,
-                            marker: false,
-                            circlemarker: false,
-                            polyline: false
-                        },
-                        edit: {
-                            featureGroup: drawnItems,
-                            remove: true
-                        }
-                    });
-                    mineAreaMap.addControl(drawControl);
-                    mineAreaMap.on('draw:created', function(e) {
-                        const layer = e.layer;
-                        drawnItems.addLayer(layer);
-                        if (layer.getLatLngs) {
-                            const coords = layer.getLatLngs()[0].map(point => ({
-                                lat: point.lat,
-                                lng: point.lng
-                            }));
-                            @this.setBoundary(coords);
-                        }
-                    });
-                    mineAreaMap.on('draw:edited', function(e) {
-                        e.layers.eachLayer(function(layer) {
-                            if (layer.getLatLngs) {
-                                const coords = layer.getLatLngs()[0].map(point => ({
-                                    lat: point.lat,
-                                    lng: point.lng
-                                }));
-                                @this.setBoundary(coords);
+                    // Determine if we're in draw mode based on active container
+                    const drawModeActive = targetId === 'mine-area-draw-map';
+                    // Drawing mode
+                    if (drawModeActive) {
+                        // Create a feature group to hold drawn layers
+                        drawnItems = new L.FeatureGroup();
+                        mineAreaMap.addLayer(drawnItems);
+
+                        function createDrawControlsAndHandlers() {
+                            try {
+                                if (!L.Control || !L.Control.Draw) {
+                                    console.warn('Leaflet.Draw not available on L.Control');
+                                    return false;
+                                }
+                                const drawControl = new L.Control.Draw({
+                                    position: 'topleft',
+                                    draw: {
+                                        polygon: true,
+                                        rectangle: false,
+                                        circle: false,
+                                        marker: false,
+                                        circlemarker: false,
+                                        polyline: false
+                                    },
+                                    edit: {
+                                        featureGroup: drawnItems,
+                                        remove: true
+                                    }
+                                });
+                                mineAreaMap.addControl(drawControl);
+                                mineAreaMap.on('draw:created', function(e) {
+                                    const layer = e.layer;
+                                    drawnItems.addLayer(layer);
+                                    if (layer.getLatLngs) {
+                                        const coords = layer.getLatLngs()[0].map(point => ({
+                                            lat: point.lat,
+                                            lng: point.lng
+                                        }));
+                                        @this.setBoundary(coords);
+                                    }
+                                });
+                                mineAreaMap.on('draw:edited', function(e) {
+                                    e.layers.eachLayer(function(layer) {
+                                        if (layer.getLatLngs) {
+                                            const coords = layer.getLatLngs()[0].map(point => ({
+                                                lat: point.lat,
+                                                lng: point.lng
+                                            }));
+                                            @this.setBoundary(coords);
+                                        }
+                                    });
+                                });
+                                mineAreaMap.on('draw:deleted', function(e) {
+                                    @this.clearBoundary();
+                                });
+                                return true;
+                            } catch (err) {
+                                console.error('Error creating draw controls:', err);
+                                return false;
                             }
-                        });
-                    });
-                    mineAreaMap.on('draw:deleted', function(e) {
-                        @this.clearBoundary();
-                    });
-                }
+                        }
+
+                        // If Draw plugin isn't attached yet, try to load the non-UMD build dynamically
+                        if (typeof L.Control === 'undefined' || typeof L.Control.Draw === 'undefined') {
+                            // Try to load the plain browser build if present
+                            const drawScriptPath = '/vendor/leaflet-draw/leaflet.draw.js';
+                            console.debug('Leaflet.Draw missing — attempting to load', drawScriptPath);
+                            const s = document.createElement('script');
+                            s.src = drawScriptPath;
+                            s.onload = function() {
+                                setTimeout(() => {
+                                    if (!createDrawControlsAndHandlers()) {
+                                        console.error('Leaflet.Draw loaded but controls still unavailable');
+                                        window.showMapHint && window.showMapHint('Drawing tools unavailable');
+                                    }
+                                }, 50);
+                            };
+                            s.onerror = function() {
+                                console.error('Failed to load Leaflet.Draw from', drawScriptPath);
+                                window.showMapHint && window.showMapHint('Failed to load drawing tools');
+                            };
+                            document.head.appendChild(s);
+                        } else {
+                            createDrawControlsAndHandlers();
+                        }
+                    }
+                console.debug('initializeMineAreaMap: targetId=', targetId, ' drawMode=', drawModeActive);
             } catch (error) {
                 console.error('Error initializing map:', error);
+                // show visual hint
+                if (window.showMapHint) window.showMapHint('Map initialization error — check console');
                 if (loadingEl) {
                     loadingEl.innerHTML = '<div class="text-center"><p class="text-red-400 mb-2">Failed to load map</p><p class="text-gray-400 text-sm">Please refresh the page</p></div>';
                 }
@@ -684,5 +771,82 @@
                 initializeMineAreaMap();
             }, 100);
         });
+
+        // Small helper to show a temporary visual hint overlay
+        window.showMapHint = function(message, duration = 6000) {
+            try {
+                const hint = document.getElementById('map-hint');
+                const hintText = document.getElementById('map-hint-text');
+                if (!hint || !hintText) return;
+                hintText.textContent = message;
+                hint.style.display = '';
+                hint.style.opacity = '1';
+                setTimeout(() => {
+                    hint.style.transition = 'opacity 400ms ease';
+                    hint.style.opacity = '0';
+                    setTimeout(() => { hint.style.display = 'none'; hint.style.transition = ''; }, 450);
+                }, duration);
+            } catch (e) {
+                console.warn('showMapHint failed', e);
+            }
+        };
+
+        // Observe the draw-map element and initialize when it appears / becomes visible.
+        (function observeDrawMapInit() {
+            const drawId = 'mine-area-draw-map';
+
+            function isElementVisible(el) {
+                if (!el) return false;
+                const rect = el.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).display !== 'none' && el.offsetParent !== null;
+            }
+
+            function tryInit() {
+                const el = document.getElementById(drawId);
+                const visible = isElementVisible(el);
+                console.debug('observeDrawMapInit: check', { found: !!el, visible });
+                if (visible) {
+                    // initialize map for draw container
+                    initializeMineAreaMap();
+                    return true;
+                }
+                return false;
+            }
+
+            // Quick initial check shortly after load
+            setTimeout(() => { tryInit(); }, 150);
+
+            // MutationObserver: watch for DOM changes (Livewire swaps) and init when element appears or its attributes change
+            const root = document.body;
+            const mo = new MutationObserver(() => {
+                if (tryInit()) {
+                    mo.disconnect();
+                    console.debug('observeDrawMapInit: MutationObserver disconnected after init');
+                }
+            });
+            mo.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+
+            // ResizeObserver: when the element exists, watch for non-zero size then init and disconnect
+            (function waitForElementAndObserveResize() {
+                const el = document.getElementById(drawId);
+                if (!el) return setTimeout(waitForElementAndObserveResize, 200);
+                try {
+                    const ro = new ResizeObserver(entries => {
+                        for (const entry of entries) {
+                            const cr = entry.contentRect || {};
+                            console.debug('observeDrawMapInit: ResizeObserver', { width: cr.width, height: cr.height });
+                            if ((cr.width || el.clientWidth) > 0 && (cr.height || el.clientHeight) > 0) {
+                                initializeMineAreaMap();
+                                try { ro.disconnect(); } catch (e) {}
+                            }
+                        }
+                    });
+                    ro.observe(el);
+                } catch (e) {
+                    console.warn('observeDrawMapInit: ResizeObserver not available', e);
+                }
+            })();
+        })();
     </script>
+</div>
 </div>

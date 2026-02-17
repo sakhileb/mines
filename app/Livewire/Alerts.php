@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Alert;
+use App\Models\Geofence;
 use App\Traits\RealtimeUpdates;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -20,6 +21,8 @@ class Alerts extends Component
     public $selectedType = 'all';
     public $showDetailsModal = false;
     public $selectedAlertId = null;
+    public $pendingDismissAlertId = null;
+    public $showDismissConfirm = false;
 
     protected $alertPriorities = [
         'critical' => 'Critical',
@@ -106,6 +109,17 @@ class Alerts extends Component
                 'resolved_at' => now(),
             ]);
             $this->dispatch('notify', message: 'Alert resolved');
+
+            // If the resolved alert is currently selected in the details modal, close it
+            if ($this->selectedAlertId === $alert->id) {
+                $this->closeDetails();
+            }
+
+            // Refresh pagination/list to immediately remove the resolved alert from the current view
+            $this->resetPage();
+
+            // Emit event for any frontend listeners (optional)
+            $this->dispatch('alert-resolved', ['id' => $alert->id]);
         }
     }
 
@@ -115,6 +129,13 @@ class Alerts extends Component
         $alert = Alert::where('team_id', $team->id)->find($alertId);
 
         if ($alert) {
+            // If the alert is not resolved, ask for confirmation before dismissing
+            if ($alert->status !== 'resolved') {
+                $this->pendingDismissAlertId = $alert->id;
+                $this->showDismissConfirm = true;
+                return;
+            }
+
             $alert->update([
                 'status' => 'dismissed',
                 'dismissed_by' => Auth::id(),
@@ -122,6 +143,42 @@ class Alerts extends Component
             ]);
             $this->dispatch('notify', message: 'Alert dismissed');
         }
+    }
+
+    public function confirmDismiss($choice = 'dismiss')
+    {
+        $team = Auth::user()->currentTeam;
+        $alert = Alert::where('team_id', $team->id)->find($this->pendingDismissAlertId);
+
+        if (! $alert) {
+            $this->showDismissConfirm = false;
+            $this->pendingDismissAlertId = null;
+            return;
+        }
+
+        if ($choice === 'dismiss') {
+            $alert->update([
+                'status' => 'dismissed',
+                'dismissed_by' => Auth::id(),
+                'dismissed_at' => now(),
+            ]);
+            $this->dispatch('notify', message: 'Alert dismissed');
+        } else {
+            // Keep the alert visible but mark as needing attention so it stands out
+            $alert->update([
+                'status' => 'attention',
+            ]);
+            $this->dispatch('notify', message: 'Alert marked for attention');
+        }
+
+        $this->showDismissConfirm = false;
+        $this->pendingDismissAlertId = null;
+    }
+
+    public function cancelDismiss()
+    {
+        $this->showDismissConfirm = false;
+        $this->pendingDismissAlertId = null;
     }
 
     public function showDetails($alertId)
@@ -139,18 +196,62 @@ class Alerts extends Component
     public function getSelectedAlert()
     {
         if ($this->selectedAlertId) {
-            return Alert::with('machine')->find($this->selectedAlertId);
+            $alert = Alert::with(['machine', 'mineArea'])->find($this->selectedAlertId);
+
+            // If geofence id was stored in metadata, attach the geofence relation for convenience
+            if ($alert && is_array($alert->metadata ?? [])) {
+                $meta = $alert->metadata;
+                $geofenceId = $meta['geofence_id'] ?? null;
+                if ($geofenceId) {
+                    $geofence = Geofence::find($geofenceId);
+                    if ($geofence) {
+                        $alert->setRelation('geofence', $geofence);
+                    }
+                }
+            }
+
+            return $alert;
         }
         return null;
     }
 
+    /**
+     * Return an array of mine-area managers (team users with manager-like roles)
+     */
+    public function getMineAreaManagersForAlert($alert): array
+    {
+        if (! $alert || ! $alert->mineArea) {
+            return [];
+        }
+
+        $team = Auth::user()->currentTeam;
+        $candidates = $team->users()->with('roles')->get();
+
+        $managers = $candidates->filter(function ($user) {
+            $role = $user->roles->first()?->name ?? null;
+            return in_array($role, ['admin', 'fleet_manager', 'manager']);
+        })->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->roles->first()?->name ?? '',
+            ];
+        })->values()->toArray();
+
+        return $managers;
+    }
+
     public function render()
     {
+        $selected = $this->getSelectedAlert();
+
         return view('livewire.alerts', [
             'alerts' => $this->getAlerts(),
             'alertPriorities' => $this->alertPriorities,
             'alertTypes' => $this->alertTypes,
-            'selectedAlert' => $this->getSelectedAlert(),
+            'selectedAlert' => $selected,
+            'mineAreaManagers' => $this->getMineAreaManagersForAlert($selected),
         ]);
     }
 }

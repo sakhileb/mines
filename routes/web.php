@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Machine;
 use App\Models\Geofence;
 use App\Models\Report;
+use App\Http\Controllers\ReportController;
 
 // Include test routes for session/CSRF debugging (remove in production)
 if (config('app.debug')) {
@@ -76,6 +77,11 @@ Route::middleware([
     Route::get('/reports/{report}', function (Report $report) {
         return view('reports.show', ['report' => $report]);
     })->name('reports.show');
+
+    // Reports view 2 (scope selectors)
+    Route::get('/reports/view-2', [ReportController::class, 'view2'])->name('reports.view2');
+    // Simple generate endpoint (GET form)
+    Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
 
     // Alerts
     Route::get('/alerts', App\Livewire\Alerts::class)

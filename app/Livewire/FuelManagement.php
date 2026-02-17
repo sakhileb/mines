@@ -10,6 +10,7 @@ use App\Models\FuelMonthlyAllocation;
 use App\Models\Machine;
 use App\Models\MineArea;
 use App\Services\AI\FuelPredictorAgent;
+use App\Services\FuelManagementService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,6 +47,7 @@ class FuelManagement extends Component
     public $tankLocationDescription = '';
     public $tankNotes = '';
     public $tankMineAreaId = '';
+    public $selectedTankId = '';
 
     public function recordDispensingTransaction()
     {
@@ -81,13 +83,39 @@ class FuelManagement extends Component
             return;
         }
 
-        // Proceed to record the transaction (not implemented here)
-        // ...
-        // After recording, update allocation
-        $allocation->updateConsumption();
-        $this->dispatch('notify', type: 'success', message: 'Dispensing transaction recorded.');
-        $this->transactionTankId = '';
-        $this->transactionQuantity = '';
+        // Build transaction payload and record via service
+        $unitPrice = $allocation->fuel_price_per_liter ?? 0;
+        $totalCost = round($unitPrice * $this->transactionQuantity, 2);
+
+        $service = new FuelManagementService();
+        try {
+            $transaction = $service->recordTransaction([
+                'team_id' => $tank->team_id,
+                'fuel_tank_id' => $tank->id,
+                'machine_id' => $this->transactionMineAreaId ?: null,
+                'user_id' => auth()->id(),
+                'transaction_type' => 'dispensing',
+                'quantity_liters' => $this->transactionQuantity,
+                'unit_price' => $unitPrice,
+                'total_cost' => $totalCost,
+                'fuel_type' => $tank->fuel_type,
+                'transaction_date' => now(),
+                'monthly_allocation_id' => $allocation->id ?? null,
+                'notes' => null,
+            ]);
+
+            // Refresh allocation consumption
+            if ($allocation) {
+                $allocation->updateConsumption();
+            }
+
+            $this->dispatch('notify', type: 'success', message: 'Dispensing transaction recorded.');
+            $this->reset(['transactionTankId', 'transactionQuantity', 'transactionMineAreaId']);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to record dispensing transaction', ['error' => $e->getMessage()]);
+            $this->transactionError = 'Failed to record transaction. ' . $e->getMessage();
+        }
     }
     
     public function mount()
@@ -106,6 +134,20 @@ class FuelManagement extends Component
     public function closeManageModal()
     {
         $this->showManageModal = false;
+    }
+
+    public function closeTankModal()
+    {
+        $this->showManageModal = false;
+        $this->manageTab = 'dispense';
+        $this->reset(['tankName', 'tankNumber', 'tankCapacity', 'tankMinimumLevel', 'tankFuelType', 'tankLocationDescription', 'tankNotes', 'tankMineAreaId']);
+    }
+
+    public function closeAllocationModal()
+    {
+        $this->showManageModal = false;
+        $this->manageTab = 'dispense';
+        $this->reset(['allocationYear', 'allocationMonth', 'allocatedLiters', 'fuelPricePerLiter', 'allocationNotes']);
     }
 
     public function setManageTab($tab)
@@ -142,7 +184,7 @@ class FuelManagement extends Component
         $teamId = $user->current_team_id;
         
         try {
-            FuelTank::create([
+            $tank = FuelTank::create([
                 'team_id' => $teamId,
                 'name' => $this->tankName,
                 'tank_number' => $this->tankNumber,
@@ -154,8 +196,14 @@ class FuelManagement extends Component
                 'status' => 'active',
                 'notes' => strip_tags($this->tankNotes),
             ]);
-            
+
+            // Ensure the newly created tank is immediately selected in the dispense dropdown
+            $this->transactionTankId = $tank->id;
+            $this->selectedTankId = $tank->id;
+
             $this->dispatch('notify', type: 'success', message: 'Fuel tank created successfully');
+            // Notify frontend and keep selection so new tank appears in dispense dropdown
+            $this->dispatch('tank-created', ['id' => $tank->id, 'name' => $tank->name]);
             $this->closeTankModal();
             
         } catch (\Exception $e) {
@@ -235,8 +283,13 @@ class FuelManagement extends Component
             ->with('mineArea')
             ->first();
 
-        // Tanks overview
+        // Determine whether the current user can see inactive tanks (admins per-team)
+        $currentUser = auth()->user();
+        $canSeeInactive = $currentUser?->hasRole('admin') ?? false;
+
+        // Tanks overview: include inactive tanks for admins, otherwise only active tanks
         $tanks = FuelTank::where('team_id', $teamId)
+            ->when(!$canSeeInactive, fn($q) => $q->where('status', 'active'))
             ->with('mineArea')
             ->when($this->showLowFuelOnly, fn($q) => $q->lowFuel())
             ->get();
@@ -326,6 +379,7 @@ class FuelManagement extends Component
             'aiRecommendations' => $aiRecommendations,
             'aiInsights' => $aiInsights,
             'mineAreas' => $mineAreas,
+            'canSeeInactiveTanks' => $canSeeInactive,
         ]);
     }
     

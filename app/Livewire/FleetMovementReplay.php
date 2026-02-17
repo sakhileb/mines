@@ -13,6 +13,8 @@ class FleetMovementReplay extends Component
 {
     public $selectedMachine = null;
     public array $activityFeed = [];
+    public array $machineActivities = [];
+    public bool $showActivities = false;
     public bool $isLoading = false;
     public $startDate = '';
     public $endDate = '';
@@ -58,6 +60,50 @@ class FleetMovementReplay extends Component
                 'created_at' => $log->created_at->diffForHumans(),
             ])
             ->toArray();
+    }
+
+    public function showRecentActivities()
+    {
+        $team = Auth::user()->currentTeam;
+
+        // If a machine is selected, filter activities for that machine and date range
+        $query = \App\Models\ActivityLog::where('team_id', $team->id)->latest('created_at');
+
+        if ($this->selectedMachine) {
+            $query->where('machine_id', $this->selectedMachine);
+        }
+
+        // Apply date range if provided
+        try {
+            if (!empty($this->startDate) && !empty($this->endDate)) {
+                $start = Carbon::parse($this->startDate . ' ' . $this->startTime);
+                $end = Carbon::parse($this->endDate . ' ' . $this->endTime);
+                $query->whereBetween('created_at', [$start, $end]);
+            }
+        } catch (\Exception $e) {
+            // ignore invalid dates
+        }
+
+        $this->machineActivities = $query->take(50)->get()->map(fn($log) => [
+            'user' => $log->user?->name ?? 'System',
+            'action' => $log->action,
+            'description' => $log->description,
+            'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+        ])->toArray();
+
+        $this->showActivities = true;
+    }
+
+    public function hideRecentActivities()
+    {
+        $this->showActivities = false;
+        $this->machineActivities = [];
+    }
+
+    public function showRoutes()
+    {
+        // Trigger frontend to highlight routes and center
+        $this->dispatch('show-routes');
     }
 
     public function render()
@@ -320,8 +366,8 @@ class FleetMovementReplay extends Component
     
     public function exportReplayData()
     {
-        if (!$this->selectedMachine || $this->totalPositions == 0) {
-            session()->flash('error', 'No replay data to export. Please load a replay first.');
+        if (!$this->selectedMachine) {
+            session()->flash('error', 'Please select a machine to export.');
             return;
         }
         
@@ -343,10 +389,15 @@ class FleetMovementReplay extends Component
             ->whereNotNull('longitude')
             ->orderBy('created_at')
             ->get();
-        
+
+        if ($locationHistory->isEmpty()) {
+            session()->flash('error', 'No movement data found for the selected machine and date range.');
+            return;
+        }
+
         $csvData = [];
         $csvData[] = ['Timestamp', 'Latitude', 'Longitude', 'Speed', 'Heading'];
-        
+
         foreach ($locationHistory as $location) {
             $csvData[] = [
                 Carbon::parse($location->created_at)->format('Y-m-d H:i:s'),
@@ -356,18 +407,18 @@ class FleetMovementReplay extends Component
                 $location->heading ?? 0
             ];
         }
-        
+
         $filename = 'replay_' . $machine->name . '_' . now()->format('Y-m-d_His') . '.csv';
         $handle = fopen('php://temp', 'r+');
-        
+
         foreach ($csvData as $row) {
             fputcsv($handle, $row);
         }
-        
+
         rewind($handle);
         $csv = stream_get_contents($handle);
         fclose($handle);
-        
+
         return response()->streamDownload(function() use ($csv) {
             echo $csv;
         }, $filename, [

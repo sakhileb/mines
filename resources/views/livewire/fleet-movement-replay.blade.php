@@ -82,7 +82,7 @@
                     </svg>
                     Load Replay
                 </button>
-                <button wire:click="loadRecentReplay" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2">
+                <button wire:click="showRecentActivities" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -95,13 +95,36 @@
                     </svg>
                     Export
                 </button>
-                <a href="{{ route('fleet.route-planning') }}" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all font-medium flex items-center justify-center gap-2">
+                <button wire:click="showRoutes" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all font-medium flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                     </svg>
                     Routes
-                </a>
+                </button>
             </div>
+
+            <!-- Recent Activities (for selected machine / date range) -->
+            @if($showActivities)
+                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-white">Recent Activities</h4>
+                        <button wire:click="hideRecentActivities" class="text-xs text-gray-400 hover:text-gray-300">Close</button>
+                    </div>
+                    @if(count($machineActivities) > 0)
+                        <ul class="space-y-2 text-sm text-gray-300 max-h-64 overflow-y-auto">
+                            @foreach($machineActivities as $act)
+                                <li>
+                                    <div class="text-xs text-gray-400">{{ $act['created_at'] }} — {{ $act['user'] }}</div>
+                                    <div class="font-medium">{{ $act['action'] }}</div>
+                                    <div class="text-gray-400 text-sm">{{ $act['description'] }}</div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="text-sm text-gray-400">No activities found for the selected machine/date range.</p>
+                    @endif
+                </div>
+            @endif
 
             <!-- Enhanced Playback Player -->
             <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-2xl border border-gray-700 mb-6">
@@ -341,6 +364,34 @@
         window.routePolylines = [];
         window.trailPolyline = null;
         window.machineType = '';
+
+        // Helper: normalize various coordinate formats to {lat, lng}
+        function normalizeCoord(coord) {
+            if (!coord) return null;
+            // If already object with lat/lng
+            if (typeof coord === 'object' && coord !== null) {
+                if (typeof coord.lat === 'number' && typeof coord.lng === 'number') return { lat: coord.lat, lng: coord.lng };
+                if (typeof coord.latitude === 'number' && typeof coord.longitude === 'number') return { lat: coord.latitude, lng: coord.longitude };
+                // If array-like [lat, lng] or [lng, lat]
+                if (Array.isArray(coord) && coord.length >= 2) {
+                    const a = Number(coord[0]);
+                    const b = Number(coord[1]);
+                    if (!Number.isNaN(a) && !Number.isNaN(b)) return { lat: a, lng: b };
+                }
+                // If object with nested coordinates (GeoJSON style)
+                if (coord.coordinates) return normalizeCoord(coord.coordinates);
+            }
+            // If string, try parse
+            if (typeof coord === 'string') {
+                try {
+                    const parsed = JSON.parse(coord);
+                    return normalizeCoord(parsed);
+                } catch (e) {
+                    return null;
+                }
+            }
+            return null;
+        }
         
         // Get machine emoji image based on machine type
         function getMachineEmojiImage(machineType) {
@@ -364,10 +415,48 @@
                     const routesStr = componentDiv.getAttribute('data-routes');
                     const machineTypeStr = componentDiv.getAttribute('data-machine-type');
                     window.machineType = machineTypeStr || '';
-                    
-                    window.pathCoordinates = pathCoordsStr ? JSON.parse(pathCoordsStr) : [];
-                    window.geofences = geofencesStr ? JSON.parse(geofencesStr) : [];
-                    window.routes = routesStr ? JSON.parse(routesStr) : [];
+                    // Parse raw strings and normalize shapes
+                    const rawPath = pathCoordsStr ? JSON.parse(pathCoordsStr) : [];
+                    const rawGeofences = geofencesStr ? JSON.parse(geofencesStr) : [];
+                    const rawRoutes = routesStr ? JSON.parse(routesStr) : [];
+
+                    // Normalize pathCoordinates to objects with numeric lat/lng
+                    window.pathCoordinates = rawPath.map(p => {
+                        const n = normalizeCoord(p);
+                        return n ? Object.assign({}, p, { lat: Number(n.lat), lng: Number(n.lng) }) : null;
+                    }).filter(Boolean);
+
+                    // Normalize geofences: ensure coordinates is an array of [lat,lng] pairs
+                    window.geofences = rawGeofences.map(g => {
+                        try {
+                            let coords = g.coordinates;
+                            if (typeof coords === 'string') coords = JSON.parse(coords);
+                            // GeoJSON "coordinates" might be [ [lng,lat], ... ] or [{lat,lng}, ...]
+                            const latlngs = [];
+                            if (Array.isArray(coords)) {
+                                coords.forEach(c => {
+                                    const nn = normalizeCoord(c);
+                                    if (nn) latlngs.push([nn.lat, nn.lng]);
+                                });
+                            }
+                            return Object.assign({}, g, { coordinates: latlngs });
+                        } catch (e) {
+                            return Object.assign({}, g, { coordinates: [] });
+                        }
+                    });
+
+                    // Normalize routes: ensure waypoints become arrays of [lat,lng]
+                    window.routes = rawRoutes.map(r => {
+                        try {
+                            const waypoints = (r.waypoints || []).map(wp => {
+                                const nn = normalizeCoord(wp);
+                                return nn ? [Number(nn.lat), Number(nn.lng)] : null;
+                            }).filter(Boolean);
+                            return Object.assign({}, r, { waypoints });
+                        } catch (e) {
+                            return Object.assign({}, r, { waypoints: [] });
+                        }
+                    });
                     
                     // Clear the snapped coordinate cache when new data is loaded
                     window.snappedCoordinateCache = {};
@@ -537,9 +626,16 @@
                 window.geofencePolygons = [];
                 
                 window.geofences.forEach(geofence => {
-                    if (geofence.coordinates && geofence.coordinates.length > 0) {
-                        const latlngs = geofence.coordinates.map(coord => [coord[0] || coord.lat, coord[1] || coord.lng]);
-                        
+                    try {
+                        const coords = geofence.coordinates || [];
+                        const latlngs = [];
+                        if (Array.isArray(coords)) {
+                            coords.forEach(c => {
+                                const nn = normalizeCoord(c);
+                                if (nn) latlngs.push([Number(nn.lat), Number(nn.lng)]);
+                            });
+                        }
+
                         if (latlngs.length >= 2) {
                             const polygon = L.polygon(latlngs, {
                                 color: geofence.color || '#3b82f6',
@@ -548,10 +644,12 @@
                                 fillOpacity: 0.1,
                                 className: 'geofence-poly'
                             }).bindPopup(`<strong>${geofence.name}</strong><br>Type: ${geofence.type}`);
-                            
+
                             polygon.addTo(window.replayMap);
                             window.geofencePolygons.push(polygon);
                         }
+                    } catch (e) {
+                        console.warn('Skipping invalid geofence during render:', geofence, e);
                     }
                 });
                 
@@ -644,51 +742,51 @@
         
         // Get the closest point on a line segment to a point
         function getClosestPointOnLineSegment(lat, lng, lat1, lng1, lat2, lng2) {
+            // Handle degenerate segment
+            if ((lat1 === lat2) && (lng1 === lng2)) {
+                return { lat: lat1, lng: lng1 };
+            }
+
             const dx = lng2 - lng1;
             const dy = lat2 - lat1;
-            
+
+            // Project point onto the line, computing parameter t in [0,1]
             let t = ((lng - lng1) * dx + (lat - lat1) * dy) / (dx * dx + dy * dy);
             t = Math.max(0, Math.min(1, t));
-            
+
             return {
-                lat: lat1 + t * dy,
-                lng: lng1 + t * dx
+                lat: lat1 + t * (lat2 - lat1),
+                lng: lng1 + t * (lng2 - lng1)
             };
         }
-        
-        // Interpolate position between two snapped coordinates for smooth playback
+
+        // Linear interpolation between two positions
         function interpolatePos(from, to, progress) {
-            if (!from || !to || progress < 0 || progress > 1) return from;
-            
+            if (!from || !to) return from || to || null;
+            const p = Math.max(0, Math.min(1, progress || 0));
             return {
-                lat: from.lat + (to.lat - from.lat) * progress,
-                lng: from.lng + (to.lng - from.lng) * progress,
-                heading: from.heading || 0
+                lat: from.lat + (to.lat - from.lat) * p,
+                lng: from.lng + (to.lng - from.lng) * p,
+                heading: (from.heading || 0) + ((to.heading || 0) - (from.heading || 0)) * p
             };
         }
-        
-        // Get an interpolated position along the replayed path
+
+        // Given a fractional index into the pathCoordinates (e.g. 3.4), return an interpolated snapped position
         function getInterpolatedPosition(fractionalIndex) {
             if (!Array.isArray(window.pathCoordinates) || window.pathCoordinates.length === 0) return null;
-            
-            const maxIndex = window.pathCoordinates.length - 1;
-            if (fractionalIndex < 0) fractionalIndex = 0;
-            if (fractionalIndex > maxIndex) fractionalIndex = maxIndex;
-            
             const lowerIndex = Math.floor(fractionalIndex);
-            const upperIndex = Math.min(Math.ceil(fractionalIndex), maxIndex);
+            const upperIndex = Math.ceil(fractionalIndex);
             const progress = fractionalIndex - lowerIndex;
-            
+
+            if (lowerIndex < 0) return snapCoordinateToRoute(window.pathCoordinates[0]);
+            if (upperIndex >= window.pathCoordinates.length) return snapCoordinateToRoute(window.pathCoordinates[window.pathCoordinates.length - 1]);
+
             if (lowerIndex === upperIndex) {
-                // Exact position
-                const coord = window.pathCoordinates[lowerIndex];
-                return snapCoordinateToRoute(coord);
+                return snapCoordinateToRoute(window.pathCoordinates[lowerIndex]);
             }
-            
-            // Interpolate between two positions
+
             const from = snapCoordinateToRoute(window.pathCoordinates[lowerIndex]);
             const to = snapCoordinateToRoute(window.pathCoordinates[upperIndex]);
-            
             return interpolatePos(from, to, progress);
         }
         
@@ -814,6 +912,48 @@
             // Fit map to bounds with padding
             window.replayMap.fitBounds(bounds, { padding: [50, 50] });
             console.log('Map zoomed to route area');
+        }
+
+        // Center map on the first available path coordinate or on the first route waypoint
+        function centerOnSelectedMachine() {
+            try {
+                if (!window.replayMap) return;
+
+                // Prefer first path coordinate
+                if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
+                    // Find first valid coordinate
+                    const firstValid = window.pathCoordinates.map(c => normalizeCoord(c)).find(n => n && typeof n.lat !== 'undefined' && typeof n.lng !== 'undefined');
+                    if (firstValid) {
+                        const lat = Number(firstValid.lat);
+                        const lng = Number(firstValid.lng);
+                        if (window.smoothPan) {
+                            window.replayMap.panTo([lat, lng], { animate: true, duration: 0.6 });
+                        } else {
+                            window.replayMap.setView([lat, lng], 14);
+                        }
+                        return;
+                    }
+                }
+
+                // Fallback: use first route waypoint
+                if (Array.isArray(window.routes) && window.routes.length > 0) {
+                    const firstRoute = window.routes[0];
+                    if (firstRoute && firstRoute.waypoints && firstRoute.waypoints.length > 0) {
+                        const wp = firstRoute.waypoints[0];
+                        let lat = wp.latitude ?? wp.lat ?? (Array.isArray(wp) ? wp[0] : undefined);
+                        let lng = wp.longitude ?? wp.lng ?? (Array.isArray(wp) ? wp[1] : undefined);
+                        if (typeof lat !== 'undefined' && typeof lng !== 'undefined') {
+                            if (window.smoothPan) {
+                                window.replayMap.panTo([lat, lng], { animate: true, duration: 0.6 });
+                            } else {
+                                window.replayMap.setView([lat, lng], 14);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error centering on selected machine:', err);
+            }
         }
         
         function updateMachineMarker(position) {
@@ -1014,7 +1154,9 @@
                 setTimeout(() => {
                     loadDataFromAttributes();
                     if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
-                        renderMapElements();
+                            renderMapElements();
+                            // Center map on selected machine's first position
+                            centerOnSelectedMachine();
                         hideMapOverlay();
                         updateTimerDisplay();
                     } else {
@@ -1035,10 +1177,12 @@
                             geofences: window.geofences?.length || 0,
                             routes: window.routes?.length || 0
                         });
-                        
+
                         if (Array.isArray(window.pathCoordinates) && window.pathCoordinates.length > 0) {
                             console.log('Rendering map elements with path data...');
                             renderMapElements();
+                            // Center on the selected machine for immediate context
+                            centerOnSelectedMachine();
                             hideMapOverlay();
                             updateTimerDisplay();
                             console.log('Map rendering completed');
@@ -1050,6 +1194,24 @@
                         console.error('Error in replay-loaded handler:', err);
                     }
                 }, 150); // Increased timeout to ensure data is available
+            });
+
+            @this.on('show-routes', () => {
+                console.log('Show routes event received');
+                setTimeout(() => {
+                    try {
+                        loadDataFromAttributes();
+                        if (Array.isArray(window.routes) && window.routes.length > 0) {
+                            renderRoutesOnMap();
+                            zoomToRouteArea();
+                            hideMapOverlay();
+                        } else {
+                            console.log('No routes available to show');
+                        }
+                    } catch (err) {
+                        console.error('Error showing routes:', err);
+                    }
+                }, 120);
             });
 
             @this.on('replay-seek', (data) => {

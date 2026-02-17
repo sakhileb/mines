@@ -24,6 +24,8 @@ use WithPagination;
     public bool $showAssignModal = false;
     public ?int $assigningMachineId = null;
     public ?int $selectedExcavatorId = null;
+    public array $selectedAdtIds = [];
+    public string $assignMode = 'assign_to_excavator';
     public bool $showMineAreaAssignModal = false;
     public ?int $assigningMineAreaMachineId = null;
     public ?int $selectedMineAreaId = null;
@@ -170,12 +172,33 @@ use WithPagination;
     {
         $this->assigningMachineId = $machineId;
         $this->selectedExcavatorId = null;
-        
+        $this->selectedAdtIds = [];
+        $this->assignMode = 'assign_to_excavator';
+
         $machine = Machine::find($machineId);
-        if ($machine && $machine->excavator_id) {
-            $this->selectedExcavatorId = $machine->excavator_id;
+        if (!$machine) {
+            $this->dispatch('alert', message: 'Machine not found', type: 'error');
+            return;
         }
-        
+
+        // If the selected machine is an excavator-like machine, open modal to assign ADTs to it
+        if (in_array($machine->machine_type, ['excavator', 'digger', 'loader'])) {
+            $this->assignMode = 'assign_adts_to_excavator';
+            // Pre-select ADTs currently assigned to this excavator
+            $this->selectedAdtIds = Machine::where('team_id', $machine->team_id)
+                ->where('excavator_id', $machine->id)
+                ->where('machine_type', 'adt')
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->toArray();
+        } else {
+            // For ADTs and other machines, allow selecting a single excavator
+            if ($machine && $machine->excavator_id) {
+                $this->selectedExcavatorId = $machine->excavator_id;
+            }
+            $this->assignMode = 'assign_to_excavator';
+        }
+
         $this->showAssignModal = true;
     }
 
@@ -184,32 +207,83 @@ use WithPagination;
         $this->showAssignModal = false;
         $this->assigningMachineId = null;
         $this->selectedExcavatorId = null;
+        $this->selectedAdtIds = [];
+        $this->assignMode = 'assign_to_excavator';
     }
 
     public function assignToExcavator(): void
     {
+        // If in ADT assignment mode, route to assignAdtsToExcavator
+        if ($this->assignMode === 'assign_adts_to_excavator') {
+            $this->assignAdtsToExcavator();
+            return;
+        }
+
         if (!$this->assigningMachineId || !$this->selectedExcavatorId) {
             $this->dispatch('alert', message: 'Please select an excavator', type: 'error');
             return;
         }
 
         $machine = Machine::find($this->assigningMachineId);
+        $excavator = Machine::find($this->selectedExcavatorId);
         
         if (!$machine || $machine->team_id !== Auth::user()->currentTeam->id) {
             abort(403);
         }
 
-        // Prevent assigning an excavator to itself
-        if ($machine->id === $this->selectedExcavatorId) {
+        if (!$excavator || $excavator->team_id !== Auth::user()->currentTeam->id) {
+            abort(403);
+        }
+
+        // Prevent assigning a machine to itself
+        if ($machine->id === $excavator->id) {
             $this->dispatch('alert', message: 'Cannot assign a machine to itself', type: 'error');
             return;
         }
 
+        // Prevent assigning big machines (excavator/dozer/loader/etc.) to another big machine
+        $bigTypes = ['excavator', 'dozer', 'loader', 'grader', 'bulldozer'];
+        if (in_array($machine->machine_type, $bigTypes) && in_array($excavator->machine_type, $bigTypes)) {
+            $this->dispatch('alert', message: 'Cannot assign an excavator or big machine to another big machine', type: 'error');
+            return;
+        }
+
+        // Assign
         $machine->assignToExcavator($this->selectedExcavatorId);
-        
-        $excavator = Machine::find($this->selectedExcavatorId);
         $this->dispatch('alert', message: "Machine '{$machine->name}' assigned to '{$excavator->name}'", type: 'success');
-        
+        $this->closeAssignModal();
+    }
+
+    public function assignAdtsToExcavator(): void
+    {
+        if (!$this->assigningMachineId) {
+            $this->dispatch('alert', message: 'Excavator not specified', type: 'error');
+            return;
+        }
+
+        $excavator = Machine::find($this->assigningMachineId);
+        if (!$excavator || $excavator->team_id !== Auth::user()->currentTeam->id) {
+            abort(403);
+        }
+
+        // Ensure selected ADTs belong to team and are ADTs
+        $validAdts = Machine::where('team_id', $excavator->team_id)
+            ->whereIn('id', $this->selectedAdtIds)
+            ->where('machine_type', 'adt')
+            ->pluck('id')
+            ->toArray();
+
+        // First unassign ADTs previously assigned to this excavator but not selected
+        Machine::where('team_id', $excavator->team_id)
+            ->where('machine_type', 'adt')
+            ->where('excavator_id', $excavator->id)
+            ->whereNotIn('id', $validAdts)
+            ->update(['excavator_id' => null, 'assigned_to_excavator_at' => null]);
+
+        // Assign selected ADTs
+        Machine::whereIn('id', $validAdts)->update(['excavator_id' => $excavator->id, 'assigned_to_excavator_at' => now()]);
+
+        $this->dispatch('alert', message: 'Assigned ADTs updated successfully', type: 'success');
         $this->closeAssignModal();
     }
 
@@ -351,6 +425,13 @@ use WithPagination;
             ->orderBy('name')
             ->get();
 
+        // Get all ADTs for potential assignment to excavators
+        $adts = Machine::where('team_id', $team->id)
+            ->where('machine_type', 'adt')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
         // Get all mine areas for assignment dropdown
         $mineAreas = MineArea::where('team_id', $team->id)
             ->where('status', 'active')
@@ -393,6 +474,7 @@ use WithPagination;
         return view('livewire.fleet', [
             'machines' => $machinesQuery,
             'excavators' => $excavators,
+            'adts' => $adts,
             'mineAreas' => $mineAreas,
             'statusStats' => $statusStats,
             'topPerformers' => $topPerformers,

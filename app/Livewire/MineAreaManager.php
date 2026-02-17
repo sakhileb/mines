@@ -145,6 +145,9 @@ class MineAreaManager extends Component
                 $this->dispatch('alert', type: 'success', message: 'Mine area updated successfully');
                 $this->showEditModal = false;
             } else {
+                // Ensure center coordinates are provided to satisfy non-null DB columns
+                $data['center_latitude'] = $this->latitude ?? null;
+                $data['center_longitude'] = $this->longitude ?? null;
                 $this->getService()->create($team->id, $data);
                 $this->dispatch('alert', type: 'success', message: 'Mine area created successfully');
                 $this->showCreateModal = false;
@@ -195,6 +198,10 @@ class MineAreaManager extends Component
     public function switchToListMode()
     {
         $this->viewMode = 'list';
+        // Ensure drawing state is cleared so the map/draw UI is not kept active
+        $this->isDrawing = false;
+        $this->boundaryCoordinates = null;
+        $this->showCreateModal = false;
     }
 
     public function openCreateMapModal()
@@ -257,6 +264,9 @@ class MineAreaManager extends Component
         ];
 
         try {
+            // Provide explicit center coordinates so DB NOT NULL columns are satisfied
+            $data['center_latitude'] = $this->latitude ?? null;
+            $data['center_longitude'] = $this->longitude ?? null;
             $this->getService()->create($team->id, $data);
             $this->dispatch('alert', type: 'success', message: 'Mine area created successfully');
             $this->isDrawing = false;

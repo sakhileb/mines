@@ -222,8 +222,56 @@
 
         @stack('modals')
 
+        <script>
+            // Prevent Livewire from warning about multiple Alpine instances when Alpine
+            // is bundled by Vite (`resources/js/app.js`). We mark the global Alpine
+            // object as coming from Livewire so Livewire won't attempt to re-initialize it.
+            (function(){
+                if (window.Alpine) {
+                    window.Alpine.__fromLivewire = true;
+                }
+
+                // If Alpine initializes later, ensure we set the flag when it does.
+                document.addEventListener('alpine:initialized', function(){
+                    if (window.Alpine) window.Alpine.__fromLivewire = true;
+                });
+            })();
+        </script>
+
         @livewireScripts
-        
+
+        <script>
+            // Ensure fetch requests include CSRF token and X-Requested-With for servers
+            // that require these headers (helps Livewire POSTs avoid 403).
+            (function() {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                const csrf = meta ? meta.getAttribute('content') : null;
+                if (!window._fetchWithCsrf) {
+                    const _origFetch = window.fetch.bind(window);
+                    window.fetch = function(resource, init = {}) {
+                        try {
+                            const url = (typeof resource === 'string') ? resource : resource.url;
+                            const sameOrigin = url && (new URL(url, window.location.href)).origin === window.location.origin;
+
+                            if (sameOrigin) {
+                                init.headers = init.headers || {};
+                                if (csrf && !init.headers['X-CSRF-TOKEN'] && !init.headers['x-csrf-token']) {
+                                    init.headers['X-CSRF-TOKEN'] = csrf;
+                                }
+                                if (!init.headers['X-Requested-With'] && !init.headers['x-requested-with']) {
+                                    init.headers['X-Requested-With'] = 'XMLHttpRequest';
+                                }
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                        return _origFetch(resource, init);
+                    };
+                    window._fetchWithCsrf = true;
+                }
+            })();
+        </script>
+
         <!-- Leaflet JS is now loaded per-component to avoid Livewire morphdom issues -->
         @stack('scripts')
         

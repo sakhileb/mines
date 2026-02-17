@@ -16,7 +16,15 @@ class AIOptimizationDashboard extends Component
     public $activeTab = 'overview';
     public $selectedCategory = 'all';
     public $selectedPriority = 'all';
+    public $filters = [
+        'category' => '',
+        'priority' => '',
+        'status' => '',
+    ];
     public $analysisRunning = false;
+    public $pendingRecommendationId = null;
+    public $pendingRecommendationAction = null; // 'implement'|'reject'
+    public $showRecommendationConfirm = false;
 
     protected $aiService;
 
@@ -71,23 +79,72 @@ class AIOptimizationDashboard extends Component
     public function implementRecommendation($recommendationId)
     {
         $recommendation = AIRecommendation::findOrFail($recommendationId);
-        
-        $this->authorize('update', $recommendation);
+        try {
+            $this->authorize('update', $recommendation);
 
-        $recommendation->markAsImplemented(auth()->user());
+            $recommendation->markAsImplemented(auth()->user());
 
-        session()->flash('success', 'Recommendation marked as implemented!');
+            session()->flash('success', 'Recommendation marked as implemented!');
+            $this->dispatch('recommendation-updated', data: ['id' => $recommendation->id, 'status' => 'implemented']);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            session()->flash('error', 'You are not authorized to implement this recommendation.');
+            return;
+        }
     }
 
     public function rejectRecommendation($recommendationId)
     {
         $recommendation = AIRecommendation::findOrFail($recommendationId);
-        
-        $this->authorize('update', $recommendation);
+        try {
+            $this->authorize('update', $recommendation);
 
-        $recommendation->update(['status' => 'rejected']);
+            $recommendation->update(['status' => 'rejected']);
 
-        session()->flash('success', 'Recommendation rejected.');
+            session()->flash('success', 'Recommendation rejected.');
+            $this->dispatch('recommendation-updated', data: ['id' => $recommendation->id, 'status' => 'rejected']);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            session()->flash('error', 'You are not authorized to reject this recommendation.');
+            return;
+        }
+    }
+
+    public function promptRecommendationAction($recommendationId, $action)
+    {
+        $this->pendingRecommendationId = $recommendationId;
+        $this->pendingRecommendationAction = $action;
+        $this->showRecommendationConfirm = true;
+    }
+
+    public function confirmRecommendationAction()
+    {
+        if (! $this->pendingRecommendationId || ! in_array($this->pendingRecommendationAction, ['implement', 'reject'])) {
+            $this->showRecommendationConfirm = false;
+            $this->pendingRecommendationId = null;
+            $this->pendingRecommendationAction = null;
+            return;
+        }
+
+        $id = $this->pendingRecommendationId;
+        $action = $this->pendingRecommendationAction;
+
+        if ($action === 'implement') {
+            $this->implementRecommendation($id);
+        } else {
+            $this->rejectRecommendation($id);
+        }
+
+        $this->showRecommendationConfirm = false;
+        $this->pendingRecommendationId = null;
+        $this->pendingRecommendationAction = null;
+        // Refresh pagination/list
+        $this->resetPage();
+    }
+
+    public function cancelRecommendationAction()
+    {
+        $this->showRecommendationConfirm = false;
+        $this->pendingRecommendationId = null;
+        $this->pendingRecommendationAction = null;
     }
 
     public function acknowledgeAlert($alertId)
@@ -119,14 +176,26 @@ class AIOptimizationDashboard extends Component
 
         // Get recommendations with filters
         $recommendationsQuery = AIRecommendation::where('team_id', $team->id)
-            ->where('status', 'pending')
             ->with(['aiAgent', 'machine', 'mineArea', 'route']);
 
-        if ($this->selectedCategory !== 'all') {
+        // Status filter: default to 'pending' when no status filter provided
+        if (!empty($this->filters['status'])) {
+            $recommendationsQuery->where('status', $this->filters['status']);
+        } else {
+            $recommendationsQuery->where('status', 'pending');
+        }
+
+        // Category filter (supports backward-compatible selectedCategory)
+        if (!empty($this->filters['category'])) {
+            $recommendationsQuery->where('category', $this->filters['category']);
+        } elseif ($this->selectedCategory !== 'all') {
             $recommendationsQuery->where('category', $this->selectedCategory);
         }
 
-        if ($this->selectedPriority !== 'all') {
+        // Priority filter (supports backward-compatible selectedPriority)
+        if (!empty($this->filters['priority'])) {
+            $recommendationsQuery->where('priority', $this->filters['priority']);
+        } elseif ($this->selectedPriority !== 'all') {
             $recommendationsQuery->where('priority', $this->selectedPriority);
         }
 

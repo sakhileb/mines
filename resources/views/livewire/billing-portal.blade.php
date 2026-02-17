@@ -345,7 +345,7 @@
     <!-- Plan Selector Modal -->
     @if($showPlanSelector && $currentSubscription)
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:click="togglePlanSelector">
-            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-4xl w-full mx-4" wire:click.stop>
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-4xl w-full mx-4" x-on:click.stop>
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-white">Change Your Plan</h2>
                     <button wire:click="togglePlanSelector" class="text-gray-400 hover:text-white">

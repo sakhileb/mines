@@ -413,7 +413,7 @@
     <!-- Unified Manage Modal -->
     @if($showManageModal)
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeManageModal">
-        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700 shadow-lg" wire:click.stop>
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700 shadow-lg" x-on:click.stop>
             @if(session('success'))
                 <div class="alert alert-success mb-4">
                     <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -458,10 +458,20 @@
                             <select wire:model.live="transactionTankId" class="select select-bordered w-full bg-gray-900 border-gray-700 text-gray-100">
                                 <option value="">Select Tank</option>
                                 @foreach($tanks as $tank)
-                                    <option value="{{ $tank->id }}">{{ $tank->name }} ({{ $tank->fuel_type }})</option>
+                                    <option value="{{ $tank->id }}">{{ $tank->name }} ({{ $tank->fuel_type }}) @if($tank->status !== 'active') — {{ ucfirst($tank->status) }} @endif</option>
                                 @endforeach
                             </select>
                             @error('transactionTankId') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+
+                            @if($tanks->isEmpty())
+                                <div class="mt-2 text-sm text-yellow-300">
+                                    No active tanks found for this team. Click "Manage Fuel → Add Fuel Tank" to create one.
+                                </div>
+                            @elseif(isset($canSeeInactiveTanks) && $canSeeInactiveTanks)
+                                <div class="mt-2 text-sm text-gray-300">
+                                    Showing inactive tanks as well because your account has admin privileges for this team. Inactive tanks are marked in the dropdown.
+                                </div>
+                            @endif
                         </div>
                         <div>
                             <label class="block font-medium mb-1">Machine</label>
@@ -478,9 +488,12 @@
                             <input type="number" min="1" wire:model.live="transactionQuantity" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
                             @error('transactionQuantity') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
+                        @if($transactionError)
+                            <div class="text-sm text-red-400">{{ $transactionError }}</div>
+                        @endif
                         <div class="flex justify-end gap-2">
                             <button type="button" wire:click="closeManageModal" class="btn btn-ghost">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Dispense</button>
+                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="recordDispensingTransaction">Dispense</button>
                         </div>
                     </form>
                 @elseif($manageTab === 'allocation')
@@ -513,21 +526,13 @@
                         </div>
                         <div class="flex justify-end gap-2">
                             <button type="button" wire:click="closeManageModal" class="btn btn-ghost">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Allocation</button>
+                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="saveAllocation">Save Allocation</button>
                         </div>
                     </form>
                 @elseif($manageTab === 'tank')
                     <!-- Add/Edit Fuel Tank Form -->
                     <form wire:submit.prevent="saveTank" class="space-y-4">
-                        <div>
-                            <label class="block font-medium mb-1">Select Existing Tank</label>
-                            <select wire:model.live="selectedTankId" class="select select-bordered w-full bg-gray-900 border-gray-700 text-gray-100">
-                                <option value="">Create New Tank</option>
-                                @foreach($tanks as $tank)
-                                    <option value="{{ $tank->id }}">{{ $tank->name }} ({{ $tank->fuel_type }})</option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <!-- Removed existing-tank select to only allow creating a new tank -->
                         <div>
                             <label class="block font-medium mb-1">Tank Name</label>
                             <input type="text" wire:model.live="tankName" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
@@ -555,7 +560,7 @@
                         </div>
                         <div class="flex justify-end gap-2">
                             <button type="button" wire:click="closeManageModal" class="btn btn-ghost">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Add Tank</button>
+                            <button type="button" class="btn btn-primary" wire:click="saveTank" wire:loading.attr="disabled" wire:target="saveTank">Add Tank</button>
                         </div>
                     </form>
                 @endif

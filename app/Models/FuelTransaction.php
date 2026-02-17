@@ -13,6 +13,7 @@ class FuelTransaction extends Model
 
     protected $fillable = [
         'team_id',
+        'monthly_allocation_id',
         'fuel_tank_id',
         'machine_id',
         'user_id',

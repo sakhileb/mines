@@ -8,6 +8,25 @@
             background: #1f2937;
         }
         
+        <script>
+            // Fallback: ensure the calculate form calls the Livewire method if submit interception fails
+            (function(){
+                try {
+                    const componentId = @json($this->id ?? null);
+                    if (!componentId) return;
+                    const livewireComponent = Livewire.find(componentId);
+                    const calcForm = document.querySelector('form[wire\\:submit\\.prevent="calculateRoute"]');
+                    if (calcForm && livewireComponent) {
+                        calcForm.addEventListener('submit', function(e){
+                            e.preventDefault();
+                            livewireComponent.call('calculateRoute');
+                        });
+                    }
+                } catch (e) {
+                    console.warn('RoutePlanning fallback binding failed', e);
+                }
+            })();
+        </script>
         #route-planning-map.clickable-mode {
             cursor: crosshair !important;
         }
@@ -562,19 +581,39 @@
             });
 
             // Listen for route calculated event
+            // Livewire event listener
             Livewire.on('routeCalculated', (routeData) => {
-                console.log('Route calculated event received');
+                console.log('Route calculated Livewire event received');
                 renderCalculatedRoute(routeData[0] || routeData);
+            });
+            // DOM event fallback (dispatchBrowserEvent)
+            window.addEventListener('routeCalculated', (e) => {
+                try {
+                    console.log('Route calculated DOM event received');
+                    const detail = e.detail || e?.detail || e;
+                    renderCalculatedRoute(detail[0] || detail);
+                } catch (err) {
+                    console.warn('routeCalculated DOM event handler error', err);
+                }
             });
 
             // Listen for view route event
             Livewire.on('viewRoute', (routeData) => {
-                console.log('View route event received');
+                console.log('View route Livewire event received');
                 renderCalculatedRoute(routeData[0] || routeData);
+            });
+            window.addEventListener('viewRoute', (e) => {
+                try {
+                    console.log('View route DOM event received');
+                    const detail = e.detail || e?.detail || e;
+                    renderCalculatedRoute(detail[0] || detail);
+                } catch (err) {
+                    console.warn('viewRoute DOM event handler error', err);
+                }
             });
             
             // Listen for clear markers event
-            Livewire.on('clearMapMarkers', () => {
+            function clearMapMarkersHandler() {
                 console.log('Clearing map markers');
                 if (startMarker) {
                     map.removeLayer(startMarker);
@@ -592,11 +631,12 @@
                     map.removeLayer(waypointsLayer);
                     waypointsLayer = null;
                 }
-                
                 // Reset global state
                 window.routePlanningState.startLat = null;
                 window.routePlanningState.endLat = null;
-            });
+            }
+            Livewire.on('clearMapMarkers', clearMapMarkersHandler);
+            window.addEventListener('clearMapMarkers', clearMapMarkersHandler);
             
             // Trigger map resize after a short delay to ensure proper rendering
             setTimeout(() => {

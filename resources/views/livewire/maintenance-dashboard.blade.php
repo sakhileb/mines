@@ -836,7 +836,7 @@
     <!-- Book Maintenance Modal -->
     @if($showBookingModal)
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeBookingModal">
-        <div class="bg-gray-800 rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700 text-gray-100 shadow-lg" wire:click.stop>
+        <div class="bg-gray-800 rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700 text-gray-100 shadow-lg" x-on:click.stop>
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-bold text-gray-100">Book Maintenance</h2>
                 <button wire:click="closeBookingModal" class="text-gray-400 hover:text-gray-600">
@@ -849,8 +849,8 @@
             <form wire:submit.prevent="bookMaintenance" class="space-y-4">
                 <!-- Machine Selection -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Machine *</label>
-                    <select wire:model="machine_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" required>
+                    <label class="block text-sm font-medium text-gray-200 mb-2">Machine *</label>
+                    <select wire:model="machine_id" class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-100 bg-gray-800" required>
                         <option value="">Select a machine...</option>
                         @foreach($machines as $machine)
                             <option value="{{ $machine->id }}">{{ $machine->name }} - {{ $machine->model }}</option>
@@ -862,8 +862,8 @@
                 <div class="grid grid-cols-2 gap-4">
                     <!-- Maintenance Type -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Maintenance Type *</label>
-                        <select wire:model="maintenance_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" required>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">Maintenance Type *</label>
+                            <select wire:model="maintenance_type" class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-100 bg-gray-800" required>
                             <option value="preventive">Preventive</option>
                             <option value="corrective">Corrective</option>
                             <option value="predictive">Predictive</option>
@@ -880,8 +880,8 @@
 
                     <!-- Priority -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
-                        <select wire:model="priority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" required>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">Priority *</label>
+                        <select wire:model="priority" class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-100 bg-gray-800" required>
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
@@ -893,11 +893,11 @@
 
                 <!-- Title -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                    <label class="block text-sm font-medium text-gray-200 mb-2">Title *</label>
                     <input 
                         type="text" 
                         wire:model="title" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                        class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100" 
                         placeholder="e.g., Oil Change, Brake Inspection" 
                         required
                     >
@@ -906,10 +906,10 @@
 
                 <!-- Description -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <label class="block text-sm font-medium text-gray-200 mb-2">Description</label>
                     <textarea 
                         wire:model="description" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                        class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100" 
                         rows="3" 
                         placeholder="Additional details about the maintenance work..."
                     ></textarea>
@@ -919,11 +919,11 @@
                 <div class="grid grid-cols-2 gap-4">
                     <!-- Scheduled Date -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Scheduled Date *</label>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">Scheduled Date *</label>
                         <input 
                             type="datetime-local" 
                             wire:model="scheduled_date" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100" 
                             required
                         >
                         @error('scheduled_date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -931,13 +931,13 @@
 
                     <!-- Estimated Duration -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Estimated Duration (hours)</label>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">Estimated Duration (hours)</label>
                         <input 
                             type="number" 
                             wire:model="estimated_duration_hours" 
                             step="0.5" 
                             min="0" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100" 
                             placeholder="0"
                         >
                         @error('estimated_duration_hours') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -947,13 +947,13 @@
                 <div class="grid grid-cols-2 gap-4">
                     <!-- Estimated Cost -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Estimated Cost (ZAR)</label>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">Estimated Cost (ZAR)</label>
                         <input 
                             type="number" 
                             wire:model="estimated_cost" 
                             step="0.01" 
                             min="0" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100" 
                             placeholder="0.00"
                         >
                         @error('estimated_cost') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -961,11 +961,11 @@
 
                     <!-- Required Parts -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Required Parts</label>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">Required Parts</label>
                         <input 
                             type="text" 
                             wire:model="required_parts" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100" 
                             placeholder="e.g., Oil filter, Brake pads"
                         >
                         @error('required_parts') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -974,10 +974,10 @@
 
                 <!-- Technician Notes -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Technician Notes</label>
+                    <label class="block text-sm font-medium text-gray-200 mb-2">Technician Notes</label>
                     <textarea 
                         wire:model="technician_notes" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                        class="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100" 
                         rows="2" 
                         placeholder="Special instructions or notes for the technician..."
                     ></textarea>

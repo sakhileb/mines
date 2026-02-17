@@ -38,10 +38,10 @@
                 <!-- Custom Date Range Picker -->
                 <div class="flex gap-2 items-center bg-white dark:bg-gray-800 rounded-lg px-3 py-2 border border-gray-300 dark:border-gray-600">
                     <input type="date" wire:model.live="startDate" 
-                        class="bg-transparent border-0 text-sm focus:ring-0 dark:text-white text-gray-900 px-1">
+                        class="bg-transparent border-0 text-sm focus:ring-0 dark:text-white text-gray-900 px-4 py-2 h-8">
                     <span class="text-gray-500 dark:text-gray-400">→</span>
                     <input type="date" wire:model.live="endDate" 
-                        class="bg-transparent border-0 text-sm focus:ring-0 dark:text-white text-gray-900 px-1">
+                        class="bg-transparent border-0 text-sm focus:ring-0 dark:text-white text-gray-900 px-4 py-2 h-8">
                 </div>
             </div>
         </div>

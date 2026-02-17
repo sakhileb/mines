@@ -21,6 +21,7 @@ class GeofenceManager extends Component
     // Form properties
     public ?int $editingGeofenceId = null;
     public ?int $teamId = null;
+    public ?int $mineAreaId = null;
     public string $name = '';
     public string $description = '';
     public string $type = 'pit';
@@ -33,6 +34,11 @@ class GeofenceManager extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function mount(): void
+    {
+        $this->teamId = Auth::user()->currentTeam->id ?? null;
     }
 
     public function toggleSort(string $column): void
@@ -60,7 +66,8 @@ class GeofenceManager extends Component
     public function resetForm(): void
     {
         $this->editingGeofenceId = null;
-        $this->teamId = null;
+        $this->teamId = Auth::user()->currentTeam->id ?? null;
+        $this->mineAreaId = null;
         $this->name = '';
         $this->description = '';
         $this->type = 'pit';
@@ -73,6 +80,7 @@ class GeofenceManager extends Component
     {
         $this->editingGeofenceId = $geofence->id;
         $this->teamId = auth()->user()->current_team_id;
+        $this->mineAreaId = $geofence->mine_area_id;
         $this->name = $geofence->name;
         $this->description = $geofence->description ?? '';
         $this->type = $geofence->type;
@@ -85,6 +93,7 @@ class GeofenceManager extends Component
     public function saveGeofence(): void
     {
         $this->validate([
+            'mineAreaId' => 'required|exists:mine_areas,id',
             'teamId' => 'required|exists:teams,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
@@ -97,6 +106,7 @@ class GeofenceManager extends Component
 
         $data = [
             'team_id' => $this->teamId,
+            'mine_area_id' => $this->mineAreaId,
             'name' => $this->name,
             'description' => $this->description ?: null,
             'type' => $this->type,

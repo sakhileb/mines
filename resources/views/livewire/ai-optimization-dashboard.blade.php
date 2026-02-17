@@ -225,11 +225,11 @@
                             </div>
                             @if($recommendation->status === 'pending')
                             <div class="flex gap-2">
-                                <button wire:click="implementRecommendation({{ $recommendation->id }})" 
+                                <button wire:click="promptRecommendationAction({{ $recommendation->id }}, 'implement')" 
                                     class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium transform hover:scale-105">
                                     ✓ Implement
                                 </button>
-                                <button wire:click="rejectRecommendation({{ $recommendation->id }})" 
+                                <button wire:click="promptRecommendationAction({{ $recommendation->id }}, 'reject')" 
                                     class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition text-sm font-medium">
                                     ✕ Reject
                                 </button>
@@ -247,6 +247,8 @@
                                 </ul>
                             </div>
                         @endif
+
+                        
                     </div>
                 @empty
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-12 text-center">
@@ -259,6 +261,30 @@
                         </button>
                     </div>
                 @endforelse
+
+                @if($showRecommendationConfirm && $pendingRecommendationId)
+                    @php $pending = \App\Models\AIRecommendation::find($pendingRecommendationId); @endphp
+                    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 w-96 max-h-80 overflow-y-auto">
+                            <div class="mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Confirm Action</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">You are about to <strong>{{ $pendingRecommendationAction === 'implement' ? 'implement' : 'reject' }}</strong> this recommendation. Proceed?</p>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="text-sm text-gray-800 dark:text-gray-200">
+                                    <strong>{{ $pending?->title }}</strong>
+                                    <div class="text-gray-500 dark:text-gray-400 text-xs mt-1">{{ $pending?->description }}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 justify-end mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <button wire:click="cancelRecommendationAction" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300">Cancel</button>
+                                <button wire:click="confirmRecommendationAction" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Proceed</button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
 

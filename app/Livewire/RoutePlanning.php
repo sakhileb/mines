@@ -17,6 +17,7 @@ class RoutePlanning extends Component
     public $name = '';
     public $description = '';
     public $machineId = null;
+    public $mineAreaId = null;
     public $routeType = 'optimal';
     public $speedLimit = null;
     
@@ -49,6 +50,7 @@ class RoutePlanning extends Component
     protected $rules = [
         'name' => 'required|min:3|max:255',
         'machineId' => 'nullable|exists:machines,id',
+        'mineAreaId' => 'nullable|exists:mine_areas,id',
         'startLat' => 'required|numeric|between:-90,90',
         'startLon' => 'required|numeric|between:-180,180',
         'endLat' => 'required|numeric|between:-90,90',
@@ -106,7 +108,16 @@ class RoutePlanning extends Component
     
     public function calculateRoute()
     {
-        $this->validate();
+        // Validate only the fields required for route calculation (name is not required here)
+        $this->validate([
+            'startLat' => 'required|numeric|between:-90,90',
+            'startLon' => 'required|numeric|between:-180,180',
+            'endLat' => 'required|numeric|between:-90,90',
+            'endLon' => 'required|numeric|between:-180,180',
+            'routeType' => 'required|in:optimal,shortest,safest,custom',
+            'speedLimit' => 'nullable|integer|min:1|max:200',
+            'machineId' => 'nullable|exists:machines,id',
+        ]);
         
         $this->isCalculating = true;
         $this->routeSaved = false;
@@ -125,6 +136,7 @@ class RoutePlanning extends Component
             );
             
             $this->showCalculatedRoute = true;
+            // Dispatch a browser event so frontend code can react
             $this->dispatch('routeCalculated', $this->calculatedRoute);
             
         } catch (\Exception $e) {
@@ -220,7 +232,7 @@ class RoutePlanning extends Component
         if ($route) {
             $this->selectedRouteId = $routeId;
             $this->viewMode = 'view';
-            
+
             // Prepare route data for map
             $routeData = [
                 'id' => $route->id,
@@ -243,6 +255,7 @@ class RoutePlanning extends Component
                 ])->toArray(),
             ];
             
+            // Dispatch as browser event for frontend listeners
             $this->dispatch('viewRoute', $routeData);
         }
     }
@@ -272,8 +285,8 @@ class RoutePlanning extends Component
             
             $this->loadRoutes();
             
-            // Clear map markers via JavaScript
-            $this->dispatch('clearMapMarkers');
+                // Clear map markers via JavaScript (dispatch browser event)
+                    $this->dispatch('clearMapMarkers');
             
             session()->flash('success', 'Route deleted successfully.');
         }
@@ -305,7 +318,7 @@ class RoutePlanning extends Component
         $this->routeType = 'optimal';
         
         // Clear map markers
-        $this->dispatch('clearMapMarkers');
+            $this->dispatch('clearMapMarkers');
     }
     
     public function updateStartPoint($lat, $lon)
@@ -328,6 +341,6 @@ class RoutePlanning extends Component
         $this->endLon = null;
         $this->calculatedRoute = null;
         $this->showCalculatedRoute = false;
-        $this->dispatch('clearMapMarkers');
+            $this->dispatch('clearMapMarkers');
     }
 }
