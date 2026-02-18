@@ -9,6 +9,7 @@ jobs:
   verify-backups:
     name: Verify backup encryption and optionally restore
     runs-on: ubuntu-latest
+    environment: backups
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -15,6 +15,15 @@ Immediate steps (automated where possible)
 4. Deploy to a small canary or staging environment and run smoke tests to validate.
 5. After validation, revoke the old credential(s) via the provider console or API.
 
+Security hardening recommendations
+
+- Where possible, prefer short-lived tokens (IAM STS, temporary OAuth tokens) and avoid
+   issuing long-lived static secrets. Short-lived tokens reduce blast radius when leaked.
+- Enforce multi-factor authentication (MFA) on all administrative accounts and require
+   MFA for any GitHub admin actions (remove repo admin tokens from shared accounts).
+- Rotate deploy keys and CI runner credentials on a regular cadence (e.g., every 90 days)
+   and immediately when a contributor leaves the organization or a runner is decommissioned.
+
 Repository hygiene (history rewrite)
 
 - After rotation and revocation, perform a repository history rewrite to remove the secret from commits. Use `scripts/purge-secrets.sh` as a non-destructive guide, or run `git-filter-repo` with the list of secrets in `scripts/secrets-to-redact.example`.

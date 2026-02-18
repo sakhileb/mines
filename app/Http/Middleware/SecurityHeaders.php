@@ -22,23 +22,33 @@ class SecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-
         // Content Security Policy - Helps prevent XSS attacks
-        // Stronger CSP: remove 'unsafe-inline' and 'unsafe-eval'. If your app relies on
-        // inline scripts/styles, migrate to nonces or hashes. A Reporting header is
-        // also added to surface violations during rollout.
+        // Stronger CSP: remove 'unsafe-inline' and 'unsafe-eval'. Prefer nonces or SRI
+        // for inline assets. Generate a per-request nonce and add it to script/style-src.
+        $nonce = bin2hex(random_bytes(12));
+
+        $scriptSrc = "'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com";
+        $styleSrc = "'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://fonts.bunny.net https://unpkg.com";
+
         $csp = "default-src 'self'; " .
-               "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; " .
-               "script-src-elem 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; " .
-               "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://fonts.bunny.net https://unpkg.com; " .
-               "style-src-elem 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://fonts.bunny.net https://unpkg.com; " .
+               "script-src {$scriptSrc}; " .
+               "script-src-elem {$scriptSrc}; " .
+               "style-src {$styleSrc}; " .
+               "style-src-elem {$styleSrc}; " .
                "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net; " .
                "img-src 'self' data: https: blob:; " .
                "connect-src 'self' https://unpkg.com https://cdnjs.cloudflare.com https://*.pusher.com https://*.pusherapp.com ws: wss:; " .
                "frame-ancestors 'none';";
 
-        $response->headers->set('Content-Security-Policy', $csp);
-        $response->headers->set('Content-Security-Policy-Report-Only', $csp);
+        // Share nonce with views (if used). Views can read via request()->attributes->get('csp_nonce')
+        $request->attributes->set('csp_nonce', $nonce);
+
+        // Set enforcement in production; use report-only in staging/testing to collect violations.
+        if (app()->environment('production')) {
+            $response->headers->set('Content-Security-Policy', $csp);
+        } else {
+            $response->headers->set('Content-Security-Policy-Report-Only', $csp);
+        }
 
         // Prevent page from being loaded in an iframe - Clickjacking protection
         $response->headers->set('X-Frame-Options', 'DENY');

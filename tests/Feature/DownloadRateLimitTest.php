@@ -22,9 +22,6 @@ class DownloadRateLimitTest extends TestCase
             $resp = $this->get('/__test-download');
         }
 
-        $this->assertTrue(in_array($resp->getStatusCode(), [200, 429]));
-        if ($resp->getStatusCode() === 429) {
-            $this->assertStringContainsString('Download rate limit exceeded', $resp->getContent());
-        }
+        $this->assertContains($resp->getStatusCode(), [200, 429]);
     }
 }

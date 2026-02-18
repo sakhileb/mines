@@ -31,6 +31,12 @@ This file documents recommended operational procedures for monitoring, key rotat
 
 - Principle: rotate secrets immediately when suspected leaked and on a regular cadence (e.g., quarterly).
 
+- Security best-practices:
+  - Prefer short-lived credentials (IAM STS tokens, OAuth short-lived tokens) where possible to limit exposure.
+  - Require MFA for all administrative accounts and sensitive operations (console/API/GitHub admin operations).
+  - Rotate deploy keys and CI/runner credentials regularly (e.g., 90 days) and immediately upon personnel changes.
+
+
 - AWS keys:
   - Create a new IAM user or temporary credentials with least privilege.
   - Update application environment `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in your secret store.
@@ -251,8 +257,8 @@ For any automation or integration (e.g. automatic Sentry release tagging on depl
 5) CI & Static Analysis
 
 - A GitHub Actions workflow `ci-security.yml` was added to run secret scans (gitleaks), `composer audit`, `npm audit`, Semgrep, and optional PHP static analysis (PHPStan/ Psalm when installed).
-- To enforce checks before merging, use `scripts/enable-branch-protection.sh` to require the security workflows as branch protection checks.
- - To enforce checks before merging, use `scripts/enable-branch-protection.sh` to require the security workflows as branch protection checks. Ensure the repository secrets `ZAP_TARGET_URL` (for non-prod ZAP scan) and required CI secrets are configured before enabling.
+ - A GitHub Actions workflow `ci-security.yml` was added to run secret scans (gitleaks), `composer audit`, `npm audit`, Semgrep, and optional PHP static analysis (PHPStan/ Psalm when installed).
+ - To enforce checks before merging, run `scripts/enable-branch-protection.sh` with an admin token to require the `ci-security.yml` workflow and other checks. Enabling branch protection requires repository admin privileges; ensure required CI secrets (for example `ZAP_TARGET_URL`) and any protected GitHub Environments (e.g., `staging`, `backups`) plus self-hosted runners for authenticated scans are configured before enabling.
 
 Incident playbooks
 

@@ -25,6 +25,7 @@ class RedactSensitiveData
                 'card_number', 'private_key', 'aws_secret', 'aws_secret_access_key', 'db_password',
                 // Additional common service keys
                 'sentry_auth_token', 'sentry_dsn', 'sentry_dsn_url', 'aws_access_key_id', 'aws_access_key',
+                'sentry_dsn_public', 'aws_session_token', 'aws_session',
                 'stripe_secret', 'stripe_token', 'stripe_key', 'stripe_api_key', 'stripe_publishable_key',
                 'pusher_key', 'pusher_secret', 'pusher_app_id', 'mailgun_api_key', 'sendgrid_api_key',
                 'twilio_auth_token', 'database_url'

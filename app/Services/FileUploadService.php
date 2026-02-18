@@ -92,6 +92,15 @@ class FileUploadService
                         }
 
                         $entryExt = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                        // Reject sensitive filenames commonly used to exfiltrate secrets
+                        $lowerName = strtolower($name);
+                        $sensitiveNames = ['.env', 'credentials', 'id_rsa', 'id_dsa', 'private.key', '.aws/credentials', '.git-credentials'];
+                        foreach ($sensitiveNames as $sn) {
+                            if (str_contains($lowerName, $sn)) {
+                                $zip->close();
+                                throw new \Exception('Archive contains potentially sensitive filenames.');
+                            }
+                        }
                         if (in_array($entryExt, $suspicious, true)) {
                             $zip->close();
                             throw new \Exception('Archive contains disallowed file types.');

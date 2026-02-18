@@ -12,8 +12,9 @@ fi
 echo "# Generated secrets-to-redact (review before use)" > "$OUT"
 echo "# Format: literal string or regex lines to pass to git-filter-repo --replace-text" >> "$OUT"
 
-# Extract likely secrets: prefer offenders[].match, fall back to .match
-jq -r '.[] | (.offenders[]?.match // .match // "") as $m | select($m!="") | $m' "$REPORT" | sort -u >> "$OUT" || true
+# Extract likely secrets: prefer offenders[].match, then .Match/.match, then .Secret
+# Support both gitleaks versions that use capitalized keys and older/lowercase keys.
+jq -r '.[] | ( .offenders[]?.match // .Match // .match // .Secret // "") as $m | select($m!="") | $m' "$REPORT" | sort -u >> "$OUT" || true
 
 echo "Wrote candidates to $OUT; review carefully before using with git-filter-repo or BFG." >&2
 echo "Suggested next step: rotate these secrets in provider consoles, then run purge script as documented." >&2
