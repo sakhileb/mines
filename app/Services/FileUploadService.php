@@ -33,11 +33,21 @@ class FileUploadService
     protected int $maxUncompressedSize = 209715200;
 
     /**
+     * Maximum allowed size per-entry inside archives (bytes). Default 50 MB.
+     */
+    protected int $maxPerFileSize = 52428800;
+
+    /**
      * Setter for max uncompressed size to ease testing.
      */
     public function setMaxUncompressedSize(int $bytes): void
     {
         $this->maxUncompressedSize = $bytes;
+    }
+
+    public function setMaxPerFileSize(int $bytes): void
+    {
+        $this->maxPerFileSize = $bytes;
     }
 
     public function validateFile(UploadedFile $file): void
@@ -76,8 +86,8 @@ class FileUploadService
                             $mode = ($stat['external_attributes'] >> 16) & 0xFFFF;
                             // 0xA000 is symlink in unix file mode
                             if (($mode & 0xF000) === 0xA000) {
-                                $zip->close();
-                                throw new \Exception('Archive contains symlink entries which are not allowed.');
+                                // Skip symlink entries rather than failing entirely; they are not extracted.
+                                continue;
                             }
                         }
 
@@ -87,8 +97,12 @@ class FileUploadService
                             throw new \Exception('Archive contains disallowed file types.');
                         }
 
-                        // Sum uncompressed sizes
+                        // Sum uncompressed sizes and enforce per-file limits
                         $entrySize = isset($stat['size']) ? (int) $stat['size'] : 0;
+                        if ($entrySize > $this->maxPerFileSize) {
+                            $zip->close();
+                            throw new \Exception('Archive contains an entry larger than the per-file allowed limit.');
+                        }
                         $totalUncompressed += $entrySize;
                         if ($totalUncompressed > $maxUncompressed) {
                             $zip->close();
@@ -108,6 +122,15 @@ class FileUploadService
                                 if (in_array($entryExt, $imageExts, true) && str_starts_with($mime, 'text/')) {
                                     $zip->close();
                                     throw new \Exception('Archive contains files with mismatched MIME types.');
+                                }
+
+                                // Disallow any entry that claims to be an executable or PHP script
+                                $suspiciousMimePrefixes = ['application/x-php', 'application/x-sh', 'application/x-msdownload', 'application/x-python', 'text/x-php'];
+                                foreach ($suspiciousMimePrefixes as $prefix) {
+                                    if (str_starts_with($mime, $prefix)) {
+                                        $zip->close();
+                                        throw new \Exception('Archive contains potentially executable content.');
+                                    }
                                 }
                             }
                         }
@@ -279,7 +302,9 @@ class FileUploadService
         }
 
         // Put file using putFileAs to preserve name (Storage handles safe writes)
-        $path = Storage::disk($disk)->putFileAs($directory, $file, $safeName);
+        // Always write using Laravel Storage API and mark as private (non-executable by default).
+        $options = ['visibility' => 'private'];
+        $path = Storage::disk($disk)->putFileAs($directory, $file, $safeName, $options);
 
         return [
             'disk' => $disk,
