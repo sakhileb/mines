@@ -25,7 +25,8 @@ class LogRedactionTest extends TestCase
 
         $this->assertEquals('[REDACTED]', $out['user']['password']);
         $this->assertEquals('[REDACTED]', $out['user']['tokens']['access_token']);
-        $this->assertEquals('Authorization: Bearer [REDACTED]', $out['headers']['Authorization']);
+        // Authorization header is redacted entirely
+        $this->assertEquals('[REDACTED]', $out['headers']['Authorization']);
         $this->assertStringContainsString('api_key=[REDACTED]', $out['message']);
     }
 
