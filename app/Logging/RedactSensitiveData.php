@@ -19,15 +19,23 @@ class RedactSensitiveData
     {
         $logger->pushProcessor(function (array $record) {
             $configured = config('logging_redaction.keys', []);
+            $defaults = [
+                'password', 'pass', 'pwd', 'secret', 'token', 'access_token', 'refresh_token',
+                'api_key', 'apikey', 'auth', 'authorization', 'ssn', 'credit_card',
+                'card_number', 'private_key', 'aws_secret', 'aws_secret_access_key', 'db_password',
+                // Additional common service keys
+                'sentry_auth_token', 'sentry_dsn', 'sentry_dsn_url', 'aws_access_key_id', 'aws_access_key',
+                'stripe_secret', 'stripe_token', 'stripe_key', 'stripe_api_key', 'stripe_publishable_key',
+                'pusher_key', 'pusher_secret', 'pusher_app_id', 'mailgun_api_key', 'sendgrid_api_key',
+                'twilio_auth_token', 'database_url'
+            ];
+
             $sensitiveKeys = is_array($configured) && count($configured) > 0
-                ? $configured
-                : [
-                    'password', 'pass', 'pwd', 'secret', 'token', 'access_token', 'refresh_token',
-                    'api_key', 'apikey', 'auth', 'authorization', 'ssn', 'credit_card',
-                    'card_number', 'private_key', 'aws_secret', 'aws_secret_access_key', 'db_password',
-                    // Additional sensitive keys to redact
-                    'sentry_auth_token', 'sentry_dsn', 'aws_access_key_id', 'stripe_secret', 'stripe_token',
-                ];
+                ? array_merge($defaults, $configured)
+                : $defaults;
+
+            // normalize to lowercase for comparisons
+            $sensitiveKeys = array_map('strtolower', $sensitiveKeys);
 
             $redact = function ($value) use (&$redact, $sensitiveKeys) {
                 if (is_array($value)) {
@@ -52,11 +60,11 @@ class RedactSensitiveData
                 return $value;
             };
 
-            if (isset($record['context']) && is_array($record['context'])) {
+            if (isset($record['context'])) {
                 $record['context'] = $redact($record['context']);
             }
 
-            if (isset($record['extra']) && is_array($record['extra'])) {
+            if (isset($record['extra'])) {
                 $record['extra'] = $redact($record['extra']);
             }
 
@@ -67,5 +75,47 @@ class RedactSensitiveData
 
             return $record;
         });
+    }
+
+    /**
+     * Public helper to redact arbitrary values (useful for tests and reuse).
+     *
+     * @param mixed $value
+     * @param array $additionalKeys
+     * @return mixed
+     */
+    public static function redactValue($value, array $additionalKeys = [])
+    {
+        $defaults = [
+            'password','pass','pwd','secret','token','access_token','refresh_token',
+            'api_key','apikey','auth','authorization','ssn','credit_card',
+            'card_number','private_key','aws_secret','aws_secret_access_key','db_password',
+            'sentry_auth_token','sentry_dsn','sentry_dsn_url','aws_access_key_id','aws_access_key',
+            'stripe_secret','stripe_token','stripe_key','stripe_api_key','stripe_publishable_key',
+            'pusher_key','pusher_secret','pusher_app_id','mailgun_api_key','sendgrid_api_key',
+            'twilio_auth_token','database_url'
+        ];
+        $sensitiveKeys = array_map('strtolower', array_merge($defaults, $additionalKeys));
+
+        $redact = function ($v) use (&$redact, $sensitiveKeys) {
+            if (is_array($v)) {
+                foreach ($v as $k => $val) {
+                    if (in_array(strtolower((string) $k), $sensitiveKeys, true)) {
+                        $v[$k] = '[REDACTED]';
+                    } else {
+                        $v[$k] = $redact($val);
+                    }
+                }
+                return $v;
+            }
+            if (is_string($v)) {
+                $v = preg_replace('/(password|pwd|pass|api_key|apikey|token|access_token)=([^&\s,;]+)/i', '$1=[REDACTED]', $v);
+                $v = preg_replace('/Authorization:\s*Bearer\s+([^\s,;]+)/i', 'Authorization: Bearer [REDACTED]', $v);
+                return $v;
+            }
+            return $v;
+        };
+
+        return $redact($value);
     }
 }
