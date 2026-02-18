@@ -275,6 +275,18 @@ Incident playbooks
 
   - Enable Composer signature verification and consider SLSA provenance for high-risk packages. For composer, prefer installing from dist with secure HTTPS and verify packages where possible. Consider adding dependency provenance checks in CI and require Dependabot PRs to pass `ci-security.yml` before merging.
 
+  ZAP / Pen-testing notes
+
+  - OWASP ZAP baseline scans are included in CI via `.github/workflows/owasp-zap.yml`. To enable scheduled scans against a staging target set the repository secret `ZAP_TARGET_URL` to your staging URL (e.g., `https://staging.example.com`). The workflow will create triage issues for High/Medium alerts.
+  - For authenticated flows (recommended):
+    - Create secrets: `ZAP_AUTH_ENABLED=true`, `ZAP_AUTH_URL=https://staging.example.com/login-or-auth-endpoint`, `ZAP_AUTH_USERNAME`, and `ZAP_AUTH_PASSWORD` (or use a service account).
+    - Authenticated scans require a runner with network access to staging; consider using a self-hosted runner in the network or an ephemeral runner that can reach staging.
+    - The workflow will upload reports and open triage issues with `security,zap,triage` labels. Triage these into sprint work or incident tickets as appropriate.
+  - Operational guidance:
+    - Run a first authenticated scan manually via `workflow_dispatch` to validate credentials and reduce false positives.
+    - Ensure staging uses realistic but non-production data and that any test accounts have least privilege.
+    - Integrate triage issues into your sprint board or incident process and assign security owners to review findings.
+
 6) Key rotation and helper scripts
 
 - A helper `scripts/rotate-aws-iam-key.sh` is provided to create a new IAM access key and guide manual rotation steps. Do not store the output keys in plaintext; update your secret manager and deploy.
