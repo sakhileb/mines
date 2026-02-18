@@ -269,6 +269,11 @@ Incident playbooks
      "prefer-stable": true
      ```
    - Use Dependabot for automated dependency updates and review Dependabot PRs; do not merge dependency changes without CI green and a manual review.
+    - Use Dependabot for automated dependency updates and review Dependabot PRs; do not merge dependency changes without CI green and a manual review.
+
+  Composer & supply-chain notes
+
+  - Enable Composer signature verification and consider SLSA provenance for high-risk packages. For composer, prefer installing from dist with secure HTTPS and verify packages where possible. Consider adding dependency provenance checks in CI and require Dependabot PRs to pass `ci-security.yml` before merging.
 
 6) Key rotation and helper scripts
 
