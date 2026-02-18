@@ -24,8 +24,9 @@
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
+        "phpstan/phpstan": "1.12.32",
         "phpunit/phpunit": "^11.5.3",
-        "phpstan/phpstan": "^1.11"
+        "vimeo/psalm": "^6.0"
     },
     "autoload": {
         "psr-4": {
@@ -82,6 +83,9 @@
         ],
         "psalm": [
             "vendor/bin/psalm --no-cache"
+        ],
+        "psalm-baseline": [
+            "vendor/bin/psalm --set-baseline=psalm-baseline.xml"
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
