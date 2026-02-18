@@ -56,6 +56,7 @@ return [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),
             'ignore_exceptions' => false,
+            'tap' => [App\Logging\RedactSensitiveData::class],
         ],
 
         'single' => [
@@ -91,6 +92,14 @@ return [
                 'port' => env('PAPERTRAIL_PORT'),
                 'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
             ],
+            'processors' => [PsrLogMessageProcessor::class],
+        ],
+
+        'sentry' => [
+            'driver' => 'monolog',
+            'level' => env('LOG_LEVEL', 'error'),
+            'handler' => Sentry\Monolog\Handler\SentryHandler::class,
+            'handler_with' => [],
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
