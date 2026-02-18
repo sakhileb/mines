@@ -287,6 +287,24 @@ Incident playbooks
     - Ensure staging uses realistic but non-production data and that any test accounts have least privilege.
     - Integrate triage issues into your sprint board or incident process and assign security owners to review findings.
 
+  Backups enforcement & restore testing
+
+  - Enforce server-side KMS encryption on backup bucket by applying the provided bucket policy `deploy/s3-bucket-policy-enforce-kms.json`. Replace `your-backup-bucket` and `YOUR_KMS_KEY_ID` with your real values before applying.
+  - Use the `deploy/backup-role-policy.json` IAM policy for a dedicated backup role. The role should be scoped to the backup bucket and the specific KMS key. Rotate the role credentials regularly and restrict who can create/delete keys.
+  - Scheduled restore smoke tests: a workflow `.github/workflows/backup-restore-smoke.yml` runs weekly (configurable) and will:
+    - Find the latest backup in the configured bucket and verify `ServerSideEncryption` is `aws:kms` and the KMS key id matches `S3_KMS_KEY_ID` (if provided).
+    - Optionally attempt a restore to a staging DB when `RESTORE_*` secrets are provided (`RESTORE_DB_HOST`, `RESTORE_DB_USERNAME`, `RESTORE_DB_PASSWORD`, etc.).
+    - Create an issue labeled `backup,incident` if verification or restore fails.
+
+  - Required repository secrets for the smoke workflow:
+    - `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY`, `BACKUP_AWS_REGION`, `BACKUP_S3_BUCKET`, `S3_KMS_KEY_ID` (optional)
+    - Optional restore secrets: `RESTORE_DB_HOST`, `RESTORE_DB_PORT`, `RESTORE_DB_DATABASE`, `RESTORE_DB_USERNAME`, `RESTORE_DB_PASSWORD`
+
+  - Operational notes:
+    - Use instance profiles for the backup runner when possible to avoid long-lived credentials; if using IAM keys, store them in Secrets Manager and rotate.
+    - Ensure the KMS key policy allows the backup role to decrypt during restores and that the restore runner has access to the key.
+    - Schedule restores at low-traffic times and run smoke validation tests after restore (e.g., a small set of read-only queries or health checks). Record restore logs and store them in a secure channel.
+
 6) Key rotation and helper scripts
 
 - A helper `scripts/rotate-aws-iam-key.sh` is provided to create a new IAM access key and guide manual rotation steps. Do not store the output keys in plaintext; update your secret manager and deploy.
