@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Pre-commit hook: run gitleaks in Docker to detect secrets before commit
+set -euo pipefail
+
+# Run gitleaks container to scan the working tree (no-git)
+# Exit code 1 will block commit if leaks found
+if docker --version >/dev/null 2>&1; then
+  docker run --rm -v "$PWD":/src -w /src zricethezav/gitleaks:latest detect --no-git -f json -r /tmp/gitleaks-precommit.json || {
+    echo "gitleaks: potential secrets detected. Commit blocked. Inspect /tmp/gitleaks-precommit.json for details." >&2
+    exit 1
+  }
+else
+  echo "gitleaks pre-commit hook requires Docker. Skipping scan." >&2
+fi
+
+# Optionally run composer audit for quick check (non-blocking)
+if command -v composer >/dev/null 2>&1; then
+  composer audit --no-interaction || echo "composer audit found issues (non-blocking)" >&2
+fi
+
+exit 0
