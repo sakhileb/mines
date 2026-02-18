@@ -1,0 +1,16 @@
+Blade XSS Audit Report
+
+Files with unescaped Blade echoes (`{!! ... !!}`):
+
+- resources/views/terms.blade.php: contains `{!! $terms !!}` — ensure `$terms` is sanitized/trusted HTML.
+- resources/views/policy.blade.php: contains `{!! $policy !!}` — ensure `$policy` is sanitized/trusted HTML.
+- resources/views/profile/two-factor-authentication-form.blade.php: `{!! $this->user->twoFactorQrCodeSvg() !!}` — likely safe (QR SVG), verify output is generated server-side and not user-provided.
+- resources/views/auth/register.blade.php: `{!! __('I agree to the :terms_of_service and :privacy_policy', [ ... ]) !!}` — translation strings; ensure translations are safe.
+- resources/views/components/input.blade.php: `{!! $attributes->merge([...]) !!}` — component attributes merging; review usage to avoid injecting raw attributes from untrusted input.
+- resources/views/components/checkbox.blade.php: same as above for component attributes.
+
+Recommendations:
+- Prefer `{{ }}` for user-provided content. Only use `{!! !!}` when rendering trusted HTML (rich text from admins, server-generated SVG, etc.).
+- Sanitize or whitelist HTML for `terms`/`policy` if editable by users.
+- Audit places where these components are used and ensure attributes are not directly built from user input.
+- Consider an automated test that fails on new `{!!` occurrences unless added to an allow-list.

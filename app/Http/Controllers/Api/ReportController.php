@@ -111,15 +111,38 @@ class ReportController extends Controller
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $filePath = storage_path('app/' . $report->file_path);
+        // Use Storage APIs where possible. Normalize and validate the stored path.
+        $disk = config('filesystems.default');
+        $relative = ltrim($report->file_path ?? '', '/');
 
-        if (!file_exists($filePath)) {
-            return response()->json([
-                'message' => 'Report file not found',
-            ], Response::HTTP_NOT_FOUND);
+        // Disallow traversal and require a safe prefix
+        if (strpos($relative, '..') !== false) {
+            return response()->json(['message' => 'Report file not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return response()->download($filePath, $report->title . '.' . $report->format);
+        $allowedPrefix = 'reports/';
+        if (! str_starts_with($relative, $allowedPrefix)) {
+            // If stored paths don't use a prefix, this check can be adjusted.
+            return response()->json(['message' => 'Report file not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (! Storage::disk($disk)->exists($relative)) {
+            return response()->json(['message' => 'Report file not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Authorize was already called earlier; use Storage::download to serve safely and add security headers.
+        $filename = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $report->title) . '.' . $report->format;
+        $mime = Storage::disk($disk)->mimeType($relative) ?? 'application/octet-stream';
+
+        $securityHeaders = [
+            'Content-Security-Policy' => "default-src 'none';",
+            'X-Content-Type-Options' => 'nosniff',
+        ];
+
+        return Storage::disk($disk)->download($relative, $filename, array_merge($securityHeaders, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]));
     }
 
     /**
@@ -132,8 +155,12 @@ class ReportController extends Controller
         $this->authorize('delete', $report);
 
         // Delete file if exists
-        if ($report->file_path && file_exists(storage_path('app/' . $report->file_path))) {
-            unlink(storage_path('app/' . $report->file_path));
+        if ($report->file_path) {
+            $disk = config('filesystems.default');
+            $relative = ltrim($report->file_path, '/');
+            if (! (strpos($relative, '..') !== false) && str_starts_with($relative, 'reports/') && Storage::disk($disk)->exists($relative)) {
+                Storage::disk($disk)->delete($relative);
+            }
         }
 
         $report->delete();

@@ -75,6 +75,16 @@ Route::middleware([
         return view('reports.generate');
     })->name('report-generator');
 
+        // Signed report download route (uses signed URLs created in emails)
+        Route::get('/reports/{report}/download', [\App\Http\Controllers\ReportDownloadController::class, 'download'])
+            ->middleware(['auth', 'throttle:downloads'])
+            ->name('reports.signed-download');
+
+        // Signed mine plan download route (mirror reports signed-download)
+        Route::get('/mine-plans/{minePlan}/download', [\App\Http\Controllers\MinePlanDownloadController::class, '__invoke'])
+            ->middleware(['auth', 'throttle:downloads'])
+            ->name('mineplans.signed-download');
+
     Route::get('/reports/{report}', function (Report $report) {
         return view('reports.show', ['report' => $report]);
     })->name('reports.show');

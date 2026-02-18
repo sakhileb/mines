@@ -121,7 +121,8 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
         Route::delete('/{report}', [ReportController::class, 'destroy']);  // Delete report
 
         // Report actions
-        Route::get('/{report}/download', [ReportController::class, 'download']); // Download file
+        Route::get('/{report}/download', [ReportController::class, 'download'])
+            ->middleware('throttle:downloads'); // Download file
         Route::get('/templates', [ReportController::class, 'templates']);        // Get templates
         Route::get('/stats', [ReportController::class, 'stats']);                // Get stats
     });

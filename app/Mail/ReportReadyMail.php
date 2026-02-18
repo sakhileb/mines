@@ -20,7 +20,20 @@ class ReportReadyMail extends Mailable
 
     public function build()
     {
-        $downloadUrl = $this->report->file_path ? url($this->report->file_path) : '#';
+        // Use a signed download route so file paths are not exposed in email
+        $downloadUrl = '#';
+        try {
+            if ($this->report && $this->report->status === 'completed') {
+                $downloadUrl = \URL::temporarySignedRoute(
+                    'reports.signed-download',
+                    now()->addHours(24),
+                    ['report' => $this->report->id]
+                );
+            }
+        } catch (\Exception $e) {
+            // fallback to placeholder
+            $downloadUrl = '#';
+        }
 
         return $this->subject('Your report is ready — ' . $this->report->title)
                     ->view('emails.report-ready')

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Auth\Events\Registered;
 use App\Mail\WelcomeMail;
+use App\Console\Commands\ScanBladeUnescaped;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +28,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register console commands so scanning is available in CI
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ScanBladeUnescaped::class,
+            ]);
+        }
+
         // Configure rate limiting
         $this->configureRateLimiting();
 
@@ -44,6 +52,36 @@ class AppServiceProvider extends ServiceProvider
                 \Log::error('Failed to queue welcome email', ['user_id' => $event->user->id, 'error' => $e->getMessage()]);
             }
         });
+
+        // Listen for failed queue jobs and notify monitoring
+        Event::listen(\Illuminate\Queue\Events\JobFailed::class, function ($event) {
+            try {
+                $listener = new \App\Listeners\NotifyOnJobFailed();
+                $listener->handle($event);
+            } catch (\Throwable $e) {
+                \Log::error('Failed to notify on job failure', ['error' => $e->getMessage()]);
+            }
+        });
+
+        // Configure Sentry release/environment if present
+        try {
+            if (env('SENTRY_DSN')) {
+                if (function_exists('\Sentry\configureScope')) {
+                    \Sentry\configureScope(function ($scope): void {
+                        $env = env('SENTRY_ENVIRONMENT');
+                        $release = env('SENTRY_RELEASE');
+                        if ($env) {
+                            $scope->setTag('environment', $env);
+                        }
+                        if ($release) {
+                            $scope->setTag('release', $release);
+                        }
+                    });
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Unable to configure Sentry release/environment', ['error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -94,6 +132,18 @@ class AppServiceProvider extends ServiceProvider
                 ->response(function () {
                     return response()->json([
                         'message' => 'Report generation rate limit exceeded.',
+                        'retry_after' => 60
+                    ], 429);
+                });
+        });
+
+        // Signed downloads - protect large or sensitive file downloads
+        RateLimiter::for('downloads', function (Request $request) {
+            return Limit::perMinute(10)
+                ->by($request->user()?->id ?: $request->ip())
+                ->response(function () {
+                    return response()->json([
+                        'message' => 'Download rate limit exceeded.',
                         'retry_after' => 60
                     ], 429);
                 });

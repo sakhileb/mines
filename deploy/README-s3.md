@@ -2,8 +2,8 @@ S3 configuration & verification
 
 1) Set AWS environment variables in your host/staging environment (do NOT commit these to git):
 
-- AWS_ACCESS_KEY_ID=your_access_key_id
-- AWS_SECRET_ACCESS_KEY=your_secret_access_key
+-- AWS_ACCESS_KEY_ID (set via your secrets manager or CI secrets)
+-- AWS_SECRET_ACCESS_KEY (set via your secrets manager or CI secrets)
 - AWS_DEFAULT_REGION=your-region (e.g. us-east-1)
 - AWS_BUCKET=your-bucket-name
 - AWS_URL=optional (for custom endpoints)

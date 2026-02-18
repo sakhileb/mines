@@ -1,0 +1,50 @@
+name: OWASP ZAP - Baseline Scan (non-prod)
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # daily at 03:00 UTC
+  workflow_dispatch:
+
+env:
+  ZAP_TARGET: ${{ secrets.ZAP_TARGET_URL }}
+
+jobs:
+  zap-baseline:
+    name: ZAP Baseline Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require target
+        run: |
+          if [ -z "${ZAP_TARGET}" ]; then echo "ZAP_TARGET_URL secret is not set; aborting"; exit 1; fi
+
+      - name: Run ZAP baseline docker scan
+        run: |
+          docker run --rm -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t "${ZAP_TARGET}" -r zap-report.html -I || true
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap-report.html
+
+      - name: Check for high/medium alerts and create issue
+        id: find_issues
+        run: |
+          if grep -E "High|Medium" zap-report.html >/dev/null 2>&1; then
+            echo "alerts_found=true" >> $GITHUB_OUTPUT
+            echo "Found potential security issues in ZAP report"
+          else
+            echo "alerts_found=false" >> $GITHUB_OUTPUT
+            echo "No high/medium alerts found"
+          fi
+
+      - name: Create triage issue when alerts found
+        if: steps.find_issues.outputs.alerts_found == 'true'
+        uses: peter-evans/create-issue-from-file@v4
+        with:
+          title: "[Security][ZAP] Potential findings for ${ZAP_TARGET}"
+          content-filepath: zap-report.html
+          labels: security, zap, triage

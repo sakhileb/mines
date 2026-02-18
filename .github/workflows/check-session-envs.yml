@@ -1,0 +1,40 @@
+name: Deploy precheck - Session envs
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  session-env-check:
+    name: Check required session envs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify session environment secrets are set
+        env:
+          SESSION_SECURE_COOKIE: ${{ secrets.SESSION_SECURE_COOKIE }}
+          SESSION_HTTP_ONLY: ${{ secrets.SESSION_HTTP_ONLY }}
+          SESSION_SAME_SITE: ${{ secrets.SESSION_SAME_SITE }}
+        run: |
+          missing=()
+          if [ -z "$SESSION_SECURE_COOKIE" ]; then missing+=(SESSION_SECURE_COOKIE); fi
+          if [ -z "$SESSION_HTTP_ONLY" ]; then missing+=(SESSION_HTTP_ONLY); fi
+          if [ -z "$SESSION_SAME_SITE" ]; then missing+=(SESSION_SAME_SITE); fi
+
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "The following required session secrets are missing: ${missing[*]}"
+            echo "Please define them in the repository or organization secrets before deploying."
+            exit 1
+          fi
+          echo "All required session secrets are present."
+
+      - name: Informational - CI won't alter production
+        run: echo "This check ensures deploy-time session envs are defined as secrets. It does not modify environment values."
+
+# Notes:
+# - This workflow fails when any of the required session env secrets are missing.
+# - Set the secrets in GitHub: Settings → Secrets → Actions (SESSION_SECURE_COOKIE, SESSION_HTTP_ONLY, SESSION_SAME_SITE).
+# - It is recommended to let your deploy pipeline read these secrets and set runtime env variables on hosts rather than exposing them in code.

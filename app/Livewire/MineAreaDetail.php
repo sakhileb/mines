@@ -280,53 +280,60 @@ class MineAreaDetail extends Component
         $team = Auth::user()->currentTeam;
 
         $file = $this->planFile;
-        $fileName = $file->getClientOriginalName();
-        $extension = strtolower($file->getClientOriginalExtension());
 
-        // Determine file type category
-        $fileTypeMap = [
-            'pdf' => 'pdf',
-            'dwg' => 'dwg',
-            'dxf' => 'dxf',
-            'kml' => 'kml',
-            'kmz' => 'kmz',
-            'shp' => 'shapefile',
-            'png' => 'image',
-            'jpg' => 'image',
-            'jpeg' => 'image',
-            'gif' => 'image',
-            'tif' => 'image',
-            'tiff' => 'image',
-        ];
-        $fileType = $fileTypeMap[$extension] ?? $extension;
+        try {
+            $uploader = new \App\Services\FileUploadService();
+            $result = $uploader->storeMinePlan($file, $team->id, $this->mineArea->id);
 
-        $path = $file->store("mine-plans/{$team->id}/{$this->mineArea->id}", 'public');
+            // Map extension to type
+            $extension = strtolower($file->getClientOriginalExtension());
+            $fileTypeMap = [
+                'pdf' => 'pdf',
+                'dwg' => 'dwg',
+                'dxf' => 'dxf',
+                'kml' => 'kml',
+                'kmz' => 'kmz',
+                'shp' => 'shapefile',
+                'png' => 'image',
+                'jpg' => 'image',
+                'jpeg' => 'image',
+                'gif' => 'image',
+                'tif' => 'image',
+                'tiff' => 'image',
+            ];
+            $fileType = $fileTypeMap[$extension] ?? $extension;
 
-        MinePlanUpload::create([
-            'team_id' => $team->id,
-            'mine_area_id' => $this->mineArea->id,
-            'uploaded_by' => Auth::id(),
-            'title' => $this->planTitle,
-            'description' => $this->planDescription ?: null,
-            'file_name' => $fileName,
-            'file_path' => $path,
-            'file_type' => $fileType,
-            'file_size' => $file->getSize(),
-            'version' => $this->planVersion,
-            'status' => $this->planStatus,
-            'effective_date' => $this->planEffectiveDate ?: null,
-        ]);
+            MinePlanUpload::create([
+                'team_id' => $team->id,
+                'mine_area_id' => $this->mineArea->id,
+                'uploaded_by' => Auth::id(),
+                'title' => $this->planTitle,
+                'description' => $this->planDescription ?: null,
+                'file_name' => $result['file_name'],
+                'file_path' => $result['path'],
+                'file_type' => $fileType,
+                'file_size' => $result['size'],
+                'version' => $this->planVersion,
+                'status' => $this->planStatus,
+                'effective_date' => $this->planEffectiveDate ?: null,
+                'metadata' => array_merge($this->mineArea->metadata ?? [], ['disk' => $result['disk']]),
+            ]);
 
-        $this->closeUploadModal();
-        $this->dispatch('alert', type: 'success', message: 'Mine plan uploaded successfully');
+            $this->closeUploadModal();
+            $this->dispatch('alert', type: 'success', message: 'Mine plan uploaded successfully');
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to upload mine plan', ['error' => $e->getMessage()]);
+            $this->dispatch('alert', type: 'error', message: 'Failed to upload mine plan: ' . $e->getMessage());
+        }
     }
 
     public function deleteMinePlan(int $planId)
     {
         $team = Auth::user()->currentTeam;
         $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
-
-        Storage::disk('public')->delete($plan->file_path);
+        $disk = data_get($plan->metadata, 'disk', 'public');
+        Storage::disk($disk)->delete($plan->file_path);
         $plan->delete();
 
         $this->dispatch('alert', type: 'success', message: 'Mine plan deleted');

@@ -118,10 +118,32 @@ jobs:
             echo "psalm not installed, skipping";
           fi
 
-      - name: Run PHPCS if available
+      - name: Run PHPCBF (auto-fix) if available
+        run: |
+          if [ -x vendor/bin/phpcbf ]; then
+            echo "Running phpcbf to apply safe fixes..."
+            vendor/bin/phpcbf --standard=PSR12 --extensions=php --ignore=vendor || true
+          else
+            echo "phpcbf not installed, skipping auto-fix";
+          fi
+
+      - name: Run PHPCS and fail on violations
         run: |
           if [ -x vendor/bin/phpcs ]; then
             vendor/bin/phpcs --standard=PSR12 --extensions=php --ignore=vendor || exit 1
           else
             echo "phpcs not installed, skipping";
           fi
+
+      - name: Scan Blade templates for unescaped output
+        run: |
+          if php -v >/dev/null 2>&1; then
+            php artisan scan:blade-unescaped || { echo 'Unescaped Blade outputs found'; exit 1; }
+          else
+            echo 'PHP not available, skipping blade scan';
+          fi
+
+      - name: Semgrep Blade XSS rules
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: '.semgrep/xss_rules.yml'

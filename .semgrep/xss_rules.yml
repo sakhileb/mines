@@ -1,0 +1,10 @@
+rules:
+  - id: blade-unescaped-echo
+    patterns:
+      - pattern: "{!! $... !!}"
+      - pattern: "{!!$...!!}"
+    message: "Found unescaped Blade echo operator '{!! !!}' — use escaped '{{ }}' instead."
+    severity: ERROR
+    languages: [php]
+    metadata:
+      category: security

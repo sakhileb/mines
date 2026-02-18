@@ -529,7 +529,7 @@
 
                                 <!-- Actions -->
                                 <div class="flex items-center gap-2 pt-2 border-t border-gray-700">
-                                    <a href="{{ Storage::url($plan->file_path) }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300">Download</a>
+                                    <a href="{{ $plan->signedDownloadUrl() }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300">Download</a>
                                     @if($plan->status === 'draft')
                                         <button wire:click="activateMinePlan({{ $plan->id }})" class="text-xs text-green-400 hover:text-green-300">Activate</button>
                                     @endif
