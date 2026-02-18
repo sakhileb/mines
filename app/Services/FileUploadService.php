@@ -26,6 +26,20 @@ class FileUploadService
         return $safe . '_' . $hash . '.' . strtolower($ext);
     }
 
+    /**
+     * Maximum allowed uncompressed size for archive contents in bytes.
+     * Default to 200 MB but can be adjusted in tests.
+     */
+    protected int $maxUncompressedSize = 209715200;
+
+    /**
+     * Setter for max uncompressed size to ease testing.
+     */
+    public function setMaxUncompressedSize(int $bytes): void
+    {
+        $this->maxUncompressedSize = $bytes;
+    }
+
     public function validateFile(UploadedFile $file): void
     {
         $ext = strtolower($file->getClientOriginalExtension());
@@ -46,7 +60,7 @@ class FileUploadService
                 $zip = new \ZipArchive();
                 if ($zip->open($real) === true) {
                     $totalUncompressed = 0;
-                    $maxUncompressed = 200 * 1024 * 1024; // 200 MB cap for uncompressed contents
+                    $maxUncompressed = $this->maxUncompressedSize; // configurable cap for uncompressed contents
                     for ($i = 0; $i < $zip->numFiles; $i++) {
                         $name = $zip->getNameIndex($i);
 
