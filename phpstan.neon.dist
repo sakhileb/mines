@@ -1,0 +1,23 @@
+parameters:
+  level: max
+  paths:
+    - app
+    - routes
+    - database
+  excludePaths:
+    - tests
+  inferPrivatePropertyTypeFromConstructor: true
+  checkExplicitMixed: false
+includes:
+  - vendor/phpstan/phpstan/conf/bleedingEdge.neon
+
+parameters:
+  level: 5
+  paths:
+    - app
+    - routes
+    - database
+
+# Customize autoloading or bootstrap if needed
+# bootstrapFiles:
+#   - %rootDir%/../../../vendor/autoload.php
