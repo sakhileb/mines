@@ -15,6 +15,7 @@
         "laravel/scout": "^10.23",
         "laravel/tinker": "^2.10.1",
         "livewire/livewire": "^3.6.4"
+        ,"sentry/sentry-laravel": "^3.8"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -68,6 +69,15 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
+        ],
+        "install-githooks": [
+            "git config core.hooksPath .githooks || true"
+        ],
+        "analyse": [
+            "vendor/bin/phpstan analyse --configuration=phpstan.neon.dist --memory-limit=1G"
+        ],
+        "psalm": [
+            "vendor/bin/psalm --no-cache"
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
