@@ -238,6 +238,10 @@ Operational notes
 - Rotating a leaked AWS key:
   - Create new key in IAM.
   - Update `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` in secrets manager.
+  - Ensure developer git hooks are enabled to prevent accidental commits of secrets:
+    - Run `composer run-script install-githooks` or `make dev-setup` to configure `.githooks` as the repo hooks path.
+    - The repository includes a composer script and a `scripts/install-git-hooks.sh` helper that sets `core.hooksPath` and makes hooks executable.
+    - To enforce checks server-side, enable branch protection requiring the `ci-security.yml` workflow and the secret-scan step; use `scripts/enable-branch-protection.sh` with an admin token to automate.
   - Deploy and verify the app can access S3.
   - Deactivate old key in IAM.
 
