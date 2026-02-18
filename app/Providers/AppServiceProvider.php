@@ -7,6 +7,10 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Auth\Events\Registered;
+use App\Mail\WelcomeMail;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +34,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $schedule = $this->app->make('Illuminate\Console\Scheduling\Schedule');
             RealtimeEventScheduler::register($schedule);
+        });
+
+        // Send welcome email when users register
+        Event::listen(Registered::class, function (Registered $event) {
+            try {
+                Mail::to($event->user->email)->queue(new WelcomeMail($event->user));
+            } catch (\Exception $e) {
+                \Log::error('Failed to queue welcome email', ['user_id' => $event->user->id, 'error' => $e->getMessage()]);
+            }
         });
     }
 

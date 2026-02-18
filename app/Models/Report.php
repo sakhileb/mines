@@ -6,6 +6,8 @@ use App\Traits\HasTeamFilters;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ReportReadyMail;
 
 /**
  * Report Model
@@ -75,12 +77,28 @@ class Report extends Model
      */
     public function markCompleted($filePath, $fileSize = null)
     {
-        return $this->update([
+        $this->update([
             'status' => 'completed',
             'file_path' => $filePath,
             'file_size' => $fileSize,
             'generated_at' => now(),
         ]);
+
+        // Send report-ready emails to team users (fallback: all team users)
+        try {
+            if ($this->team) {
+                $emails = $this->team->users()->pluck('email')->filter()->unique()->toArray();
+                if (!empty($emails)) {
+                    foreach (array_chunk($emails, 50) as $batch) {
+                        Mail::to($batch)->queue(new ReportReadyMail($this));
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send report-ready emails', ['report_id' => $this->id, 'error' => $e->getMessage()]);
+        }
+
+        return $this;
     }
 
     /**

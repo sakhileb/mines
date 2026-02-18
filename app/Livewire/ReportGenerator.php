@@ -183,8 +183,10 @@ class ReportGenerator extends Component
             ]);
 
             session()->flash('message', 'Report generation started. You will receive an email when ready.');
-            
-            return $this->redirect(route('reports'), navigate: true);
+
+            // Use Livewire redirect without the `navigate` flag to avoid relying on Alpine.navigate
+            $this->redirect(route('reports'));
+            return;
             
         } catch (\Exception $e) {
             \Log::error('Failed to generate report', [

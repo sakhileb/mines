@@ -30,6 +30,7 @@ class AuthServiceProvider extends ServiceProvider
         Integration::class => IntegrationPolicy::class,
         Report::class => ReportPolicy::class,
         Notification::class => NotificationPolicy::class,
+        \App\Models\AIRecommendation::class => \App\Policies\AIRecommendationPolicy::class,
     ];
 
     /**

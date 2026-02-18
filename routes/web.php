@@ -70,6 +70,7 @@ Route::middleware([
         return view('reports.index');
     })->name('reports');
 
+    // Live report generator (Livewire)
     Route::get('/reports/generate', function () {
         return view('reports.generate');
     })->name('report-generator');
@@ -80,8 +81,8 @@ Route::middleware([
 
     // Reports view 2 (scope selectors)
     Route::get('/reports/view-2', [ReportController::class, 'view2'])->name('reports.view2');
-    // Simple generate endpoint (GET form)
-    Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
+    // Simple generate endpoint (GET form) — moved to avoid path conflict with Livewire generator
+    Route::get('/reports/generate/simple', [ReportController::class, 'generate'])->name('reports.generate');
 
     // Alerts
     Route::get('/alerts', App\Livewire\Alerts::class)

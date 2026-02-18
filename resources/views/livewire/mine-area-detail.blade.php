@@ -699,7 +699,7 @@
 
     <!-- Assign Machine Modal -->
     @if($showAssignModal)
-        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4">
             <div class="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full border border-gray-700 text-gray-100">
                 <div class="p-6 border-b border-gray-700 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-gray-100">Assign Machine to {{ $mineArea->name }}</h2>
@@ -736,7 +736,7 @@
 
     <!-- Production Record Modal -->
     @if($showProductionModal)
-        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4">
             <div class="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full border border-gray-700">
                 <div class="p-6 border-b border-gray-700 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-white">Add Production Record</h2>
@@ -804,7 +804,7 @@
 
     <!-- Production Target Modal -->
     @if($showTargetModal)
-        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4">
             <div class="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full border border-gray-700">
                 <div class="p-6 border-b border-gray-700 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-white">Set Production Target</h2>
@@ -866,7 +866,7 @@
 
     <!-- Upload Mine Plan Modal -->
     @if($showUploadModal)
-        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4">
             <div class="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full border border-gray-700">
                 <div class="p-6 border-b border-gray-700 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-white">Upload Mine Plan</h2>
@@ -921,7 +921,7 @@
 
     <!-- Create Area Alert Modal -->
     @if($showAlertModal)
-        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4">
             <div class="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full border border-gray-700">
                 <div class="p-6 border-b border-gray-700 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-white">Create Area Alert</h2>
@@ -974,7 +974,7 @@
 
     <!-- Link Geofence Modal -->
     @if($showGeofenceModal)
-        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4">
             <div class="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full border border-gray-700">
                 <div class="p-6 border-b border-gray-700 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-white">Link Geofence to {{ $mineArea->name }}</h2>

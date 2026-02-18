@@ -58,6 +58,14 @@ class FuelTank extends Model
     }
 
     /**
+     * Belongs to a mine area (optional)
+     */
+    public function mineArea(): BelongsTo
+    {
+        return $this->belongsTo(MineArea::class, 'mine_area_id');
+    }
+
+    /**
      * Get the fill percentage
      */
     public function getFillPercentageAttribute(): float
