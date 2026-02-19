@@ -38,7 +38,7 @@ class Dashboard extends Component
                     ->where('status', 'active')
                     ->count(),
                 'active_alerts' => Alert::where('team_id', $team->id)
-                    ->where('status', 'open')
+                    ->where('status', 'active')
                     ->count(),
                 'total_geofences' => Geofence::where('team_id', $team->id)->count(),
             ];
@@ -46,7 +46,10 @@ class Dashboard extends Component
 
         $this->totalMachines = $stats['total_machines'];
         $this->activeMachines = $stats['active_machines'];
-        $this->activeAlerts = $stats['active_alerts'];
+        // Ensure active alerts count is accurate for the current team (bypass stale cache)
+        $this->activeAlerts = Alert::where('team_id', $team->id)
+            ->where('status', 'active')
+            ->count();
         $this->totalGeofences = $stats['total_geofences'];
 
         // Recent Alerts (with eager loading)

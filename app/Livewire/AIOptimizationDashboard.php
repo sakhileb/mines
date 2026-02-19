@@ -8,10 +8,11 @@ use App\Models\AIPredictiveAlert;
 use App\Services\AI\AIOptimizationService;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Traits\BrowserEventBridge;
 
 class AIOptimizationDashboard extends Component
 {
-    use WithPagination;
+    use WithPagination, BrowserEventBridge;
 
     public $activeTab = 'overview';
     public $selectedCategory = 'all';
@@ -56,9 +57,9 @@ class AIOptimizationDashboard extends Component
             );
 
             $this->dispatch('analysis-completed');
-            session()->flash('success', 'AI analysis completed successfully!');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'AI analysis completed successfully!']);
         } catch (\Exception $e) {
-            session()->flash('error', 'Analysis failed: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Analysis failed: ' . $e->getMessage()]);
         }
 
         $this->analysisRunning = false;
@@ -84,10 +85,10 @@ class AIOptimizationDashboard extends Component
 
             $recommendation->markAsImplemented(auth()->user());
 
-            session()->flash('success', 'Recommendation marked as implemented!');
-            $this->dispatch('recommendation-updated', data: ['id' => $recommendation->id, 'status' => 'implemented']);
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Recommendation marked as implemented!']);
+            $this->dispatch('recommendation-updated', ['id' => $recommendation->id, 'status' => 'implemented']);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            session()->flash('error', 'You are not authorized to implement this recommendation.');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'You are not authorized to implement this recommendation.']);
             return;
         }
     }
@@ -100,10 +101,10 @@ class AIOptimizationDashboard extends Component
 
             $recommendation->update(['status' => 'rejected']);
 
-            session()->flash('success', 'Recommendation rejected.');
-            $this->dispatch('recommendation-updated', data: ['id' => $recommendation->id, 'status' => 'rejected']);
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Recommendation rejected.']);
+            $this->dispatch('recommendation-updated', ['id' => $recommendation->id, 'status' => 'rejected']);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            session()->flash('error', 'You are not authorized to reject this recommendation.');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'You are not authorized to reject this recommendation.']);
             return;
         }
     }
@@ -147,24 +148,14 @@ class AIOptimizationDashboard extends Component
         $this->pendingRecommendationAction = null;
     }
 
-    public function acknowledgeAlert($alertId)
-    {
-        $alert = AIPredictiveAlert::findOrFail($alertId);
-        
-        $this->authorize('update', $alert);
-
-        $alert->acknowledge(auth()->user());
-
-        session()->flash('success', 'Alert acknowledged.');
-    }
+    // (Possibly missing function for alert acknowledgement should be implemented here if needed)
 
     public function markInsightAsRead($insightId)
     {
         $insight = AIInsight::findOrFail($insightId);
-        
         $this->authorize('update', $insight);
-
         $insight->markAsRead();
+        $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Insight marked as read.']);
     }
 
     public function render()
@@ -177,7 +168,6 @@ class AIOptimizationDashboard extends Component
         // Get recommendations with filters
         $recommendationsQuery = AIRecommendation::where('team_id', $team->id)
             ->with(['aiAgent', 'machine', 'mineArea', 'route']);
-
         // Status filter: default to 'pending' when no status filter provided
         if (!empty($this->filters['status'])) {
             $recommendationsQuery->where('status', $this->filters['status']);

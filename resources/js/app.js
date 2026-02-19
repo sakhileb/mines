@@ -30,3 +30,24 @@ window.LivewireEcho = LivewireEcho;
 window.RealtimeMapManager = RealtimeMapManager;
 window.ToastNotificationService = ToastNotificationService;
 window.GeofenceVisualizationManager = GeofenceVisualizationManager;
+
+// Ensure Livewire-dispatched events are re-dispatched on `window` so
+// Alpine listeners using `@notify.window` receive them reliably.
+document.addEventListener('livewire:load', function () {
+	if (window.Livewire && typeof window.Livewire.hook === 'function') {
+		window.Livewire.hook('message.processed', (message, component) => {
+			try {
+				const dispatches = message?.response?.effects?.dispatches || [];
+				dispatches.forEach(d => {
+					const name = d.name;
+					// Livewire sends params as an array; we take the first element as payload
+					const payload = (d.params && d.params.length) ? d.params[0] : {};
+					window.dispatchEvent(new CustomEvent(name, { detail: payload, bubbles: true, composed: true }));
+				});
+			} catch (e) {
+				// swallow — non-critical
+				console.error('Livewire dispatch re-dispatch failed', e);
+			}
+		});
+	}
+});

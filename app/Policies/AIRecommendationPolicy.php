@@ -37,8 +37,14 @@ class AIRecommendationPolicy
      */
     public function update(User $user, AIRecommendation $recommendation): bool
     {
-        return $user->current_team_id === $recommendation->team_id &&
-               ($user->hasPermission('update_recommendations') || $user->hasRole('owner'));
+         return $user->current_team_id === $recommendation->team_id &&
+            (
+                $user->hasPermission('update_recommendations') ||
+                $user->hasRole('owner') ||
+                // Accept both common role names to avoid mismatch between environments
+                $user->hasRole('admin') ||
+                $user->hasRole('administrator')
+            );
     }
 
     /**
