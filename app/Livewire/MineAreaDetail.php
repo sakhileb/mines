@@ -398,7 +398,8 @@ class MineAreaDetail extends Component
             'mine_area_id' => $this->mineArea->id,
             'type' => $this->alertType,
             'title' => $this->alertTitle,
-            'description' => $this->alertDescription ?: null,
+            // Ensure description is not null (DB requires NOT NULL)
+            'description' => $this->alertDescription ?: '',
             'priority' => $this->alertPriority,
             'status' => 'active',
             'triggered_at' => now(),
