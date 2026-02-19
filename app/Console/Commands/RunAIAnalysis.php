@@ -33,7 +33,10 @@ class RunAIAnalysis extends Command
 
         foreach ($teams as $team) {
             $this->line("📊 Analyzing: <fg=cyan>{$team->name}</>");
-            
+
+            // Ensure team scoping for models using HasTeamFilters in non-request contexts
+            app()->instance('current_team_id', $team->id);
+
             try {
                 $result = $aiService->runComprehensiveAnalysis($team);
                 
@@ -71,6 +74,12 @@ class RunAIAnalysis extends Command
                 $this->error("  ✗ Failed: {$e->getMessage()}");
                 $this->newLine();
                 continue;
+            }
+            finally {
+                // Remove the team instance so subsequent iterations or other code are not affected
+                if (app()->hasInstance('current_team_id')) {
+                    app()->forgetInstance('current_team_id');
+                }
             }
         }
 
