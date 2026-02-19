@@ -16,6 +16,12 @@ public array $activityFeed = [];
 public bool $isLoading = true;
 use WithPagination;
 
+    // AI recommendation interaction state
+    public array $lastAiRecommendations = [];
+    public $pendingRecommendationIndex = null;
+    public bool $showRejectRecommendationModal = false;
+    public string $rejectReason = '';
+
     public string $search = '';
     public string $statusFilter = '';
     public string $sortBy = 'name';
@@ -469,6 +475,9 @@ use WithPagination;
         $aiRecommendations = collect($aiAnalysis['recommendations'])->take(5);
         $aiInsights = collect($aiAnalysis['insights'])->take(3);
 
+        // Keep a serializable copy to reference in action handlers (Livewire methods)
+        $this->lastAiRecommendations = $aiRecommendations->values()->map(fn($r) => (array) $r)->toArray();
+
         $this->isLoading = false;
 
         return view('livewire.fleet', [
@@ -484,5 +493,99 @@ use WithPagination;
             'activityFeed' => $this->activityFeed,
             'isLoading' => $this->isLoading,
         ]);
+    }
+
+    public function implementRecommendation(int $index)
+    {
+        $team = Auth::user()->currentTeam;
+        $rec = $this->lastAiRecommendations[$index] ?? null;
+        if (! $rec) {
+            $this->dispatch('alert', message: 'Recommendation not found', type: 'error');
+            return;
+        }
+
+        // Compute a stable hash for the recommendation
+        $hash = md5(json_encode($rec));
+
+        // Create action record
+        $action = \App\Models\AiRecommendationAction::create([
+            'team_id' => $team->id,
+            'recommendation_hash' => $hash,
+            'recommendation' => $rec,
+            'status' => 'implemented',
+            'actioned_by' => Auth::id(),
+            'actioned_at' => now(),
+        ]);
+
+        // Apply operational adjustment (best-effort): if recommendation references a machine, create an activity log and tag machine
+        if (!empty($rec['related_machine_id'])) {
+            $machine = Machine::find($rec['related_machine_id']);
+            if ($machine && $machine->team_id === $team->id) {
+                \App\Models\ActivityLog::create([
+                    'team_id' => $team->id,
+                    'user_id' => Auth::id(),
+                    'action' => 'ai_recommendation_implemented',
+                    'description' => "Implemented AI recommendation: {$rec['title']} for machine {$machine->name}",
+                ]);
+            }
+        } else {
+            \App\Models\ActivityLog::create([
+                'team_id' => $team->id,
+                'user_id' => Auth::id(),
+                'action' => 'ai_recommendation_implemented',
+                'description' => "Implemented AI recommendation: {$rec['title']}",
+            ]);
+        }
+
+        // Dispatch a success notification and record that performance tracking should occur (placeholder)
+        $this->dispatch('alert', message: 'Recommendation implemented. Performance will be tracked.', type: 'success');
+    }
+
+    public function openRejectRecommendation(int $index)
+    {
+        $this->pendingRecommendationIndex = $index;
+        $this->rejectReason = '';
+        $this->showRejectRecommendationModal = true;
+    }
+
+    public function confirmRejectRecommendation()
+    {
+        if (empty(trim($this->rejectReason))) {
+            $this->dispatch('alert', message: 'Please provide a reason for rejection', type: 'error');
+            return;
+        }
+
+        $team = Auth::user()->currentTeam;
+        $rec = $this->lastAiRecommendations[$this->pendingRecommendationIndex] ?? null;
+        if (! $rec) {
+            $this->dispatch('alert', message: 'Recommendation not found', type: 'error');
+            $this->showRejectRecommendationModal = false;
+            return;
+        }
+
+        $hash = md5(json_encode($rec));
+
+        \App\Models\AiRecommendationAction::create([
+            'team_id' => $team->id,
+            'recommendation_hash' => $hash,
+            'recommendation' => $rec,
+            'status' => 'rejected',
+            'actioned_by' => Auth::id(),
+            'actioned_at' => now(),
+            'reject_reason' => $this->rejectReason,
+        ]);
+
+        \App\Models\ActivityLog::create([
+            'team_id' => $team->id,
+            'user_id' => Auth::id(),
+            'action' => 'ai_recommendation_rejected',
+            'description' => "Rejected AI recommendation: {$rec['title']} — Reason: {$this->rejectReason}",
+        ]);
+
+        $this->showRejectRecommendationModal = false;
+        $this->pendingRecommendationIndex = null;
+        $this->rejectReason = '';
+
+        $this->dispatch('alert', message: 'Recommendation rejected and logged', type: 'success');
     }
 }

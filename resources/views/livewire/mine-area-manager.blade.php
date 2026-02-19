@@ -62,18 +62,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Mode Tabs -->
-            @if($viewMode === 'list')
-                <div class="flex gap-2">
-                    <button 
-                        wire:click="switchToListMode"
-                        class="px-4 py-2 rounded-lg transition-colors bg-blue-600 text-white"
-                    >
-                        List View
-                    </button>
-                </div>
-            @endif
         </div>
     </div>
 

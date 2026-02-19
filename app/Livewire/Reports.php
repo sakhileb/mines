@@ -3,6 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Report;
+use App\Models\MineArea;
+use App\Models\Geofence;
+use App\Models\Machine;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +19,10 @@ class Reports extends Component
     public $sortDirection = 'desc';
     public $selectedType = 'all';
     public $selectedStatus = 'all';
+    public $selectedMineAreaId = '';
+    public $selectedGeofenceId = '';
+    public $selectedMachineId = '';
+    public $machinesList = null;
     public $showDeleteConfirm = false;
     public $deleteReportId = null;
 
@@ -32,6 +39,9 @@ class Reports extends Component
     {
         $this->sortBy = 'created_at';
         $this->sortDirection = 'desc';
+        $this->selectedMineAreaId = '';
+        $this->selectedGeofenceId = '';
+        $this->selectedMachineId = '';
     }
 
     public function getReports()
@@ -48,6 +58,15 @@ class Reports extends Component
             ->when($searchTerm, function ($query) use ($searchTerm) {
                 $query->where('title', 'like', '%' . $searchTerm . '%')
                     ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            })
+            ->when($this->selectedMineAreaId, function ($query) {
+                $query->where('filters->mine_area_id', $this->selectedMineAreaId);
+            })
+            ->when($this->selectedGeofenceId, function ($query) {
+                $query->where('filters->geofence_id', $this->selectedGeofenceId);
+            })
+            ->when($this->selectedMachineId, function ($query) {
+                $query->where('filters->machine_id', $this->selectedMachineId);
             })
             ->when($this->selectedType !== 'all', function ($query) {
                 $query->where('type', $this->selectedType);
@@ -165,9 +184,18 @@ class Reports extends Component
 
     public function render()
     {
+        $team = Auth::user()->currentTeam;
+
+        $mineAreas = $team ? MineArea::where('team_id', $team->id)->get() : collect();
+        $geofences = $team ? Geofence::where('team_id', $team->id)->get() : collect();
+        $this->machinesList = $team ? Machine::where('team_id', $team->id)->select('id','name')->get() : collect();
+
         return view('livewire.reports', [
             'reports' => $this->getReports(),
             'reportTypes' => $this->reportTypes,
+            'mineAreas' => $mineAreas,
+            'geofences' => $geofences,
+            'machinesList' => $this->machinesList,
         ]);
     }
 }

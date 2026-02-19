@@ -21,6 +21,7 @@ class LiveMap extends Component
     public bool $showGeofences = true;
     public bool $showMachines = true;
     public string $selectedStatus = '';
+    public ?int $selectedMineAreaId = null;
 
     public function mount(): void
     {
@@ -107,7 +108,40 @@ class LiveMap extends Component
             $machinesQuery->where('status', $this->selectedStatus);
         }
 
+        if ($this->selectedMineAreaId) {
+            $machinesQuery->where('mine_area_id', $this->selectedMineAreaId);
+        }
+
         return $machinesQuery->get();
+    }
+
+    public function getMineAreas()
+    {
+        $team = Auth::user()->currentTeam;
+        // Return active mine areas with coordinates decoded for client-side use
+        return \App\Models\MineArea::forTeam($team->id)
+            ->byStatus('active')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($area) {
+                return [
+                    'id' => $area->id,
+                    'name' => $area->name,
+                    'coordinates' => is_string($area->coordinates) ? json_decode($area->coordinates, true) : $area->coordinates ?? [],
+                ];
+            })
+            ->toArray();
+    }
+
+    public function updatedSelectedMineAreaId($value): void
+    {
+        // When user selects a mine area, push an update to the map with filtered machines
+        $this->dispatch('map-updated', [
+            'mapStyle' => $this->mapStyle,
+            'machines' => $this->getMachines(),
+            'geofences' => $this->showGeofences ? $this->getGeofences() : [],
+            'selectedMineAreaId' => $value,
+        ]);
     }
 
     public function getGeofences()
@@ -141,6 +175,7 @@ class LiveMap extends Component
             'machines' => $machines,
             'geofences' => $geofences,
             'machineStatuses' => $machineStatuses,
+            'mineAreas' => $this->getMineAreas(),
         ]);
     }
 }

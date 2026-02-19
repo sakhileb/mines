@@ -4,19 +4,19 @@
         <div class="flex items-center gap-4">
             @php
                 $routeName = optional(request()->route())->getName();
-                $mapping = [
+                    $mapping = [
                     'dashboard' => 'Dashboard',
                     'fleet' => 'Fleet Management',
                     'fleet.replay' => 'Fleet Replay',
                     'fleet.route-planning' => 'Route Planning',
-                    'map' => 'Live Map',
+                        'map' => 'Live Operations Map',
                     'geofences' => 'Geofences',
                     'geofences.show' => 'Geofence Details',
                     'mine-areas' => 'Mine Areas',
                     'mine-areas.show' => 'Mine Area',
                     'reports' => 'Reports',
                     'report-generator' => 'Generate Report',
-                    'alerts' => 'Alerts',
+                        'alerts' => 'Operational Alerts',
                     'production' => 'Production',
                     'fuel' => 'Fuel Management',
                     'maintenance' => 'Maintenance',

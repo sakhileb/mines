@@ -510,6 +510,16 @@
                             @error('allocationMonth') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
+                            <label class="block font-medium mb-1">Mine Area</label>
+                            <select wire:model.live="mineAreaId" class="select select-bordered w-full bg-gray-900 border-gray-700 text-gray-100">
+                                <option value="">Select Area</option>
+                                @foreach($mineAreas as $area)
+                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('mineAreaId') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
                             <label class="block font-medium mb-1">Allocated Liters</label>
                             <input type="number" min="1" wire:model.live="allocatedLiters" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
                             @error('allocatedLiters') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror

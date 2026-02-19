@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Services\QueryCacheService;
 use App\Traits\HasTeamFilters;
+use Illuminate\Validation\ValidationException;
+use App\Models\MineArea;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -75,6 +77,17 @@ class Machine extends Model
 
     /**
      * Get the team that owns this machine
+            // Ensure machines are always assigned to a mine area when possible
+            static::saving(function (Machine $machine) {
+                // If mine_area_id is null, and the team has at least one active mine area, prevent save
+                if (is_null($machine->mine_area_id) && $machine->team_id) {
+                    $teamId = $machine->team_id;
+                    $hasActive = MineArea::where('team_id', $teamId)->where('status', 'active')->exists();
+                    if ($hasActive) {
+                        throw ValidationException::withMessages(['mine_area_id' => 'Machine must be assigned to an active mine area for this team.']);
+                    }
+                }
+            });
      */
     public function team(): BelongsTo
     {

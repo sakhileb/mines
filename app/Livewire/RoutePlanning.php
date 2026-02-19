@@ -230,8 +230,10 @@ class RoutePlanning extends Component
             ->first();
         
         if ($route) {
+            // Keep the list visible — do not switch to a hidden 'view' state.
             $this->selectedRouteId = $routeId;
-            $this->viewMode = 'view';
+            // Ensure viewMode stays as 'list' so the routes list remains visible.
+            $this->viewMode = 'list';
 
             // Prepare route data for map
             $routeData = [

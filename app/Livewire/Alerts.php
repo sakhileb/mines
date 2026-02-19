@@ -23,6 +23,8 @@ class Alerts extends Component
     public $selectedAlertId = null;
     public $pendingDismissAlertId = null;
     public $showDismissConfirm = false;
+    // Track when a dismissed-unresolved alert was created so UI can render specially
+    public $recentlyDismissedUnresolved = [];
 
     protected $alertPriorities = [
         'critical' => 'Critical',
@@ -155,20 +157,29 @@ class Alerts extends Component
             $this->pendingDismissAlertId = null;
             return;
         }
-
-        if ($choice === 'dismiss') {
+        // If the alert is already resolved, allow normal dismissal which will remove it from active workflows
+        if ($alert->status === 'resolved') {
             $alert->update([
                 'status' => 'dismissed',
                 'dismissed_by' => Auth::id(),
                 'dismissed_at' => now(),
             ]);
             $this->dispatch('notify', message: 'Alert dismissed');
-        } else {
-            // Keep the alert visible but mark as needing attention so it stands out
+
+            $this->showDismissConfirm = false;
+            $this->pendingDismissAlertId = null;
+            return;
+        }
+
+        // For unresolved alerts: if the user confirms the dismiss warning, mark it as dismissed_unresolved
+        if ($choice === 'confirm') {
             $alert->update([
-                'status' => 'attention',
+                'status' => 'dismissed_unresolved',
+                'dismissed_by' => Auth::id(),
+                'dismissed_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert marked for attention');
+            $this->dispatch('notify', message: 'Alert marked Dismissed - Unresolved');
+            $this->recentlyDismissedUnresolved[] = $alert->id;
         }
 
         $this->showDismissConfirm = false;

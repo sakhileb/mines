@@ -293,6 +293,10 @@
 
                             <div class="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
                                 <span class="text-xs text-gray-300">AI Confidence: {{ number_format($recommendation['confidence_score'] * 100, 0) }}%</span>
+                                <div class="flex items-center gap-2">
+                                    <button wire:click="implementRecommendation({{ $loop->index }})" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">Implement</button>
+                                    <button wire:click="openRejectRecommendation({{ $loop->index }})" class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">Reject</button>
+                                </div>
                             </div>
                         </div>
                         @endforeach
@@ -752,9 +756,7 @@
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeAssignModal">
             <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md" @click.stop>
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-white">
-                        Assign to Excavator
-                    </h2>
+                    <h2 class="text-2xl font-bold text-white">Assign to Excavator</h2>
                     <button wire:click="closeAssignModal" class="text-gray-400 hover:text-white">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -764,27 +766,22 @@
 
                 <div class="mb-6">
                     @if($assignMode === 'assign_adts_to_excavator')
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Select ADTs to assign</label>
-                        <div class="max-h-48 overflow-auto border border-gray-700 rounded p-2 bg-gray-900">
-                            @if($adts->count() === 0)
-                                <p class="text-gray-400 text-sm">No ADTs available. Create ADT machines first.</p>
-                            @else
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Assign ADTs</label>
+                        @if($adts->count() === 0)
+                            <p class="text-gray-400 text-sm">No ADTs available. Create ADT machines first.</p>
+                        @else
+                            <select multiple wire:model="selectedAdtIds" class="w-full h-40 px-3 py-2 bg-gray-900 border border-gray-700 rounded text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
                                 @foreach($adts as $adt)
-                                    <label class="flex items-center gap-2 text-sm text-gray-200 py-1">
-                                        <input type="checkbox" wire:model="selectedAdtIds" value="{{ $adt->id }}" class="form-checkbox h-4 w-4 text-amber-500" />
-                                        <span>{{ $adt->name }} ({{ ucfirst($adt->machine_type) }})</span>
-                                    </label>
+                                    <option value="{{ $adt->id }}">{{ $adt->name }} ({{ ucfirst($adt->machine_type) }})</option>
                                 @endforeach
-                            @endif
-                        </div>
+                            </select>
+                            <p class="text-xs text-gray-400 mt-2">Tip: hold Ctrl/Cmd (or use touch gestures) to select multiple ADTs.</p>
+                        @endif
                     @else
                         <label class="block text-sm font-medium text-gray-300 mb-2">Select Excavator</label>
-                        <select 
-                            wire:model="selectedExcavatorId"
-                            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500"
-                        >
+                        @php $assigning = \App\Models\Machine::find($assigningMachineId); @endphp
+                        <select wire:model="selectedExcavatorId" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500">
                             <option value="">Choose an excavator...</option>
-                            @php $assigning = \App\Models\Machine::find($assigningMachineId); @endphp
                             @foreach ($excavators as $excavator)
                                 @php
                                     $disableOption = false;
@@ -797,36 +794,27 @@
                                     {{ $excavator->name }} ({{ ucfirst($excavator->machine_type) }}) @if($disableOption) — not allowed @endif
                                 </option>
                             @endforeach
-                        </select>
-                        
-                        @if (count($excavators) === 0)
-                            <p class="text-gray-400 text-sm mt-2">No excavators available. Create an excavator machine first.</p>
-                        @else
-                            @if($assigning && in_array(strtolower($assigning->machine_type ?? ''), ['excavator','dozer','loader','grader','bulldozer']))
-                                <p class="text-xs text-gray-400 mt-2">Note: Assigning big machines to other big machines is not allowed. Valid excavators/haulers will be selectable.</p>
+
+                            @php
+                                $target = $selectedExcavatorId ? \App\Models\Machine::find($selectedExcavatorId) : null;
+                                $assigningIsExcavator = $assigning && strtolower($assigning->machine_type ?? '') === 'excavator';
+                                $targetIsExcavator = $target && strtolower($target->machine_type ?? '') === 'excavator';
+                                $blockExcavatorToExcavator = $assigningIsExcavator && $targetIsExcavator;
+                            @endphp
+
+                            @if(!empty($assigning) && $blockExcavatorToExcavator)
+                                <div class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+                                    Excavators cannot be assigned to other excavators.
+                                </div>
                             @endif
-                        @endif
+                        </select>
                     @endif
                 </div>
 
                 <div class="flex justify-end gap-3">
-                    <button 
-                        type="button" 
-                        wire:click="closeAssignModal"
-                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        wire:click="assignToExcavator"
-                        class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                        @if($assignMode === 'assign_adts_to_excavator' && count($adts) === 0) disabled @endif
-                    >
-                        @if($assignMode === 'assign_adts_to_excavator')
-                            Save ADT Assignments
-                        @else
-                            Assign
-                        @endif
+                    <button type="button" wire:click="closeAssignModal" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">Cancel</button>
+                    <button wire:click="assignToExcavator" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50" @if($assignMode === 'assign_adts_to_excavator' && count($adts) === 0) disabled @endif @if(isset($blockExcavatorToExcavator) && $blockExcavatorToExcavator) disabled @endif>
+                        Assign
                     </button>
                 </div>
             </div>

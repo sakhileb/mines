@@ -66,11 +66,34 @@ class FuelManagement extends Component
         $mineAreaId = $tank->mine_area_id;
         $year = now()->year;
         $month = now()->month;
+        // Prefer an allocation scoped to the specific mine area, but fall back
+        // to a team-level (general) allocation when none exists for the area.
         $allocation = FuelMonthlyAllocation::where('team_id', $tank->team_id)
-            ->where('mine_area_id', $mineAreaId)
             ->where('year', $year)
             ->where('month', $month)
+            ->where(function ($q) use ($mineAreaId) {
+                $q->where('mine_area_id', $mineAreaId);
+            })
             ->first();
+
+        if (!$allocation) {
+            // Try a team-level allocation (mine_area_id IS NULL)
+            $allocation = FuelMonthlyAllocation::where('team_id', $tank->team_id)
+                ->whereNull('mine_area_id')
+                ->where('year', $year)
+                ->where('month', $month)
+                ->first();
+
+            if ($allocation) {
+                \Log::info('Falling back to team-level fuel allocation for dispense', [
+                    'team_id' => $tank->team_id,
+                    'requested_mine_area_id' => $mineAreaId,
+                    'allocation_id' => $allocation->id,
+                    'year' => $year,
+                    'month' => $month,
+                ]);
+            }
+        }
 
         if (!$allocation) {
             $this->transactionError = 'No monthly allocation set for this mine area.';
@@ -221,6 +244,7 @@ class FuelManagement extends Component
         $this->validate([
             'allocationYear' => 'required|integer|min:2020|max:2100',
             'allocationMonth' => 'required|integer|min:1|max:12',
+            'mineAreaId' => 'required|exists:mine_areas,id',
             'allocatedLiters' => 'required|numeric|min:1|max:999999999',
             'fuelPricePerLiter' => 'required|numeric|min:0.01|max:999999',
             'allocationNotes' => 'nullable|string|max:1000',
@@ -240,6 +264,7 @@ class FuelManagement extends Component
             $allocation = FuelMonthlyAllocation::updateOrCreate(
                 [
                     'team_id' => $teamId,
+                    'mine_area_id' => $this->mineAreaId,
                     'year' => $this->allocationYear,
                     'month' => $this->allocationMonth,
                 ],

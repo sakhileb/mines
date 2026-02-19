@@ -164,9 +164,20 @@ class MineAreaDetail extends Component
             ->whereNull('unassigned_at')
             ->update(['unassigned_at' => now()]);
 
-        $machine->update(['mine_area_id' => null]);
+        // Try to find another active mine area to assign the machine to.
+        $otherArea = MineArea::where('team_id', $team->id)
+            ->where('status', 'active')
+            ->where('id', '!=', $this->mineArea->id)
+            ->first();
 
-        $this->dispatch('alert', type: 'success', message: "{$machine->name} unassigned from {$this->mineArea->name}");
+        if ($otherArea) {
+            $machine->update(['mine_area_id' => $otherArea->id]);
+            $this->dispatch('alert', type: 'success', message: "{$machine->name} reassigned to {$otherArea->name} (cannot leave unassigned)");
+        } else {
+            // No other active area exists — do not allow unassigning to null to preserve invariant
+            $this->dispatch('alert', type: 'error', message: "Cannot unassign {$machine->name}; at least one active mine area must be set. Assign to another area first.");
+            return;
+        }
     }
 
     // === PRODUCTION TRACKING ===

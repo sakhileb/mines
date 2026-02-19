@@ -163,3 +163,10 @@ Route::prefix('core-features')->group(function () {
     Route::view('/fuel', 'pages.core-features.fuel')->name('core-features.fuel');
 });
 
+// Ensure Livewire update route exists (helps when routes are cached or Livewire
+// couldn't register its default route). This route name ends with
+// "livewire.update" so Livewire will detect it as the update endpoint.
+Route::post('/livewire/update', [\Livewire\Mechanisms\HandleRequests\HandleRequests::class, 'handleUpdate'])
+    ->middleware('web')
+    ->name('default.livewire.update');
+

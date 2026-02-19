@@ -81,12 +81,16 @@ class User extends Authenticatable
      */
     public function permissions()
     {
-        return $this->belongsToMany(
-            Permission::class,
-            'permission_role',
-            'role_id',
-            'permission_id'
-        )->through('roles');
+        // Return a query builder for permissions granted to this user via their roles.
+        // We join through permission_role -> roles -> role_user so callers can further
+        // scope by team or permission name.
+        return Permission::query()
+            ->select('permissions.*')
+            ->join('permission_role', 'permissions.id', '=', 'permission_role.permission_id')
+            ->join('roles', 'permission_role.role_id', '=', 'roles.id')
+            ->join('role_user', 'roles.id', '=', 'role_user.role_id')
+            ->where('role_user.user_id', $this->id)
+            ->where('roles.team_id', $this->current_team_id);
     }
 
     /**
@@ -117,8 +121,7 @@ class User extends Authenticatable
         }
 
         return $this->permissions()
-            ->where('team_id', $this->current_team_id)
-            ->where('name', $permission)
+            ->where('permissions.name', $permission)
             ->exists();
     }
 
@@ -132,8 +135,7 @@ class User extends Authenticatable
         }
 
         return $this->permissions()
-            ->where('team_id', $this->current_team_id)
-            ->whereIn('name', (array) $permissions)
+            ->whereIn('permissions.name', (array) $permissions)
             ->exists();
     }
 
@@ -147,8 +149,7 @@ class User extends Authenticatable
         }
 
         $count = $this->permissions()
-            ->where('team_id', $this->current_team_id)
-            ->whereIn('name', (array) $permissions)
+            ->whereIn('permissions.name', (array) $permissions)
             ->count();
 
         return $count === count((array) $permissions);
