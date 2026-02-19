@@ -44,6 +44,9 @@ class MachineLocationUpdateJob implements ShouldQueue
         ]);
 
         try {
+            // Ensure model queries are scoped to the integration's team in queue context
+            app()->instance('current_team_id', $this->integration->team_id);
+
             // Verify integration is connected
             if ($this->integration->status !== 'connected') {
                 Log::warning('Integration not connected, skipping location update', [
@@ -142,6 +145,11 @@ class MachineLocationUpdateJob implements ShouldQueue
 
             // Rethrow to trigger retry mechanism
             throw $e;
+        } finally {
+            // Clear the injected team context to avoid leakage into other jobs
+            if (app()->hasInstance('current_team_id')) {
+                app()->forgetInstance('current_team_id');
+            }
         }
     }
 
