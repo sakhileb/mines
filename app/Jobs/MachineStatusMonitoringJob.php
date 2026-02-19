@@ -145,7 +145,6 @@ class MachineStatusMonitoringJob implements ShouldQueue
                 app()->forgetInstance('current_team_id');
             }
         }
-        }
     }
 
     /**
@@ -220,8 +219,11 @@ class MachineStatusMonitoringJob implements ShouldQueue
 
                 event(new MachineOffline(
                     machine: $machine,
-                    lastLocationUpdate: $machine->last_location_update,
                     reason: 'No location update for 5+ minutes',
+                    lastLocation: $machine->last_location_latitude && $machine->last_location_longitude ? [
+                        'latitude' => $machine->last_location_latitude,
+                        'longitude' => $machine->last_location_longitude,
+                    ] : null,
                 ));
 
                 Log::info('Machine marked offline due to timeout', [

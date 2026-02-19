@@ -79,7 +79,8 @@ class AIOptimizationDashboard extends Component
 
     public function implementRecommendation($recommendationId)
     {
-        $recommendation = AIRecommendation::findOrFail($recommendationId);
+        $team = auth()->user()->currentTeam;
+        $recommendation = AIRecommendation::where('team_id', $team->id)->findOrFail($recommendationId);
         try {
             $this->authorize('update', $recommendation);
 
@@ -95,7 +96,8 @@ class AIOptimizationDashboard extends Component
 
     public function rejectRecommendation($recommendationId)
     {
-        $recommendation = AIRecommendation::findOrFail($recommendationId);
+        $team = auth()->user()->currentTeam;
+        $recommendation = AIRecommendation::where('team_id', $team->id)->findOrFail($recommendationId);
         try {
             $this->authorize('update', $recommendation);
 
@@ -152,7 +154,8 @@ class AIOptimizationDashboard extends Component
 
     public function markInsightAsRead($insightId)
     {
-        $insight = AIInsight::findOrFail($insightId);
+        $team = auth()->user()->currentTeam;
+        $insight = AIInsight::where('team_id', $team->id)->findOrFail($insightId);
         $this->authorize('update', $insight);
         $insight->markAsRead();
         $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Insight marked as read.']);

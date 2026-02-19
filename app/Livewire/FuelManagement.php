@@ -66,13 +66,15 @@ class FuelManagement extends Component
             'transactionTankId' => 'required|exists:fuel_tanks,id',
             'transactionQuantity' => 'required|numeric|min:1',
         ]);
+        $user = Auth::user();
+        $teamId = $user?->current_team_id;
 
-        $tank = FuelTank::find($this->transactionTankId);
-            if (!$tank) {
-                $this->transactionError = 'Selected tank not found.';
-                $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Selected tank not found.']);
-                return;
-            }
+        $tank = FuelTank::where('team_id', $teamId)->find($this->transactionTankId);
+        if (!$tank) {
+            $this->transactionError = 'Selected tank not found.';
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Selected tank not found.']);
+            return;
+        }
 
         $year = now()->year;
         $month = now()->month;
@@ -82,9 +84,9 @@ class FuelManagement extends Component
         // mine area. This ensures allocations are looked up for the correct area.
         $mineAreaId = null;
         if (!empty($this->transactionMineAreaId)) {
-            $machine = Machine::find($this->transactionMineAreaId);
+            $machine = Machine::where('team_id', $tank->team_id)->find($this->transactionMineAreaId);
             // Ensure the referenced machine belongs to the same team as the tank
-            if ($machine && $machine->team_id === $tank->team_id) {
+            if ($machine) {
                 $mineAreaId = $machine->mine_area_id;
             }
         }
@@ -280,15 +282,12 @@ class FuelManagement extends Component
             'refuelUnitPrice' => 'nullable|numeric|min:0',
         ]);
 
-        $tank = FuelTank::find($this->refuelTankId);
+        $user = Auth::user();
+        $teamId = $user?->current_team_id;
+
+        $tank = FuelTank::where('team_id', $teamId)->find($this->refuelTankId);
         if (!$tank) {
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Selected tank not found.']);
-            return;
-        }
-
-        $user = Auth::user();
-        if (!$user || $user->current_team_id !== $tank->team_id) {
-            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Unauthorized to refuel this tank.']);
             return;
         }
 
@@ -374,15 +373,12 @@ class FuelManagement extends Component
      */
     public function deleteTank($tankId)
     {
-        $tank = FuelTank::find($tankId);
+        $user = Auth::user();
+        $teamId = $user?->current_team_id;
+
+        $tank = FuelTank::where('team_id', $teamId)->find($tankId);
         if (!$tank) {
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Tank not found.']);
-            return;
-        }
-
-        $user = Auth::user();
-        if (!$user || $user->current_team_id !== $tank->team_id) {
-            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Unauthorized to delete this tank.']);
             return;
         }
 
@@ -545,7 +541,7 @@ class FuelManagement extends Component
             ->limit(5)
             ->get()
             ->map(function ($item) {
-                $machine = Machine::find($item->machine_id);
+                $machine = Machine::where('team_id', $teamId)->find($item->machine_id);
                 return [
                     'machine' => $machine,
                     'total_consumed' => $item->total_consumed,

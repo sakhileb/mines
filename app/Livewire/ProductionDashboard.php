@@ -215,7 +215,7 @@ class ProductionDashboard extends Component
 
     public function openEditModal($id)
     {
-        $record = ProductionRecord::findOrFail($id);
+        $record = ProductionRecord::where('team_id', $this->teamId)->findOrFail($id);
         $this->editingRecordId = $id;
         $this->record_date = $record->record_date->format('Y-m-d');
         $this->shift = $record->shift;
@@ -247,7 +247,7 @@ class ProductionDashboard extends Component
         ]);
 
         if ($this->editingRecordId) {
-            $record = ProductionRecord::findOrFail($this->editingRecordId);
+            $record = ProductionRecord::where('team_id', $this->teamId)->findOrFail($this->editingRecordId);
             $this->productionService->updateProductionRecord($record, [
                 ...$validated,
                 'notes' => $this->notes,
@@ -267,7 +267,7 @@ class ProductionDashboard extends Component
 
     public function deleteRecord($id)
     {
-        $record = ProductionRecord::findOrFail($id);
+        $record = ProductionRecord::where('team_id', $this->teamId)->findOrFail($id);
         $this->productionService->deleteProductionRecord($record);
     }
 

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasTeamFilters;
 
 class AiRecommendationAction extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTeamFilters;
 
     protected $table = 'ai_recommendation_actions';
 

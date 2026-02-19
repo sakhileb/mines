@@ -100,11 +100,8 @@ class Dashboard extends Component
 
     public function acknowledgeAlert(int $alertId): void
     {
-        $alert = Alert::findOrFail($alertId);
-        
-        if ($alert->team_id !== Auth::user()->currentTeam->id) {
-            abort(403);
-        }
+        $team = Auth::user()->currentTeam;
+        $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
 
         $alert->update([
             'status' => 'acknowledged',

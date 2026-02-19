@@ -39,9 +39,10 @@ class AINotifications extends Component
 
     public function acknowledge($alertId)
     {
-        $alert = AIPredictiveAlert::find($alertId);
-        
-        if ($alert && $alert->team_id === auth()->user()->currentTeam->id) {
+        $team = auth()->user()->currentTeam;
+        $alert = AIPredictiveAlert::where('team_id', $team->id)->find($alertId);
+
+        if ($alert) {
             $alert->update([
                 'is_acknowledged' => true,
                 'acknowledged_at' => now(),

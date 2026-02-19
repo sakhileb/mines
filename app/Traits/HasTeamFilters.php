@@ -23,7 +23,12 @@ trait HasTeamFilters
         // Add global scope for team filtering
         static::addGlobalScope('team', function (Builder $builder) {
             $teamId = auth()->user()?->current_team_id;
-            
+
+            // Allow non-HTTP contexts (jobs/commands) to set the current team
+            if (empty($teamId) && app()->has('current_team_id')) {
+                $teamId = app('current_team_id');
+            }
+
             if ($teamId) {
                 $builder->where('team_id', $teamId);
             }

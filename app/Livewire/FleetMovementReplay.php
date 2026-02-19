@@ -127,7 +127,7 @@ class FleetMovementReplay extends Component
         $selectedMachineDetails = null;
         
         if ($this->selectedMachine) {
-            $selectedMachineDetails = Machine::find($this->selectedMachine);
+            $selectedMachineDetails = Machine::where('team_id', $team->id)->find($this->selectedMachine);
             $start = Carbon::parse($this->startDate . ' ' . $this->startTime);
             $end = Carbon::parse($this->endDate . ' ' . $this->endTime);
             
@@ -377,7 +377,7 @@ class FleetMovementReplay extends Component
         }
         
         $team = Auth::user()->currentTeam;
-        $machine = Machine::find($this->selectedMachine);
+        $machine = Machine::where('team_id', $team->id)->find($this->selectedMachine);
         
         if (!$machine) {
             session()->flash('error', 'Machine not found');

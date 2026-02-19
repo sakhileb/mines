@@ -150,7 +150,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeAssignModal();
-        $this->dispatch('alert', type: 'success', message: "{$machine->name} assigned to {$this->mineArea->name}");
+        $this->dispatchBrowserEvent('notify', ['message' => "{$machine->name} assigned to {$this->mineArea->name}", 'type' => 'success']);
     }
 
     public function unassignMachine(int $machineId)
@@ -172,10 +172,10 @@ class MineAreaDetail extends Component
 
         if ($otherArea) {
             $machine->update(['mine_area_id' => $otherArea->id]);
-            $this->dispatch('alert', type: 'success', message: "{$machine->name} reassigned to {$otherArea->name} (cannot leave unassigned)");
+            $this->dispatchBrowserEvent('notify', ['message' => "{$machine->name} reassigned to {$otherArea->name} (cannot leave unassigned)", 'type' => 'success']);
         } else {
             // No other active area exists — do not allow unassigning to null to preserve invariant
-            $this->dispatch('alert', type: 'error', message: "Cannot unassign {$machine->name}; at least one active mine area must be set. Assign to another area first.");
+            $this->dispatchBrowserEvent('notify', ['message' => "Cannot unassign {$machine->name}; at least one active mine area must be set. Assign to another area first.", 'type' => 'error']);
             return;
         }
     }
@@ -221,7 +221,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeProductionModal();
-        $this->dispatch('alert', type: 'success', message: 'Production record saved successfully');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Production record saved successfully', 'type' => 'success']);
     }
 
     public function openTargetModal()
@@ -259,7 +259,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeTargetModal();
-        $this->dispatch('alert', type: 'success', message: 'Production target created successfully');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Production target created successfully', 'type' => 'success']);
     }
 
     // === MINE PLAN UPLOADS ===
@@ -331,11 +331,11 @@ class MineAreaDetail extends Component
             ]);
 
             $this->closeUploadModal();
-            $this->dispatch('alert', type: 'success', message: 'Mine plan uploaded successfully');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan uploaded successfully', 'type' => 'success']);
 
         } catch (\Exception $e) {
             \Log::error('Failed to upload mine plan', ['error' => $e->getMessage()]);
-            $this->dispatch('alert', type: 'error', message: 'Failed to upload mine plan: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('notify', ['message' => 'Failed to upload mine plan: ' . $e->getMessage(), 'type' => 'error']);
         }
     }
 
@@ -347,7 +347,7 @@ class MineAreaDetail extends Component
         Storage::disk($disk)->delete($plan->file_path);
         $plan->delete();
 
-        $this->dispatch('alert', type: 'success', message: 'Mine plan deleted');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan deleted', 'type' => 'success']);
     }
 
     public function activateMinePlan(int $planId)
@@ -356,7 +356,7 @@ class MineAreaDetail extends Component
         $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
         $plan->update(['status' => 'active']);
 
-        $this->dispatch('alert', type: 'success', message: 'Mine plan activated');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan activated', 'type' => 'success']);
     }
 
     public function archiveMinePlan(int $planId)
@@ -365,7 +365,7 @@ class MineAreaDetail extends Component
         $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
         $plan->update(['status' => 'archived']);
 
-        $this->dispatch('alert', type: 'success', message: 'Mine plan archived');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan archived', 'type' => 'success']);
     }
 
     // === AREA-SPECIFIC ALERTS ===
@@ -410,7 +410,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeAlertModal();
-        $this->dispatch('alert', type: 'success', message: 'Area alert created');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Area alert created', 'type' => 'success']);
     }
 
     public function acknowledgeAlert(int $alertId)
@@ -419,7 +419,7 @@ class MineAreaDetail extends Component
         $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
         $alert->acknowledge(Auth::id());
 
-        $this->dispatch('alert', type: 'success', message: 'Alert acknowledged');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Alert acknowledged', 'type' => 'success']);
     }
 
     public function resolveAlert(int $alertId)
@@ -428,7 +428,7 @@ class MineAreaDetail extends Component
         $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
         $alert->resolve(Auth::id());
 
-        $this->dispatch('alert', type: 'success', message: 'Alert resolved');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Alert resolved', 'type' => 'success']);
     }
 
     // === GEOFENCE INTEGRATION ===
@@ -455,7 +455,7 @@ class MineAreaDetail extends Component
         $geofence->update(['mine_area_id' => $this->mineArea->id]);
 
         $this->closeGeofenceModal();
-        $this->dispatch('alert', type: 'success', message: "{$geofence->name} linked to {$this->mineArea->name}");
+        $this->dispatchBrowserEvent('notify', ['message' => "{$geofence->name} linked to {$this->mineArea->name}", 'type' => 'success']);
     }
 
     public function unlinkGeofence(int $geofenceId)
@@ -464,7 +464,7 @@ class MineAreaDetail extends Component
         $geofence = Geofence::where('team_id', $team->id)->findOrFail($geofenceId);
         $geofence->update(['mine_area_id' => null]);
 
-        $this->dispatch('alert', type: 'success', message: "{$geofence->name} unlinked from area");
+        $this->dispatchBrowserEvent('notify', ['message' => "{$geofence->name} unlinked from area", 'type' => 'success']);
     }
 
     // === RENDER ===

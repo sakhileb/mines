@@ -195,8 +195,16 @@ class Settings extends Component
     public function updateUserRole($userId, $newRole)
     {
         try {
-            $user = User::findOrFail($userId);
-            
+            $team = auth()->user()->currentTeam;
+
+            // Ensure the user is a member of this team
+            if (! $team->users()->where('id', $userId)->exists()) {
+                $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'User is not a member of this team']);
+                return;
+            }
+
+            $team = auth()->user()->currentTeam;
+            $user = $team->users()->findOrFail($userId);
             // Remove old roles
             $user->roles()->detach();
             
