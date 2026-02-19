@@ -43,6 +43,9 @@ class MachineStatusMonitoringJob implements ShouldQueue
         ]);
 
         try {
+            // Ensure model queries are scoped to the integration's team in queue context
+            app()->instance('current_team_id', $this->integration->team_id);
+
             // Verify integration is connected
             if ($this->integration->status !== 'connected') {
                 Log::warning('Integration not connected, skipping status monitoring', [
@@ -137,6 +140,11 @@ class MachineStatusMonitoringJob implements ShouldQueue
             ]);
 
             throw $e;
+        } finally {
+            if (app()->hasInstance('current_team_id')) {
+                app()->forgetInstance('current_team_id');
+            }
+        }
         }
     }
 
