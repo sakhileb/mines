@@ -38,6 +38,9 @@ class SyncMachineMetricsJob implements ShouldQueue
         ]);
 
         try {
+            // Ensure model queries are scoped to the machine's team in queue context
+            app()->instance('current_team_id', $this->machine->team_id);
+
             // Get the integration for this machine
             $integration = $this->machine->team->integrations()
                 ->where('provider', $this->machine->manufacturer)
@@ -72,6 +75,10 @@ class SyncMachineMetricsJob implements ShouldQueue
             ]);
 
             throw $e;
+        } finally {
+            if (app()->hasInstance('current_team_id')) {
+                app()->forgetInstance('current_team_id');
+            }
         }
     }
 
