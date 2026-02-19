@@ -42,9 +42,13 @@ class AIRecommendationPolicy
             return true;
         }
 
-        // Regular users must be on the same team and have the permission
-        return $user->current_team_id === $recommendation->team_id &&
-            $user->hasPermission('update_recommendations');
+        // Allow any user on the same team to act (team members can manage recommendations),
+        // or users with the explicit permission. Admin/owner roles were handled above.
+        if ($user->current_team_id === $recommendation->team_id) {
+            return true;
+        }
+
+        return $user->hasPermission('update_recommendations');
     }
 
     /**
