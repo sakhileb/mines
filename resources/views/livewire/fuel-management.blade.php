@@ -84,6 +84,60 @@
     </div>
     @endif
 
+    <!-- Refuel Modal -->
+    @if($showRefuelModal)
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeRefuelModal">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-lg w-full mx-4 border border-gray-700 shadow-lg" x-on:click.stop>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Refuel Tank</h3>
+                <button class="text-gray-400 hover:text-gray-600" wire:click="closeRefuelModal">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form wire:submit.prevent="refuelTank" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tank</label>
+                    <div class="text-gray-200">{{ $tanks->firstWhere('id', $refuelTankId)?->name ?? 'Selected Tank' }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Quantity (Liters)</label>
+                    <input type="number" step="0.01" min="0.01" wire:model.live="refuelQuantity" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                    @error('refuelQuantity') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Unit Price (ZAR)</label>
+                    <input type="number" step="0.01" min="0" wire:model.live="refuelUnitPrice" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                    @error('refuelUnitPrice') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Notes</label>
+                    <input type="text" wire:model.live="refuelNotes" class="input input-bordered w-full bg-gray-900 border-gray-700 text-gray-100" />
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" wire:click="closeRefuelModal" class="btn btn-ghost">Cancel</button>
+                    <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="refuelTank">Refuel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
+    <!-- Delete Confirmation Modal -->
+    @if($showDeleteConfirm)
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" wire:click="closeDeleteConfirm">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700 shadow-lg" x-on:click.stop>
+            <h3 class="text-lg font-bold mb-2">Confirm Delete</h3>
+            <p class="mb-4 text-gray-300">Are you sure you want to delete the tank "{{ $tanks->firstWhere('id', $confirmDeleteTankId)?->name ?? 'Selected Tank' }}"? This action cannot be undone.</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" wire:click="closeDeleteConfirm" class="btn btn-ghost">Cancel</button>
+                <button type="button" wire:click="performDeleteConfirmed" class="btn btn-error" wire:loading.attr="disabled">Delete</button>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Period Selector -->
     <div class="mb-6 flex items-center gap-4">
         <select wire:model.live="selectedPeriod" class="select select-bordered bg-white text-gray-900 [&>option]:text-gray-900">
@@ -282,6 +336,7 @@
                                 <th>Location</th>
                                 <th>Level</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -311,6 +366,10 @@
                                         @else badge-error
                                         @endif
                                     ">{{ $tank->status }}</span>
+                                </td>
+                                <td class="flex gap-2">
+                                    <button wire:click.prevent="openRefuelModal({{ $tank->id }})" class="btn btn-sm btn-outline">Refuel</button>
+                                    <button wire:click.prevent="confirmDeleteTank({{ $tank->id }})" class="btn btn-sm btn-error">Delete</button>
                                 </td>
                             </tr>
                             @empty

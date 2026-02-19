@@ -6,12 +6,13 @@ use App\Models\Alert;
 use App\Models\Geofence;
 use App\Traits\RealtimeUpdates;
 use Livewire\Component;
+use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class Alerts extends Component
 {
-    use WithPagination, RealtimeUpdates;
+    use WithPagination, RealtimeUpdates, BrowserEventBridge;
 
     public $search = '';
     public $sortBy = 'created_at';
@@ -95,7 +96,7 @@ class Alerts extends Component
                 'acknowledged_by' => Auth::id(),
                 'acknowledged_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert acknowledged');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert acknowledged']);
         }
     }
 
@@ -110,7 +111,7 @@ class Alerts extends Component
                 'resolved_by' => Auth::id(),
                 'resolved_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert resolved');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert resolved']);
 
             // If the resolved alert is currently selected in the details modal, close it
             if ($this->selectedAlertId === $alert->id) {
@@ -143,7 +144,7 @@ class Alerts extends Component
                 'dismissed_by' => Auth::id(),
                 'dismissed_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert dismissed');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert dismissed']);
         }
     }
 
@@ -164,7 +165,7 @@ class Alerts extends Component
                 'dismissed_by' => Auth::id(),
                 'dismissed_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert dismissed');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert dismissed']);
 
             $this->showDismissConfirm = false;
             $this->pendingDismissAlertId = null;
@@ -178,7 +179,7 @@ class Alerts extends Component
                 'dismissed_by' => Auth::id(),
                 'dismissed_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert marked Dismissed - Unresolved');
+            $this->dispatchBrowserEvent('notify', ['type' => 'warning', 'message' => 'Alert marked Dismissed - Unresolved']);
             $this->recentlyDismissedUnresolved[] = $alert->id;
         }
 

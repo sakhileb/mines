@@ -7,11 +7,13 @@ use App\Models\MineArea;
 use App\Models\Geofence;
 use App\Models\Machine;
 use Livewire\Component;
+use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class Reports extends Component
 {
+    use BrowserEventBridge;
     use WithPagination;
 
     public $search = '';
@@ -92,7 +94,7 @@ class Reports extends Component
     {
         // Validate report ID
         if (!is_numeric($reportId)) {
-            $this->dispatch('notify', type: 'error', message: 'Invalid report ID');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Invalid report ID']);
             return;
         }
         
@@ -100,7 +102,7 @@ class Reports extends Component
         $report = Report::where('team_id', $team->id)->find($reportId);
 
         if (!$report) {
-            $this->dispatch('notify', type: 'error', message: 'Report not found or access denied');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report not found or access denied']);
             $this->showDeleteConfirm = false;
             return;
         }
@@ -119,7 +121,7 @@ class Reports extends Component
                 'report_type' => $report->type,
             ]);
             
-            $this->dispatch('notify', type: 'success', message: 'Report deleted successfully');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Report deleted successfully']);
         } catch (\Exception $e) {
             \Log::error('Failed to delete report', [
                 'user_id' => Auth::id(),
@@ -127,7 +129,7 @@ class Reports extends Component
                 'error' => $e->getMessage(),
             ]);
             
-            $this->dispatch('notify', type: 'error', message: 'Failed to delete report');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to delete report']);
         }
 
         $this->showDeleteConfirm = false;
@@ -150,7 +152,7 @@ class Reports extends Component
     {
         // Validate report ID
         if (!is_numeric($reportId)) {
-            $this->dispatch('notify', type: 'error', message: 'Invalid report ID');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Invalid report ID']);
             return;
         }
         
@@ -158,12 +160,12 @@ class Reports extends Component
         $report = Report::where('team_id', $team->id)->find($reportId);
 
         if (!$report) {
-            $this->dispatch('notify', type: 'error', message: 'Report not found or access denied');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report not found or access denied']);
             return;
         }
         
         if ($report->status !== 'completed') {
-            $this->dispatch('notify', type: 'warning', message: 'Report is not ready for download');
+            $this->dispatchBrowserEvent('notify', ['type' => 'warning', 'message' => 'Report is not ready for download']);
             return;
         }
         
@@ -179,7 +181,7 @@ class Reports extends Component
             }
         }
         
-        $this->dispatch('notify', type: 'error', message: 'Report file not found');
+        $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report file not found']);
     }
 
     public function render()
