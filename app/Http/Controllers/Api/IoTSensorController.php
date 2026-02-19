@@ -23,6 +23,8 @@ class IoTSensorController extends Controller
      */
     public function show(IoTSensor $sensor)
     {
+        $this->authorize('view', $sensor);
+
         $health = $this->service->checkSensorHealth($sensor);
         $stats = $this->service->getReadingStats($sensor, 7);
 
@@ -38,6 +40,7 @@ class IoTSensorController extends Controller
      */
     public function recordReading(Request $request, IoTSensor $sensor)
     {
+        $this->authorize('update', $sensor);
         $validated = $request->validate([
             'value' => 'required|numeric',
             'unit' => 'required|string|max:50',
@@ -55,6 +58,7 @@ class IoTSensorController extends Controller
      */
     public function readings(Request $request, IoTSensor $sensor)
     {
+        $this->authorize('view', $sensor);
         $days = $request->get('days', 7);
         $type = $request->get('type', 'all');
 
@@ -76,6 +80,7 @@ class IoTSensorController extends Controller
      */
     public function statistics(Request $request, IoTSensor $sensor)
     {
+        $this->authorize('view', $sensor);
         $days = $request->get('days', 7);
         $stats = $this->service->getReadingStats($sensor, $days);
 
@@ -87,6 +92,8 @@ class IoTSensorController extends Controller
      */
     public function deactivate(IoTSensor $sensor)
     {
+        $this->authorize('update', $sensor);
+
         $this->service->deactivateSensor($sensor);
 
         return response()->json(['message' => 'Sensor deactivated']);
@@ -97,6 +104,7 @@ class IoTSensorController extends Controller
      */
     public function export(Request $request, IoTSensor $sensor)
     {
+        $this->authorize('view', $sensor);
         $days = $request->get('days', 30);
         $format = $request->get('format', 'csv');
 
