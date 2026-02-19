@@ -83,7 +83,10 @@ class FuelManagement extends Component
         $mineAreaId = null;
         if (!empty($this->transactionMineAreaId)) {
             $machine = Machine::find($this->transactionMineAreaId);
-            $mineAreaId = $machine?->mine_area_id;
+            // Ensure the referenced machine belongs to the same team as the tank
+            if ($machine && $machine->team_id === $tank->team_id) {
+                $mineAreaId = $machine->mine_area_id;
+            }
         }
         if (is_null($mineAreaId)) {
             $mineAreaId = $tank->mine_area_id;
