@@ -208,14 +208,19 @@ class Alerts extends Component
     public function getSelectedAlert()
     {
         if ($this->selectedAlertId) {
-            $alert = Alert::with(['machine', 'mineArea'])->find($this->selectedAlertId);
+            $team = Auth::user()->currentTeam;
+
+            // Ensure selected alert belongs to the current team to avoid cross-team access
+            $alert = Alert::where('team_id', $team->id)
+                ->with(['machine', 'mineArea'])
+                ->find($this->selectedAlertId);
 
             // If geofence id was stored in metadata, attach the geofence relation for convenience
             if ($alert && is_array($alert->metadata ?? [])) {
                 $meta = $alert->metadata;
                 $geofenceId = $meta['geofence_id'] ?? null;
                 if ($geofenceId) {
-                    $geofence = Geofence::find($geofenceId);
+                    $geofence = Geofence::where('team_id', $team->id)->find($geofenceId);
                     if ($geofence) {
                         $alert->setRelation('geofence', $geofence);
                     }
