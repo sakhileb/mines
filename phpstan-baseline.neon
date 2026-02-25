@@ -7626,26 +7626,6 @@ parameters:
 			path: app/Models/Route.php
 
 		-
-			message: "#^Class App\\\\Models\\\\Route has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Route has PHPDoc tag @method for method find\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Route has PHPDoc tag @method for method findOrFail\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Route has PHPDoc tag @method for method whereIn\\(\\) parameter \\#2 \\$values with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
 			message: "#^Class App\\\\Models\\\\Route has PHPDoc tag @property for property \\$metadata with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/Route.php
@@ -7661,26 +7641,6 @@ parameters:
 			path: app/Models/Route.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:calculateDistance\\(\\) has parameter \\$lat1 with no type specified\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:calculateDistance\\(\\) has parameter \\$lat2 with no type specified\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:calculateDistance\\(\\) has parameter \\$lon1 with no type specified\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:calculateDistance\\(\\) has parameter \\$lon2 with no type specified\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
 			message: "#^Method App\\\\Models\\\\Route\\:\\:machine\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: app/Models/Route.php
@@ -7691,22 +7651,22 @@ parameters:
 			path: app/Models/Route.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeActive\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeActive\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/Route.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeActive\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeActive\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/Route.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeDraft\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeDraft\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/Route.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeDraft\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\Route\\:\\:scopeDraft\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/Route.php
 
@@ -7737,11 +7697,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Route\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Route\\:\\:all\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
 			count: 1
 			path: app/Models/Route.php
 
@@ -9741,147 +9696,7 @@ parameters:
 			path: app/Services/MineAreaService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:createProductionRecord\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:createProductionRecord\\(\\) has parameter \\$data with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:createProductionRecord\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:createTarget\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:createTarget\\(\\) has parameter \\$data with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:createTarget\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:deleteProductionRecord\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getActiveTargets\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getActiveTargets\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionByMineArea\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionByMineArea\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionByTeam\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionByTeam\\(\\) has parameter \\$endDate with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionByTeam\\(\\) has parameter \\$startDate with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionByTeam\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionStatistics\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionStatistics\\(\\) has parameter \\$endDate with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionStatistics\\(\\) has parameter \\$startDate with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionStatistics\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionTrend\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionTrend\\(\\) has parameter \\$days with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionTrend\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getRecentForecasts\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getRecentForecasts\\(\\) has parameter \\$days with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getRecentForecasts\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getTodayProduction\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getTodayProduction\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:updateProductionRecord\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/ProductionService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:updateProductionRecord\\(\\) has parameter \\$data with no type specified\\.$#"
+			message: "#^Method App\\\\Services\\\\ProductionService\\:\\:getProductionByTeam\\(\\) return type with generic class Illuminate\\\\Pagination\\\\Paginator does not specify its types\\: TKey, TValue$#"
 			count: 1
 			path: app/Services/ProductionService.php
 

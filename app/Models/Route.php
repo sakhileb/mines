@@ -38,11 +38,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Carbon\Carbon $updated_at
  *
  * @method static \Illuminate\Database\Eloquent\Builder|Route where(string $column, mixed $operator = null, mixed $value = null)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route whereIn(string $column, array<string|int> $values)
  * @method static \Illuminate\Database\Eloquent\Builder|Route orderBy(string $column, string $direction = 'asc')
- * @method static Route|null find(mixed $id, array $columns = ['*'])
- * @method static Route findOrFail(mixed $id, array $columns = ['*'])
- * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ * @method static Route|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static Route findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,Route> all(array<string> $columns = ['*'])
  */
 class Route extends Model
 {
@@ -156,7 +156,7 @@ class Route extends Model
     /**
      * Calculate distance between two coordinates using Haversine formula
      */
-    protected function calculateDistance($lat1, $lon1, $lat2, $lon2): float
+    protected function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
         $earthRadius = 6371; // km
 
@@ -175,7 +175,7 @@ class Route extends Model
     /**
      * Scope query to active routes only
      */
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('status', 'active');
     }
@@ -183,7 +183,7 @@ class Route extends Model
     /**
      * Scope query to draft routes only
      */
-    public function scopeDraft($query)
+    public function scopeDraft(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('status', 'draft');
     }
