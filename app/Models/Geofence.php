@@ -31,11 +31,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Carbon\Carbon $updated_at
  *
  * @method static \Illuminate\Database\Eloquent\Builder|Geofence where(string $column, mixed $operator = null, mixed $value = null)
- * @method static \Illuminate\Database\Eloquent\Builder|Geofence whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Geofence whereIn(string $column, array<string|int> $values)
  * @method static \Illuminate\Database\Eloquent\Builder|Geofence orderBy(string $column, string $direction = 'asc')
- * @method static Geofence|null find(mixed $id, array $columns = ['*'])
- * @method static Geofence findOrFail(mixed $id, array $columns = ['*'])
- * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ * @method static Geofence|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static Geofence findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,Geofence> all(array<string> $columns = ['*'])
  */
 class Geofence extends Model
 {

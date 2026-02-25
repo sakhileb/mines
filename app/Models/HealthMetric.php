@@ -28,11 +28,11 @@ use App\Traits\HasTeamFilters;
  * @property \Carbon\Carbon $updated_at
  *
  * @method static \Illuminate\Database\Eloquent\Builder|HealthMetric where(string $column, mixed $operator = null, mixed $value = null)
- * @method static \Illuminate\Database\Eloquent\Builder|HealthMetric whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|HealthMetric whereIn(string $column, array<string|int> $values)
  * @method static \Illuminate\Database\Eloquent\Builder|HealthMetric orderBy(string $column, string $direction = 'asc')
- * @method static HealthMetric|null find(mixed $id, array $columns = ['*'])
- * @method static HealthMetric findOrFail(mixed $id, array $columns = ['*'])
- * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ * @method static HealthMetric|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static HealthMetric findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,HealthMetric> all(array<string> $columns = ['*'])
  */
 class HealthMetric extends Model
 {

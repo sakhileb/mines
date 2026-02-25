@@ -1241,7 +1241,7 @@ parameters:
 			path: app/Http/Controllers/ReportController.php
 
 		-
-			message: "#^Parameter \\#2 \\$values of static method App\\\\Models\\\\Geofence\\:\\:whereIn\\(\\) expects array, Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\), mixed\\> given\\.$#"
+			message: "#^Parameter \\#2 \\$values of static method App\\\\Models\\\\Geofence\\:\\:whereIn\\(\\) expects array\\<int\\|string\\>, Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\), mixed\\> given\\.$#"
 			count: 1
 			path: app/Http/Controllers/ReportController.php
 
@@ -5281,26 +5281,6 @@ parameters:
 			path: app/Models/Geofence.php
 
 		-
-			message: "#^Class App\\\\Models\\\\Geofence has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Geofence.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Geofence has PHPDoc tag @method for method find\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Geofence.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Geofence has PHPDoc tag @method for method findOrFail\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Geofence.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Geofence has PHPDoc tag @method for method whereIn\\(\\) parameter \\#2 \\$values with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Geofence.php
-
-		-
 			message: "#^Class App\\\\Models\\\\Geofence has PHPDoc tag @property for property \\$coordinates with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/Geofence.php
@@ -5362,11 +5342,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Geofence\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
-			count: 1
-			path: app/Models/Geofence.php
-
-		-
-			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Geofence\\:\\:all\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
 			count: 1
 			path: app/Models/Geofence.php
 
@@ -5496,26 +5471,6 @@ parameters:
 			path: app/Models/HealthMetric.php
 
 		-
-			message: "#^Class App\\\\Models\\\\HealthMetric has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/HealthMetric.php
-
-		-
-			message: "#^Class App\\\\Models\\\\HealthMetric has PHPDoc tag @method for method find\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/HealthMetric.php
-
-		-
-			message: "#^Class App\\\\Models\\\\HealthMetric has PHPDoc tag @method for method findOrFail\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/HealthMetric.php
-
-		-
-			message: "#^Class App\\\\Models\\\\HealthMetric has PHPDoc tag @method for method whereIn\\(\\) parameter \\#2 \\$values with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/HealthMetric.php
-
-		-
 			message: "#^Class App\\\\Models\\\\HealthMetric uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/HealthMetric.php
@@ -5592,11 +5547,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\HealthMetric\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
-			count: 1
-			path: app/Models/HealthMetric.php
-
-		-
-			message: "#^PHPDoc tag @method for method App\\\\Models\\\\HealthMetric\\:\\:all\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
 			count: 1
 			path: app/Models/HealthMetric.php
 
