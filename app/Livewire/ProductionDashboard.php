@@ -43,7 +43,8 @@ class ProductionDashboard extends Component
 
     private function productionService(): ProductionService
     {
-        return $this->productionService ??= app(ProductionService::class);
+        assert($this->productionService !== null);
+        return $this->productionService;
     }
 
     public function mount()
