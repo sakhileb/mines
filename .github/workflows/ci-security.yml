@@ -14,7 +14,7 @@ jobs:
       - name: Run gitleaks
         uses: zricethezav/gitleaks-action@v1
         env:
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   composer-audit:
     name: Composer audit
