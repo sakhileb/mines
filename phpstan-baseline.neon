@@ -8642,12 +8642,12 @@ parameters:
 
 		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\BellService\\:\\:logError\\(\\)\\.$#"
-			count: 4
+			count: 8
 			path: app/Services/Integration/BellService.php
 
 		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\BellService\\:\\:makeRequest\\(\\)\\.$#"
-			count: 8
+			count: 15
 			path: app/Services/Integration/BellService.php
 
 		-
@@ -8657,6 +8657,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\BellService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/BellService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\BellService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/BellService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\BellService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/BellService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\BellService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/BellService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\BellService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/BellService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\BellService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/BellService.php
 
@@ -8731,6 +8756,31 @@ parameters:
 			path: app/Services/Integration/CATService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CATService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CATService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CATService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CATService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CATService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/CATService.php
@@ -8782,12 +8832,12 @@ parameters:
 
 		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:logError\\(\\)\\.$#"
-			count: 4
+			count: 8
 			path: app/Services/Integration/CTrackService.php
 
 		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:makeRequest\\(\\)\\.$#"
-			count: 6
+			count: 11
 			path: app/Services/Integration/CTrackService.php
 
 		-
@@ -8797,6 +8847,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CTrackService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CTrackService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CTrackService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CTrackService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/CTrackService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/CTrackService.php
 
@@ -8876,6 +8951,31 @@ parameters:
 			path: app/Services/Integration/DoosanService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/DoosanService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/DoosanService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/DoosanService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/DoosanService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/DoosanService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/DoosanService.php
@@ -8902,6 +9002,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/EpirocService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/EpirocService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/EpirocService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/EpirocService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/EpirocService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/EpirocService.php
 
@@ -8936,6 +9061,31 @@ parameters:
 			path: app/Services/Integration/HitachiService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HitachiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HitachiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HitachiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HitachiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HitachiService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/HitachiService.php
@@ -8962,6 +9112,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HyundaiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HyundaiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HyundaiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HyundaiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/HyundaiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/HyundaiService.php
 
@@ -9046,6 +9221,31 @@ parameters:
 			path: app/Services/Integration/JCBService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/JCBService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/JCBService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/JCBService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/JCBService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/JCBService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/JCBService.php
@@ -9067,6 +9267,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KawasakiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KawasakiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KawasakiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KawasakiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KawasakiService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/KawasakiService.php
 
@@ -9146,6 +9371,31 @@ parameters:
 			path: app/Services/Integration/KobelcoService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KobelcoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KobelcoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KobelcoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KobelcoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KobelcoService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/KobelcoService.php
@@ -9167,6 +9417,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\KomatsuService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KomatsuService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KomatsuService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KomatsuService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KomatsuService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KomatsuService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KomatsuService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KomatsuService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KomatsuService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KomatsuService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KomatsuService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/KomatsuService.php
 
@@ -9246,6 +9521,31 @@ parameters:
 			path: app/Services/Integration/KubotaService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KubotaService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KubotaService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KubotaService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KubotaService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/KubotaService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/KubotaService.php
@@ -9276,6 +9576,31 @@ parameters:
 			path: app/Services/Integration/LiebherrService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/LiebherrService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/LiebherrService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/LiebherrService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/LiebherrService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/LiebherrService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/LiebherrService.php
@@ -9297,6 +9622,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/RoundebultService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/RoundebultService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/RoundebultService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/RoundebultService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/RoundebultService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/RoundebultService.php
 
@@ -9376,6 +9726,31 @@ parameters:
 			path: app/Services/Integration/SanyService.php
 
 		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/SanyService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/SanyService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/SanyService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/SanyService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/SanyService.php
+
+		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/SanyService.php
@@ -9397,6 +9772,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/VolvoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/VolvoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/VolvoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/VolvoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/VolvoService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/VolvoService.php
 
@@ -9472,6 +9872,31 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/XCMGService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchMachineAlerts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/XCMGService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchMachineData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/XCMGService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchMachineDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/XCMGService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchMachineLocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/Integration/XCMGService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchMachineMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/XCMGService.php
 

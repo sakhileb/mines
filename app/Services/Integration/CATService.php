@@ -2,6 +2,7 @@
 
 namespace App\Services\Integration;
 
+use App\Contracts\ManufacturerServiceInterface;
 use Exception;
 
 /**
