@@ -6,6 +6,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * ComplianceViolation Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property string $violation_type
+ * @property string $description
+ * @property string $severity
+ * @property \Carbon\Carbon $detected_at
+ * @property \Carbon\Carbon $remediation_deadline
+ * @property \Carbon\Carbon|null $resolved_at
+ * @property int|null $resolved_by
+ * @property string|null $resolution_notes
+ * @property array|null $metadata
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|ComplianceViolation where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|ComplianceViolation whereIn(string $column, array<string|int> $values)
+ * @method static ComplianceViolation|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static ComplianceViolation findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,ComplianceViolation> all(array<string> $columns = ['*'])
+ */
 class ComplianceViolation extends Model
 {
     use HasFactory;

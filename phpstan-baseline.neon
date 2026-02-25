@@ -4481,12 +4481,7 @@ parameters:
 			path: app/Models/ComplianceReport.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\ComplianceViolation\\:\\:\\$remediation_deadline\\.$#"
-			count: 1
-			path: app/Models/ComplianceViolation.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\ComplianceViolation\\:\\:\\$resolved_at\\.$#"
+			message: "#^Class App\\\\Models\\\\ComplianceViolation has PHPDoc tag @property for property \\$metadata with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/ComplianceViolation.php
 
@@ -4502,6 +4497,16 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\ComplianceViolation\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/ComplianceViolation.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\ComplianceViolation\\:\\:where\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/ComplianceViolation.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\ComplianceViolation\\:\\:whereIn\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/ComplianceViolation.php
 
@@ -4751,27 +4756,7 @@ parameters:
 			path: app/Models/FuelAlert.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\FuelBudget\\:\\:\\$actual_liters\\.$#"
-			count: 1
-			path: app/Models/FuelBudget.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\FuelBudget\\:\\:\\$actual_spent\\.$#"
-			count: 3
-			path: app/Models/FuelBudget.php
-
-		-
 			message: "#^Access to an undefined property App\\\\Models\\\\FuelBudget\\:\\:\\$budget_utilization\\.$#"
-			count: 1
-			path: app/Models/FuelBudget.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\FuelBudget\\:\\:\\$budgeted_amount\\.$#"
-			count: 3
-			path: app/Models/FuelBudget.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\FuelBudget\\:\\:\\$budgeted_liters\\.$#"
 			count: 1
 			path: app/Models/FuelBudget.php
 
@@ -4832,6 +4817,16 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\FuelBudget\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/FuelBudget.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\FuelBudget\\:\\:where\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/FuelBudget.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\FuelBudget\\:\\:whereIn\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/FuelBudget.php
 
@@ -7722,6 +7717,16 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\SensorReading\\:\\:sensor\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/SensorReading.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\SensorReading\\:\\:where\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/SensorReading.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\SensorReading\\:\\:whereIn\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/SensorReading.php
 
