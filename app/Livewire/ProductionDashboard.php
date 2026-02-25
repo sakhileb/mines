@@ -41,6 +41,12 @@ class ProductionDashboard extends Component
     protected ?\App\Models\Team $team = null;
     public int $teamId = 0;
 
+    private function productionService(): ProductionService
+    {
+        assert($this->productionService !== null);
+        return $this->productionService;
+    }
+
     public function mount()
     {
         $this->productionService = app(ProductionService::class);
@@ -91,7 +97,7 @@ class ProductionDashboard extends Component
 
     public function getStatisticsProperty()
     {
-        return $this->productionService->getProductionStatistics(
+        return $this->productionService()->getProductionStatistics(
             $this->teamId,
             Carbon::now()->subDays(30),
             Carbon::now()
@@ -100,17 +106,17 @@ class ProductionDashboard extends Component
 
     public function getTrendProperty()
     {
-        return $this->productionService->getProductionTrend($this->teamId, 30);
+        return $this->productionService()->getProductionTrend($this->teamId, 30);
     }
 
     public function getTargetsProperty()
     {
-        return $this->productionService->getActiveTargets($this->teamId);
+        return $this->productionService()->getActiveTargets($this->teamId);
     }
 
     public function getForecastsProperty()
     {
-        return $this->productionService->getRecentForecasts($this->teamId, 7);
+        return $this->productionService()->getRecentForecasts($this->teamId, 7);
     }
 
     public function getSummaryProperty()
@@ -248,13 +254,13 @@ class ProductionDashboard extends Component
 
         if ($this->editingRecordId) {
             $record = ProductionRecord::where('team_id', $this->teamId)->findOrFail($this->editingRecordId);
-            $this->productionService->updateProductionRecord($record, [
+            $this->productionService()->updateProductionRecord($record, [
                 ...$validated,
                 'notes' => $this->notes,
             ]);
             $this->showEditModal = false;
         } else {
-            $this->productionService->createProductionRecord($this->teamId, [
+            $this->productionService()->createProductionRecord($this->teamId, [
                 ...$validated,
                 'notes' => $this->notes,
             ]);
@@ -268,7 +274,7 @@ class ProductionDashboard extends Component
     public function deleteRecord($id)
     {
         $record = ProductionRecord::where('team_id', $this->teamId)->findOrFail($id);
-        $this->productionService->deleteProductionRecord($record);
+        $this->productionService()->deleteProductionRecord($record);
     }
 
     public function resetForm()

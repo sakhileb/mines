@@ -10424,3 +10424,23 @@ parameters:
 			message: "#^Undefined variable\\: \\$this$#"
 			count: 1
 			path: routes/console.php
+
+		-
+			message: "#^Method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:get\\(\\) has invalid return type Illuminate\\\\Database\\\\Eloquent\\\\Collection\\.$#"
+			count: 1
+			path: phpstan-stubs/eloquent.stub
+
+		-
+			message: "#^Method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:all\\(\\) has invalid return type Illuminate\\\\Database\\\\Eloquent\\\\Collection\\.$#"
+			count: 1
+			path: phpstan-stubs/eloquent.stub
+
+		-
+			message: "#^Method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:pluck\\(\\) has invalid return type Illuminate\\\\Database\\\\Eloquent\\\\Collection\\.$#"
+			count: 1
+			path: phpstan-stubs/eloquent.stub
+
+		-
+			message: "#^Method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:paginate\\(\\) has invalid return type Illuminate\\\\Pagination\\\\Paginator\\.$#"
+			count: 1
+			path: phpstan-stubs/eloquent.stub

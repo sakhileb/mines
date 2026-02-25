@@ -27,6 +27,7 @@ class Alerts extends Component
     // Track when a dismissed-unresolved alert was created so UI can render specially
     public array $recentlyDismissedUnresolved = [];
 
+    /** @var array<string, string> */
     protected array $alertPriorities = [
         'critical' => 'Critical',
         'high' => 'High',
@@ -34,6 +35,7 @@ class Alerts extends Component
         'low' => 'Low',
     ];
 
+    /** @var array<string, string> */
     protected array $alertTypes = [
         'temperature' => 'Temperature Warning',
         'fuel' => 'Fuel Level',
