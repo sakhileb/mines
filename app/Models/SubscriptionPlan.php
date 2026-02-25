@@ -11,6 +11,34 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Represents available subscription tiers (Basic, Pro, Enterprise)
  * Defines features and limits for each plan
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property float $price
+ * @property float|null $yearly_price
+ * @property string|null $stripe_price_id
+ * @property string|null $stripe_yearly_price_id
+ * @property array|null $features
+ * @property int|null $max_machines
+ * @property int|null $max_users
+ * @property int|null $max_geofences
+ * @property int|null $max_mine_areas
+ * @property bool $has_advanced_analytics
+ * @property bool $has_api_access
+ * @property bool $has_priority_support
+ * @property bool $is_active
+ * @property int $sort_order
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|SubscriptionPlan where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|SubscriptionPlan whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|SubscriptionPlan orderBy(string $column, string $direction = 'asc')
+ * @method static SubscriptionPlan|null find(mixed $id, array $columns = ['*'])
+ * @method static SubscriptionPlan findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class SubscriptionPlan extends Model
 {

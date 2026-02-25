@@ -11,6 +11,29 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Represents a payment transaction
  * Tracks Stripe payment intents and status
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int|null $subscription_id
+ * @property string|null $stripe_payment_intent_id
+ * @property string|null $stripe_invoice_id
+ * @property float $amount
+ * @property string $currency
+ * @property string $status
+ * @property string|null $payment_method
+ * @property string|null $description
+ * @property string|null $failure_reason
+ * @property \Carbon\Carbon|null $paid_at
+ * @property array|null $metadata
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Payment where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Payment whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Payment orderBy(string $column, string $direction = 'asc')
+ * @method static Payment|null find(mixed $id, array $columns = ['*'])
+ * @method static Payment findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Payment extends Model
 {

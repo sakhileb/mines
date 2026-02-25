@@ -13,6 +13,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Represents a team's subscription to a plan
  * Tracks billing cycle, status, and Stripe integration
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $subscription_plan_id
+ * @property string|null $stripe_subscription_id
+ * @property string|null $stripe_customer_id
+ * @property string $status
+ * @property string $billing_cycle
+ * @property \Carbon\Carbon|null $trial_ends_at
+ * @property \Carbon\Carbon|null $current_period_start
+ * @property \Carbon\Carbon|null $current_period_end
+ * @property \Carbon\Carbon|null $canceled_at
+ * @property \Carbon\Carbon|null $ends_at
+ * @property array|null $metadata
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Subscription where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Subscription whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Subscription orderBy(string $column, string $direction = 'asc')
+ * @method static Subscription|null find(mixed $id, array $columns = ['*'])
+ * @method static Subscription findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Subscription extends Model
 {

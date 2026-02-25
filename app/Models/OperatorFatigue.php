@@ -11,6 +11,33 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Tracks machine operator fatigue levels and work hours to ensure safety
  * and compliance with rest requirements.
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int $team_id
+ * @property int|null $machine_id
+ * @property \Carbon\Carbon $shift_date
+ * @property string $shift_type
+ * @property string $shift_start
+ * @property string $shift_end
+ * @property float $hours_worked
+ * @property float $consecutive_days
+ * @property int $fatigue_score
+ * @property string $alert_level
+ * @property float $break_time_minutes
+ * @property int $incidents_count
+ * @property bool $is_rested
+ * @property string|null $notes
+ * @property array|null $metadata
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|OperatorFatigue where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|OperatorFatigue whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|OperatorFatigue orderBy(string $column, string $direction = 'asc')
+ * @method static OperatorFatigue|null find(mixed $id, array $columns = ['*'])
+ * @method static OperatorFatigue findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class OperatorFatigue extends Model
 {

@@ -6,6 +6,30 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * AIAgent Model
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $type
+ * @property string|null $description
+ * @property string $status
+ * @property array|null $configuration
+ * @property array|null $capabilities
+ * @property float $accuracy_score
+ * @property int $predictions_made
+ * @property int $successful_predictions
+ * @property \Carbon\Carbon|null $last_trained_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|AIAgent where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|AIAgent whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|AIAgent orderBy(string $column, string $direction = 'asc')
+ * @method static AIAgent|null find(mixed $id, array $columns = ['*'])
+ * @method static AIAgent findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class AIAgent extends Model
 {
     use HasFactory;
