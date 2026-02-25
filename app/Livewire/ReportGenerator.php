@@ -8,6 +8,7 @@ use Livewire\Component;
 use App\Traits\BrowserEventBridge;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ReportGenerator extends Component
 {
@@ -178,7 +179,7 @@ class ReportGenerator extends Component
                 'filters' => $filters,
             ]);
             
-            \Log::info('User generated report', [
+            Log::info('User generated report', [
                 'user_id' => $user->id,
                 'report_id' => $report->id,
                 'report_type' => $this->reportType,
@@ -191,7 +192,7 @@ class ReportGenerator extends Component
             return;
             
         } catch (\Exception $e) {
-            \Log::error('Failed to generate report', [
+            Log::error('Failed to generate report', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);

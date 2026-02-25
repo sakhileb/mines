@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FleetMovementReplay extends Component
 {
@@ -234,7 +235,7 @@ class FleetMovementReplay extends Component
                             ];
                         }
                     } catch (\Exception $e) {
-                        \Log::warning('Failed to auto-calculate route for replay', [
+                        Log::warning('Failed to auto-calculate route for replay', [
                             'machine_id' => $this->selectedMachine,
                             'error' => $e->getMessage(),
                         ]);

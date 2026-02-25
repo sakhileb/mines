@@ -10,6 +10,7 @@ use Livewire\Component;
 use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Reports extends Component
 {
@@ -115,7 +116,7 @@ class Reports extends Component
             
             $report->delete();
             
-            \Log::info('User deleted report', [
+            Log::info('User deleted report', [
                 'user_id' => Auth::id(),
                 'report_id' => $reportId,
                 'report_type' => $report->type,
@@ -123,7 +124,7 @@ class Reports extends Component
             
             $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Report deleted successfully']);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete report', [
+            Log::error('Failed to delete report', [
                 'user_id' => Auth::id(),
                 'report_id' => $reportId,
                 'error' => $e->getMessage(),
@@ -172,7 +173,7 @@ class Reports extends Component
         // Prevent path traversal attacks
         if ($report->file_path && !str_contains($report->file_path, '..')) {
             if (\Storage::exists($report->file_path)) {
-                \Log::info('User downloaded report', [
+                Log::info('User downloaded report', [
                     'user_id' => Auth::id(),
                     'report_id' => $reportId,
                 ]);

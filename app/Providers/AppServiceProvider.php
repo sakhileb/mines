@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Registered;
 use App\Mail\WelcomeMail;
 use App\Console\Commands\ScanBladeUnescaped;
@@ -49,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
             try {
                 Mail::to($event->user->email)->queue(new WelcomeMail($event->user));
             } catch (\Exception $e) {
-                \Log::error('Failed to queue welcome email', ['user_id' => $event->user->id, 'error' => $e->getMessage()]);
+                Log::error('Failed to queue welcome email', ['user_id' => $event->user->id, 'error' => $e->getMessage()]);
             }
         });
 
@@ -59,7 +60,7 @@ class AppServiceProvider extends ServiceProvider
                 $listener = new \App\Listeners\NotifyOnJobFailed();
                 $listener->handle($event);
             } catch (\Throwable $e) {
-                \Log::error('Failed to notify on job failure', ['error' => $e->getMessage()]);
+                Log::error('Failed to notify on job failure', ['error' => $e->getMessage()]);
             }
         });
 
@@ -80,7 +81,7 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         } catch (\Throwable $e) {
-            \Log::warning('Unable to configure Sentry release/environment', ['error' => $e->getMessage()]);
+            Log::warning('Unable to configure Sentry release/environment', ['error' => $e->getMessage()]);
         }
     }
 

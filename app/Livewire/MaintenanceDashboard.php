@@ -10,6 +10,7 @@ use App\Models\MaintenanceAlert;
 use App\Models\Machine;
 use App\Services\AI\MaintenancePredictorAgent;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class MaintenanceDashboard extends Component
 {
@@ -105,7 +106,7 @@ class MaintenanceDashboard extends Component
                 'parts_used' => $this->required_parts ? ['notes' => strip_tags($this->required_parts)] : null,
             ]);
             
-            \Log::info('Maintenance scheduled', [
+            Log::info('Maintenance scheduled', [
                 'user_id' => $user->id,
                 'machine_id' => $this->machine_id,
                 'type' => $this->maintenance_type,
@@ -115,7 +116,7 @@ class MaintenanceDashboard extends Component
             $this->closeBookingModal();
             
         } catch (\Exception $e) {
-            \Log::error('Failed to schedule maintenance', [
+            Log::error('Failed to schedule maintenance', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
@@ -146,14 +147,14 @@ class MaintenanceDashboard extends Component
                 'completed_by' => auth()->id(),
             ]);
             
-            \Log::info('Maintenance completed', [
+            Log::info('Maintenance completed', [
                 'user_id' => auth()->id(),
                 'record_id' => $recordId,
             ]);
             
             $this->dispatchBrowserEvent('notify', ['message' => 'Maintenance marked as completed', 'type' => 'success']);
         } catch (\Exception $e) {
-            \Log::error('Failed to complete maintenance', [
+            Log::error('Failed to complete maintenance', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);
@@ -180,14 +181,14 @@ class MaintenanceDashboard extends Component
         try {
             $record->update(['status' => 'cancelled']);
             
-            \Log::info('Maintenance cancelled', [
+            Log::info('Maintenance cancelled', [
                 'user_id' => auth()->id(),
                 'record_id' => $recordId,
             ]);
             
             $this->dispatchBrowserEvent('notify', ['message' => 'Maintenance cancelled', 'type' => 'info']);
         } catch (\Exception $e) {
-            \Log::error('Failed to cancel maintenance', [
+            Log::error('Failed to cancel maintenance', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);

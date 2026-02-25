@@ -13,6 +13,7 @@ use App\Services\AI\FuelPredictorAgent;
 use App\Services\FuelManagementService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Traits\BrowserEventBridge;
 
 class FuelManagement extends Component
@@ -114,7 +115,7 @@ class FuelManagement extends Component
                 ->first();
 
             if ($allocation) {
-                \Log::info('Falling back to team-level fuel allocation for dispense', [
+                Log::info('Falling back to team-level fuel allocation for dispense', [
                     'team_id' => $tank->team_id,
                     'requested_mine_area_id' => $mineAreaId,
                     'allocation_id' => $allocation->id,
@@ -167,7 +168,7 @@ class FuelManagement extends Component
             $this->reset(['transactionTankId', 'transactionQuantity', 'transactionMineAreaId']);
 
         } catch (\Exception $e) {
-            \Log::error('Failed to record dispensing transaction', ['error' => $e->getMessage()]);
+            Log::error('Failed to record dispensing transaction', ['error' => $e->getMessage()]);
             $this->transactionError = 'Failed to record transaction. ' . $e->getMessage();
                 $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => $this->transactionError]);
         }
@@ -262,7 +263,7 @@ class FuelManagement extends Component
             $this->closeTankModal();
             
         } catch (\Exception $e) {
-            \Log::error('Failed to create fuel tank', [
+            Log::error('Failed to create fuel tank', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
@@ -331,7 +332,7 @@ class FuelManagement extends Component
             $this->reset(['refuelTankId', 'refuelQuantity', 'refuelUnitPrice', 'refuelNotes']);
 
         } catch (\Exception $e) {
-            \Log::error('Failed to record refuel transaction', ['error' => $e->getMessage()]);
+            Log::error('Failed to record refuel transaction', ['error' => $e->getMessage()]);
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to record refuel transaction.']);
         }
     }
@@ -393,7 +394,7 @@ class FuelManagement extends Component
 
             $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Tank deleted successfully']);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete tank', ['error' => $e->getMessage()]);
+            Log::error('Failed to delete tank', ['error' => $e->getMessage()]);
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to delete tank']);
         }
     }
@@ -444,7 +445,7 @@ class FuelManagement extends Component
             $this->closeAllocationModal();
             
         } catch (\Exception $e) {
-            \Log::error('Failed to save fuel allocation', [
+            Log::error('Failed to save fuel allocation', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);

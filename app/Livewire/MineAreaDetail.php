@@ -15,6 +15,7 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class MineAreaDetail extends Component
 {
@@ -334,7 +335,7 @@ class MineAreaDetail extends Component
             $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan uploaded successfully', 'type' => 'success']);
 
         } catch (\Exception $e) {
-            \Log::error('Failed to upload mine plan', ['error' => $e->getMessage()]);
+            Log::error('Failed to upload mine plan', ['error' => $e->getMessage()]);
             $this->dispatchBrowserEvent('notify', ['message' => 'Failed to upload mine plan: ' . $e->getMessage(), 'type' => 'error']);
         }
     }

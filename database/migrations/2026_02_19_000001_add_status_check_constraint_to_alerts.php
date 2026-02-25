@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 
 return new class extends Migration
 {
@@ -32,7 +33,7 @@ return new class extends Migration
             }
         } catch (\Exception $e) {
             // Log and continue - DB may not support adding a constraint at runtime
-            \Log::warning('Could not add alerts status check constraint: ' . $e->getMessage());
+            Log::warning('Could not add alerts status check constraint: ' . $e->getMessage());
         }
     }
 
@@ -55,7 +56,7 @@ return new class extends Migration
                 DB::statement('ALTER TABLE alerts DROP CHECK IF EXISTS chk_alert_status_values');
             }
         } catch (\Exception $e) {
-            \Log::warning('Could not drop alerts status check constraint: ' . $e->getMessage());
+            Log::warning('Could not drop alerts status check constraint: ' . $e->getMessage());
         }
     }
 };
