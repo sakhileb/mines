@@ -15,24 +15,16 @@ class JCBService extends BaseManufacturerService implements ManufacturerServiceI
 {
     protected string $manufacturer = 'jcb';
 
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/livelink/v1/machines', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to JCB LiveLink API',
-                'api_system' => 'LiveLink',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

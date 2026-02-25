@@ -15,24 +15,16 @@ class SanyService extends BaseManufacturerService implements ManufacturerService
 {
     protected string $manufacturer = 'sany';
 
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/open/v1/devices', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Sany SUMS API',
-                'api_system' => 'SUMS',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

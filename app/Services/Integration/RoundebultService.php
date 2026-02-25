@@ -20,26 +20,18 @@ class RoundebultService extends BaseManufacturerService
     /**
      * Test connection to Roundebult API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/api/v1/machines', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Roundebult API',
-                'api_system' => 'Roundebult Fleet Management',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

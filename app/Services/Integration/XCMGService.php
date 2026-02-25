@@ -15,24 +15,16 @@ class XCMGService extends BaseManufacturerService implements ManufacturerService
 {
     protected string $manufacturer = 'xcmg';
 
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/iot/v1/devices', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to XCMG Xrea API',
-                'api_system' => 'Xrea',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

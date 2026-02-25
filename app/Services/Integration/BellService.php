@@ -21,27 +21,22 @@ class BellService extends BaseManufacturerService
     /**
      * Test connection to Bell Fleetmatic API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             // Test with vehicles endpoint
             $response = $this->makeRequest('GET', '/fleetmatic/v1/vehicles');
             
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Bell Fleetmatic API',
-                'status' => 'connected',
-                'api_system' => 'Fleetmatic',
-            ];
+            if ($response && isset($response['success'])) {
+                return (bool) $response['success'];
+            }
+            
+            return true;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-                'note' => 'Contact Bell Equipment for API access',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

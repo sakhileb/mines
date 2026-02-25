@@ -15,24 +15,16 @@ class EpirocService extends BaseManufacturerService implements ManufacturerServi
 {
     protected string $manufacturer = 'epiroc';
 
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/api/v2/equipment', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Epiroc Certiq API',
-                'api_system' => 'Certiq',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

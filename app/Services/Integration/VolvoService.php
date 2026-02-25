@@ -21,26 +21,17 @@ class VolvoService extends BaseManufacturerService
     /**
      * Test connection to Volvo CareTrack API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             // Test with machines endpoint
             $response = $this->makeRequest('GET', '/connected-machines/v1/machines');
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Volvo CareTrack API',
-                'status' => 'connected',
-                'api_system' => 'CareTrack',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

@@ -20,26 +20,18 @@ class CTrackService extends BaseManufacturerService
     /**
      * Test connection to C-Track API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/v3/vehicles', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to C-Track API',
-                'api_system' => 'C-Track Fleet Management',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

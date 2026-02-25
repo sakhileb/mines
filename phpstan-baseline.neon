@@ -1271,11 +1271,6 @@ parameters:
 			path: app/Http/Middleware/EnsureTeamContext.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Middleware\\\\EnsureValidRealTimeChannel\\:\\:handle\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Http/Middleware/EnsureValidRealTimeChannel.php
-
-		-
 			message: "#^Access to undefined constant Illuminate\\\\Http\\\\Request\\:\\:HEADER_X_FORWARDED_ALL\\.$#"
 			count: 1
 			path: app/Http/Middleware/TrustProxies.php
@@ -8736,11 +8731,6 @@ parameters:
 			path: app/Services/FuelManagementService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\AtlasCopcoService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/AtlasCopcoService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\BaseManufacturerService\\:\\:__construct\\(\\) has parameter \\$credentials with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/BaseManufacturerService.php
@@ -8886,21 +8876,6 @@ parameters:
 			path: app/Services/Integration/BellService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\BellService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/BellService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\BobcatService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/BobcatService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\CASEService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/CASEService.php
-
-		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\CATService\\:\\:logError\\(\\)\\.$#"
 			count: 4
 			path: app/Services/Integration/CATService.php
@@ -8967,11 +8942,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:parseMetric\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/CATService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\CATService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/CATService.php
 
@@ -9046,11 +9016,6 @@ parameters:
 			path: app/Services/Integration/CTrackService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\CTrackService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/CTrackService.php
-
-		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:logError\\(\\)\\.$#"
 			count: 4
 			path: app/Services/Integration/DoosanService.php
@@ -9076,17 +9041,7 @@ parameters:
 			path: app/Services/Integration/DoosanService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/DoosanService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/DoosanService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\DoosanService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/DoosanService.php
 
@@ -9116,17 +9071,7 @@ parameters:
 			path: app/Services/Integration/EpirocService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/EpirocService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/EpirocService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\EpirocService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/EpirocService.php
 
@@ -9156,17 +9101,7 @@ parameters:
 			path: app/Services/Integration/HitachiService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/HitachiService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/HitachiService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\HitachiService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/HitachiService.php
 
@@ -9196,17 +9131,7 @@ parameters:
 			path: app/Services/Integration/HyundaiService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/HyundaiService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/HyundaiService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\HyundaiService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/HyundaiService.php
 
@@ -9286,24 +9211,9 @@ parameters:
 			path: app/Services/Integration/JCBService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/JCBService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/JCBService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\JCBService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/JCBService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\JohnDeereService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/JohnDeereService.php
 
 		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:logError\\(\\)\\.$#"
@@ -9376,11 +9286,6 @@ parameters:
 			path: app/Services/Integration/KawasakiService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\KawasakiService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/KawasakiService.php
-
-		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:logError\\(\\)\\.$#"
 			count: 4
 			path: app/Services/Integration/KobelcoService.php
@@ -9406,17 +9311,7 @@ parameters:
 			path: app/Services/Integration/KobelcoService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/KobelcoService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/KobelcoService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\KobelcoService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/KobelcoService.php
 
@@ -9491,11 +9386,6 @@ parameters:
 			path: app/Services/Integration/KomatsuService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\KomatsuService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/KomatsuService.php
-
-		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:logError\\(\\)\\.$#"
 			count: 4
 			path: app/Services/Integration/KubotaService.php
@@ -9521,17 +9411,7 @@ parameters:
 			path: app/Services/Integration/KubotaService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/KubotaService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/KubotaService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\KubotaService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/KubotaService.php
 
@@ -9561,24 +9441,9 @@ parameters:
 			path: app/Services/Integration/LiebherrService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/LiebherrService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/LiebherrService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\LiebherrService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/LiebherrService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\NewHollandService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/NewHollandService.php
 
 		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:logError\\(\\)\\.$#"
@@ -9651,16 +9516,6 @@ parameters:
 			path: app/Services/Integration/RoundebultService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\RoundebultService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/RoundebultService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\SandvikService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/SandvikService.php
-
-		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\SanyService\\:\\:logError\\(\\)\\.$#"
 			count: 4
 			path: app/Services/Integration/SanyService.php
@@ -9686,24 +9541,9 @@ parameters:
 			path: app/Services/Integration/SanyService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/SanyService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/SanyService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\SanyService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/SanyService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\TakeuchiService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/TakeuchiService.php
 
 		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:logError\\(\\)\\.$#"
@@ -9776,11 +9616,6 @@ parameters:
 			path: app/Services/Integration/VolvoService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\VolvoService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/VolvoService.php
-
-		-
 			message: "#^Call to an undefined method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:logError\\(\\)\\.$#"
 			count: 4
 			path: app/Services/Integration/XCMGService.php
@@ -9806,24 +9641,9 @@ parameters:
 			path: app/Services/Integration/XCMGService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/XCMGService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:fetchMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/Integration/XCMGService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\XCMGService\\:\\:testConnection\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/XCMGService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\Integration\\\\YanmarService\\:\\:fetchMachines\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/Integration/YanmarService.php
 
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\IoTSensor\\:\\:\\$status\\.$#"

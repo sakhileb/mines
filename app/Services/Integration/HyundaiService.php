@@ -15,24 +15,16 @@ class HyundaiService extends BaseManufacturerService implements ManufacturerServ
 {
     protected string $manufacturer = 'hyundai';
 
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/api/v1/equipment', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Hyundai Hi-MATE API',
-                'api_system' => 'Hi-MATE',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

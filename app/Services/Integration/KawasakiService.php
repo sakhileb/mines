@@ -20,24 +20,16 @@ class KawasakiService extends BaseManufacturerService
     /**
      * Test connection to Kawasaki API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/health');
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Kawasaki API',
-                'status' => $response['status'] ?? 'connected',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

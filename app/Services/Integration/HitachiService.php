@@ -18,24 +18,16 @@ class HitachiService extends BaseManufacturerService implements ManufacturerServ
     /**
      * Test connection to Hitachi ConSite API
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/api/v2/machines', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Hitachi ConSite API',
-                'api_system' => 'ConSite',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

@@ -15,24 +15,16 @@ class DoosanService extends BaseManufacturerService implements ManufacturerServi
 {
     protected string $manufacturer = 'doosan';
 
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/api/v2/machines', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Doosan DoosanCONNECT API',
-                'api_system' => 'DoosanCONNECT',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

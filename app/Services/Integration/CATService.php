@@ -21,28 +21,17 @@ class CATService extends BaseManufacturerService
     /**
      * Test connection to CAT VisionLink API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             // Test with assets endpoint
             $response = $this->makeRequest('GET', '/assets');
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Caterpillar VisionLink API',
-                'status' => 'connected',
-                'api_system' => 'VisionLink',
-                'requires_dealer_auth' => true,
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-                'note' => 'Ensure dealer authorization and valid subscription ID',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

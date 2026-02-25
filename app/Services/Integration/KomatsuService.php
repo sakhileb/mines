@@ -21,27 +21,17 @@ class KomatsuService extends BaseManufacturerService
     /**
      * Test connection to Komatsu KOMTRAX API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             // Test with machines endpoint
             $response = $this->makeRequest('GET', '/api/v2/machines');
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Komatsu KOMTRAX API',
-                'status' => 'connected',
-                'api_system' => 'KOMTRAX',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-                'note' => 'Contact Komatsu representative for API access',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 

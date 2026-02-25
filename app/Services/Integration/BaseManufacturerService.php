@@ -286,6 +286,95 @@ abstract class BaseManufacturerService implements ManufacturerServiceInterface
     }
 
     /**
+     * Test the connection to the manufacturer API
+     * Concrete classes should override this
+     *
+     * @return bool
+     */
+    public function testConnection(): bool
+    {
+        // Default implementation - concrete classes should override
+        return false;
+    }
+
+    /**
+     * Fetch all machines from the manufacturer API
+     * Concrete classes should override this
+     *
+     * @return array<string, mixed>
+     */
+    public function fetchMachines(): array
+    {
+        // Default implementation - concrete classes should override
+        return [];
+    }
+
+    /**
+     * Fetch machine details from the manufacturer API
+     * Concrete classes should override this
+     *
+     * @param string $machineId
+     * @return array<string, mixed>
+     */
+    public function fetchMachineDetails(string $machineId): array
+    {
+        // Default implementation - concrete classes should override
+        return [];
+    }
+
+    /**
+     * Fetch real-time location for a machine
+     * Concrete classes should override this
+     *
+     * @param string $machineId
+     * @return array<string, mixed>|null
+     */
+    public function fetchMachineLocation(string $machineId): ?array
+    {
+        // Default implementation - concrete classes should override
+        return null;
+    }
+
+    /**
+     * Fetch machine metrics/diagnostics
+     * Concrete classes should override this
+     *
+     * @param string $machineId
+     * @return array<string, mixed>
+     */
+    public function fetchMachineMetrics(string $machineId): array
+    {
+        // Default implementation - concrete classes should override
+        return [];
+    }
+
+    /**
+     * Fetch machine alerts/faults
+     * Concrete classes should override this
+     *
+     * @param string $machineId
+     * @return array<string, mixed>
+     */
+    public function fetchMachineAlerts(string $machineId): array
+    {
+        // Default implementation - concrete classes should override
+        return [];
+    }
+
+    /**
+     * Fetch all data for a machine (comprehensive sync)
+     * Concrete classes should override this
+     *
+     * @param string $machineId
+     * @return array<string, mixed>
+     */
+    public function fetchMachineData(string $machineId): array
+    {
+        // Default implementation - concrete classes should override
+        return [];
+    }
+
+    /**
      * Log integration activity
      *
      * @param string $action
