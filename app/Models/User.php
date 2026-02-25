@@ -27,6 +27,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $two_factor_recovery_codes
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Team> $ownedTeams
  */
 class User extends Authenticatable
 {
@@ -216,5 +218,25 @@ class User extends Authenticatable
         }
 
         return $this->roles()->detach($role->id);
+    }
+
+    /**
+     * Get the teams owned by the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Team>
+     */
+    public function ownedTeams()
+    {
+        return $this->hasMany(Team::class, 'user_id');
+    }
+
+    /**
+     * Get the current team of the user's context.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Team>
+     */
+    public function currentTeam()
+    {
+        return $this->belongsTo(Team::class, 'current_team_id');
     }
 }

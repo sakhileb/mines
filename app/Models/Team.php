@@ -17,6 +17,8 @@ use Laravel\Jetstream\Team as JetstreamTeam;
  * @property string|null $personal_team
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
+ * @property-read \App\Models\User $owner
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
  */
 class Team extends JetstreamTeam
 {
@@ -62,6 +64,16 @@ class Team extends JetstreamTeam
     public function roles()
     {
         return $this->hasMany(Role::class);
+    }
+
+    /**
+     * Get the owner of the team.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User>
+     */
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**

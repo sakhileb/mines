@@ -16,22 +16,22 @@ class AIAnalytics extends Component
     public string $selectedAgent = 'all';
     public bool $showDetails = true;
 
-    public function mount()
+    public function mount(): void
     {
         //
     }
 
-    public function setTimeRange($days)
+    public function setTimeRange(string $days): void
     {
         $this->timeRange = $days;
     }
 
-    public function setAgent($agentType)
+    public function setAgent(string $agentType): void
     {
         $this->selectedAgent = $agentType;
     }
 
-    public function render()
+    public function render(): \Illuminate\View\View
     {
         $team = auth()->user()->currentTeam;
         $startDate = now()->subDays((int)$this->timeRange);

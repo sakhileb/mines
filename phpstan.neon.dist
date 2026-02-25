@@ -20,7 +20,7 @@ parameters:
     - '#Call to static method .+\(\) on an unknown class#'
 includes:
   - vendor/phpstan/phpstan/conf/bleedingEdge.neon
-  - phpstan-baseline.neon
+  # - phpstan-baseline.neon  # Temporarily disabled to see actual errors
 # Note: keep a single `parameters` section above. Adjust level and paths there if needed.
 # Customize autoloading or bootstrap if needed
 # bootstrapFiles:

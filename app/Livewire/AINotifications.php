@@ -12,13 +12,13 @@ class AINotifications extends Component
     public int $unreadCount = 0;
     public bool $showPanel = false;
 
-    public function mount()
+    public function mount(): void
     {
         $this->loadNotifications();
     }
 
     #[On('alert-created')]
-    public function loadNotifications()
+    public function loadNotifications(): void
     {
         $team = auth()->user()->currentTeam;
         
@@ -32,12 +32,12 @@ class AINotifications extends Component
         $this->unreadCount = $this->notifications->count();
     }
 
-    public function togglePanel()
+    public function togglePanel(): void
     {
         $this->showPanel = !$this->showPanel;
     }
 
-    public function acknowledge($alertId)
+    public function acknowledge(int $alertId): void
     {
         $team = auth()->user()->currentTeam;
         $alert = AIPredictiveAlert::where('team_id', $team->id)->find($alertId);
@@ -55,7 +55,7 @@ class AINotifications extends Component
         }
     }
 
-    public function acknowledgeAll()
+    public function acknowledgeAll(): void
     {
         $team = auth()->user()->currentTeam;
         
