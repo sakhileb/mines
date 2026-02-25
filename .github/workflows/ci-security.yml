@@ -42,9 +42,9 @@ jobs:
           BROADCAST_DRIVER: log
       - name: Run composer audit
         run: |
-          composer audit --format=json > composer-audit.json || true
-          if [ -s composer-audit.json ]; then
-            echo "Composer audit found advisories:"; cat composer-audit.json; exit 1
+          if ! composer audit --format=plain; then
+            echo "Composer audit found security advisories"
+            exit 1
           fi
 
   npm-audit:
