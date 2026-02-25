@@ -5,6 +5,27 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * ProductionForecast Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $mine_area_id
+ * @property string|\Carbon\Carbon $forecast_date
+ * @property string|float $forecasted_quantity
+ * @property string $unit
+ * @property string|float $confidence_level
+ * @property array|null $forecast_method
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionForecast where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionForecast whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionForecast orderBy(string $column, string $direction = 'asc')
+ * @method static ProductionForecast|null find(mixed $id, array $columns = ['*'])
+ * @method static ProductionForecast findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class ProductionForecast extends Model
 {
     protected $fillable = [

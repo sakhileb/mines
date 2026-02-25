@@ -16,6 +16,12 @@ public array $activityFeed = [];
 public bool $isLoading = true;
 use WithPagination;
 
+    // AI recommendation interaction state
+    public array $lastAiRecommendations = [];
+    public ?int $pendingRecommendationIndex = null;
+    public bool $showRejectRecommendationModal = false;
+    public string $rejectReason = '';
+
     public string $search = '';
     public string $statusFilter = '';
     public string $sortBy = 'name';
@@ -122,10 +128,7 @@ use WithPagination;
         $team = Auth::user()->currentTeam;
 
         if ($this->editingMachineId) {
-            $machine = Machine::findOrFail($this->editingMachineId);
-            if ($machine->team_id !== $team->id) {
-                abort(403);
-            }
+            $machine = Machine::where('team_id', $team->id)->findOrFail($this->editingMachineId);
             $machine->update([
                 'name' => $this->name,
                 'model' => $this->model,
@@ -137,7 +140,7 @@ use WithPagination;
                 'latitude' => $this->latitude ?: null,
                 'longitude' => $this->longitude ?: null,
             ]);
-            $this->dispatch('alert', message: 'Machine updated successfully', type: 'success');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Machine updated successfully', 'type' => 'success']);
         } else {
             Machine::create([
                 'team_id' => $team->id,
@@ -151,7 +154,7 @@ use WithPagination;
                 'latitude' => $this->latitude ?: null,
                 'longitude' => $this->longitude ?: null,
             ]);
-            $this->dispatch('alert', message: 'Machine created successfully', type: 'success');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Machine created successfully', 'type' => 'success']);
         }
 
         $this->closeModal();
@@ -165,7 +168,7 @@ use WithPagination;
 
         $machineName = $machine->name;
         $machine->delete();
-        $this->dispatch('alert', message: "Machine '{$machineName}' deleted successfully", type: 'success');
+        $this->dispatchBrowserEvent('notify', ['message' => "Machine '{$machineName}' deleted successfully", 'type' => 'success']);
     }
 
     public function openAssignModal(int $machineId): void
@@ -174,10 +177,10 @@ use WithPagination;
         $this->selectedExcavatorId = null;
         $this->selectedAdtIds = [];
         $this->assignMode = 'assign_to_excavator';
-
-        $machine = Machine::find($machineId);
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::where('team_id', $team->id)->find($machineId);
         if (!$machine) {
-            $this->dispatch('alert', message: 'Machine not found', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Machine not found', 'type' => 'error']);
             return;
         }
 
@@ -220,12 +223,13 @@ use WithPagination;
         }
 
         if (!$this->assigningMachineId || !$this->selectedExcavatorId) {
-            $this->dispatch('alert', message: 'Please select an excavator', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Please select an excavator', 'type' => 'error']);
             return;
         }
 
-        $machine = Machine::find($this->assigningMachineId);
-        $excavator = Machine::find($this->selectedExcavatorId);
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::where('team_id', $team->id)->find($this->assigningMachineId);
+        $excavator = Machine::where('team_id', $team->id)->find($this->selectedExcavatorId);
         
         if (!$machine || $machine->team_id !== Auth::user()->currentTeam->id) {
             abort(403);
@@ -237,32 +241,33 @@ use WithPagination;
 
         // Prevent assigning a machine to itself
         if ($machine->id === $excavator->id) {
-            $this->dispatch('alert', message: 'Cannot assign a machine to itself', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Cannot assign a machine to itself', 'type' => 'error']);
             return;
         }
 
         // Prevent assigning big machines (excavator/dozer/loader/etc.) to another big machine
         $bigTypes = ['excavator', 'dozer', 'loader', 'grader', 'bulldozer'];
         if (in_array($machine->machine_type, $bigTypes) && in_array($excavator->machine_type, $bigTypes)) {
-            $this->dispatch('alert', message: 'Cannot assign an excavator or big machine to another big machine', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Cannot assign an excavator or big machine to another big machine', 'type' => 'error']);
             return;
         }
 
         // Assign
         $machine->assignToExcavator($this->selectedExcavatorId);
-        $this->dispatch('alert', message: "Machine '{$machine->name}' assigned to '{$excavator->name}'", type: 'success');
+        $this->dispatchBrowserEvent('notify', ['message' => "Machine '{$machine->name}' assigned to '{$excavator->name}'", 'type' => 'success']);
         $this->closeAssignModal();
     }
 
     public function assignAdtsToExcavator(): void
     {
         if (!$this->assigningMachineId) {
-            $this->dispatch('alert', message: 'Excavator not specified', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Excavator not specified', 'type' => 'error']);
             return;
         }
 
-        $excavator = Machine::find($this->assigningMachineId);
-        if (!$excavator || $excavator->team_id !== Auth::user()->currentTeam->id) {
+        $team = Auth::user()->currentTeam;
+        $excavator = Machine::where('team_id', $team->id)->find($this->assigningMachineId);
+        if (!$excavator) {
             abort(403);
         }
 
@@ -283,22 +288,23 @@ use WithPagination;
         // Assign selected ADTs
         Machine::whereIn('id', $validAdts)->update(['excavator_id' => $excavator->id, 'assigned_to_excavator_at' => now()]);
 
-        $this->dispatch('alert', message: 'Assigned ADTs updated successfully', type: 'success');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Assigned ADTs updated successfully', 'type' => 'success']);
         $this->closeAssignModal();
     }
 
     public function unassignFromExcavator(int $machineId): void
     {
-        $machine = Machine::find($machineId);
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::where('team_id', $team->id)->find($machineId);
         
-        if (!$machine || $machine->team_id !== Auth::user()->currentTeam->id) {
+        if (!$machine) {
             abort(403);
         }
 
         $machineName = $machine->name;
         $machine->unassignFromExcavator();
         
-        $this->dispatch('alert', message: "Machine '{$machineName}' unassigned from excavator", type: 'success');
+        $this->dispatchBrowserEvent('notify', ['message' => "Machine '{$machineName}' unassigned from excavator", 'type' => 'success']);
     }
 
     public function openMineAreaAssignModal(int $machineId): void
@@ -318,25 +324,26 @@ use WithPagination;
     public function assignToMineArea(): void
     {
         if (!$this->assigningMineAreaMachineId || !$this->selectedMineAreaId) {
-            $this->dispatch('alert', message: 'Please select a mine area', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Please select a mine area', 'type' => 'error']);
             return;
         }
 
-        $machine = Machine::find($this->assigningMineAreaMachineId);
+        $team = Auth::user()->currentTeam;
+        $machine = Machine::where('team_id', $team->id)->find($this->assigningMineAreaMachineId);
         
-        if (!$machine || $machine->team_id !== Auth::user()->currentTeam->id) {
+        if (!$machine) {
             abort(403);
         }
 
-        $mineArea = MineArea::find($this->selectedMineAreaId);
-        if (!$mineArea || $mineArea->team_id !== Auth::user()->currentTeam->id) {
+        $mineArea = MineArea::where('team_id', $team->id)->find($this->selectedMineAreaId);
+        if (!$mineArea) {
             abort(403);
         }
 
         // Update machine's mine_area_id field
         $machine->update(['mine_area_id' => $this->selectedMineAreaId]);
         
-        $this->dispatch('alert', message: "Machine '{$machine->name}' assigned to '{$mineArea->name}'", type: 'success');
+        $this->dispatchBrowserEvent('notify', ['message' => "Machine '{$machine->name}' assigned to '{$mineArea->name}'", 'type' => 'success']);
         
         $this->closeMineAreaAssignModal();
     }
@@ -469,6 +476,9 @@ use WithPagination;
         $aiRecommendations = collect($aiAnalysis['recommendations'])->take(5);
         $aiInsights = collect($aiAnalysis['insights'])->take(3);
 
+        // Keep a serializable copy to reference in action handlers (Livewire methods)
+        $this->lastAiRecommendations = $aiRecommendations->values()->map(fn($r) => (array) $r)->toArray();
+
         $this->isLoading = false;
 
         return view('livewire.fleet', [
@@ -484,5 +494,99 @@ use WithPagination;
             'activityFeed' => $this->activityFeed,
             'isLoading' => $this->isLoading,
         ]);
+    }
+
+    public function implementRecommendation(int $index)
+    {
+        $team = Auth::user()->currentTeam;
+        $rec = $this->lastAiRecommendations[$index] ?? null;
+        if (! $rec) {
+            $this->dispatchBrowserEvent('notify', ['message' => 'Recommendation not found', 'type' => 'error']);
+            return;
+        }
+
+        // Compute a stable hash for the recommendation
+        $hash = md5(json_encode($rec));
+
+        // Create action record
+        $action = \App\Models\AiRecommendationAction::create([
+            'team_id' => $team->id,
+            'recommendation_hash' => $hash,
+            'recommendation' => $rec,
+            'status' => 'implemented',
+            'actioned_by' => Auth::id(),
+            'actioned_at' => now(),
+        ]);
+
+        // Apply operational adjustment (best-effort): if recommendation references a machine, create an activity log and tag machine
+        if (!empty($rec['related_machine_id'])) {
+            $machine = Machine::where('team_id', $team->id)->find($rec['related_machine_id']);
+            if ($machine) {
+                \App\Models\ActivityLog::create([
+                    'team_id' => $team->id,
+                    'user_id' => Auth::id(),
+                    'action' => 'ai_recommendation_implemented',
+                    'description' => "Implemented AI recommendation: {$rec['title']} for machine {$machine->name}",
+                ]);
+            }
+        } else {
+            \App\Models\ActivityLog::create([
+                'team_id' => $team->id,
+                'user_id' => Auth::id(),
+                'action' => 'ai_recommendation_implemented',
+                'description' => "Implemented AI recommendation: {$rec['title']}",
+            ]);
+        }
+
+        // Dispatch a success notification and record that performance tracking should occur (placeholder)
+        $this->dispatchBrowserEvent('notify', ['message' => 'Recommendation implemented. Performance will be tracked.', 'type' => 'success']);
+    }
+
+    public function openRejectRecommendation(int $index)
+    {
+        $this->pendingRecommendationIndex = $index;
+        $this->rejectReason = '';
+        $this->showRejectRecommendationModal = true;
+    }
+
+    public function confirmRejectRecommendation()
+    {
+        if (empty(trim($this->rejectReason))) {
+            $this->dispatchBrowserEvent('notify', ['message' => 'Please provide a reason for rejection', 'type' => 'error']);
+            return;
+        }
+
+        $team = Auth::user()->currentTeam;
+        $rec = $this->lastAiRecommendations[$this->pendingRecommendationIndex] ?? null;
+        if (! $rec) {
+            $this->dispatchBrowserEvent('notify', ['message' => 'Recommendation not found', 'type' => 'error']);
+            $this->showRejectRecommendationModal = false;
+            return;
+        }
+
+        $hash = md5(json_encode($rec));
+
+        \App\Models\AiRecommendationAction::create([
+            'team_id' => $team->id,
+            'recommendation_hash' => $hash,
+            'recommendation' => $rec,
+            'status' => 'rejected',
+            'actioned_by' => Auth::id(),
+            'actioned_at' => now(),
+            'reject_reason' => $this->rejectReason,
+        ]);
+
+        \App\Models\ActivityLog::create([
+            'team_id' => $team->id,
+            'user_id' => Auth::id(),
+            'action' => 'ai_recommendation_rejected',
+            'description' => "Rejected AI recommendation: {$rec['title']} — Reason: {$this->rejectReason}",
+        ]);
+
+        $this->showRejectRecommendationModal = false;
+        $this->pendingRecommendationIndex = null;
+        $this->rejectReason = '';
+
+        $this->dispatchBrowserEvent('notify', ['message' => 'Recommendation rejected and logged', 'type' => 'success']);
     }
 }

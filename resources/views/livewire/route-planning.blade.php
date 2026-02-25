@@ -310,7 +310,8 @@
                 @else
                     <div class="space-y-3">
                         @foreach($routes as $route)
-                            <div wire:key="route-{{ $route['id'] }}" class="bg-gray-700 rounded-lg p-4 hover:bg-gray-700/80 transition-colors">
+                            @php $isSelected = isset($selectedRouteId) && $selectedRouteId == $route['id']; @endphp
+                            <div wire:key="route-{{ $route['id'] }}" class="rounded-lg p-4 transition-colors {{ $isSelected ? 'bg-gray-700 ring-2 ring-amber-400' : 'bg-gray-700 hover:bg-gray-700/80' }}">
                                 <div class="flex justify-between items-start mb-2">
                                     <h3 class="font-semibold text-white">{{ $route['name'] }}</h3>
                                     <span class="px-2 py-1 text-xs rounded {{ $route['status'] === 'active' ? 'bg-green-600' : 'bg-gray-600' }} text-white">

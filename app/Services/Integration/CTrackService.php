@@ -20,26 +20,18 @@ class CTrackService extends BaseManufacturerService
     /**
      * Test connection to C-Track API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             $response = $this->makeRequest('GET', '/v3/vehicles', [
                 'query' => ['limit' => 1]
             ]);
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to C-Track API',
-                'api_system' => 'C-Track Fleet Management',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 
@@ -73,6 +65,130 @@ class CTrackService extends BaseManufacturerService
                 'machines' => [],
             ];
         }
+    }
+
+    /**
+     * Fetch current location for vehicle
+     * 
+     * @param string $machineId
+     * @return array|null
+     */
+    public function fetchMachineLocation(string $machineId): ?array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/v3/vehicles/{$machineId}/location");
+            
+            return $this->parseLocation($response['data'] ?? []);
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch location', $e);
+            return null;
+        }
+    }
+
+    /**
+     * Fetch tracking metrics and history for vehicle
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineMetrics(string $machineId): array
+    {
+        try {
+            $history = $this->makeRequest('GET', "/v3/vehicles/{$machineId}/history");
+            $events = $this->makeRequest('GET', "/v3/vehicles/{$machineId}/events");
+            
+            $metrics = array_merge(
+                $this->parseMetrics($history['data'] ?? []),
+                $this->parseMetrics($events['data'] ?? [])
+            );
+            
+            return $metrics;
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch metrics', $e);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch geofence violations and alerts
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineAlerts(string $machineId): array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/v3/vehicles/{$machineId}/events", [
+                'query' => ['type' => 'alert']
+            ]);
+            
+            $alerts = [];
+            if (!empty($response['data']['events'])) {
+                foreach ($response['data']['events'] as $event) {
+                    if (($event['type'] ?? '') === 'alert') {
+                        $alerts[] = $this->parseAlert($event);
+                    }
+                }
+            }
+            
+            return $alerts;
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch alerts', $e);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch machine details from C-Track API
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineDetails(string $machineId): array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/v3/vehicles/{$machineId}");
+            return $response ?? [];
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch machine details', $e);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch comprehensive machine data
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineData(string $machineId): array
+    {
+        return [
+            'details' => $this->fetchMachineDetails($machineId),
+            'location' => $this->fetchMachineLocation($machineId),
+            'metrics' => $this->fetchMachineMetrics($machineId),
+            'alerts' => $this->fetchMachineAlerts($machineId),
+        ];
+    }
+
+    /**
+     * Get the manufacturer name
+     * 
+     * @return string
+     */
+    public function getManufacturer(): string
+    {
+        return $this->manufacturer;
+    }
+
+    /**
+     * Get API error if any occurred
+     * 
+     * @return string|null
+     */
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 
     /**

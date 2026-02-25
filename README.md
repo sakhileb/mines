@@ -41,93 +41,7 @@ OptiMine is a modern fleet management system designed specifically for mining op
 ### Fleet Management
 - Live map view with satellite and standard map styles
 - Real-time machine location tracking
-- Machine health monitoring
-- Activity status tracking (active, idle, maintenance, offline)
-- Fleet movement replay with time-lapse visualization
 
-### Maintenance Management
-- 10 maintenance types: Preventive, Corrective, Predictive, Emergency, Routine, Inspection, Calibration, Overhaul, Breakdown, Seasonal
-- Priority-based scheduling (Low, Medium, High, Critical)
-- Cost estimation and tracking
-- Required parts inventory management
-- Technician notes and work history
-
-### Fuel Management
-- Mine area-based fuel allocation
-- Fuel tank creation and management
-- Consumption tracking and reporting
-- Tank capacity monitoring
-- Multi-tank support per mine area
-
-### Geofencing
-- Custom boundary creation with coordinate points
-- Mine area association for each geofence
-- Real-time boundary violation alerts
-- Visual boundary display on maps
-
-### Mine Area Management
-- Precise 4-point coordinate boundary definition
-- Interactive map-based drawing tools
-- Visual feedback with hover markers and click animations
-- Real-time coordinate preview
-- Mine area naming and management
-
-### Reporting
-- Fleet activity reports
-- Maintenance history reports
-- Fuel consumption analysis
-- Custom date range selection
-- Export capabilities
-
-## 🛠 Technology Stack
-
-### Backend
-- **Framework**: Laravel 10.x
-- **Real-time Components**: Livewire 3.x
-- **Database**: PostgreSQL 14+
-- **Authentication**: Laravel Fortify + Jetstream
-- **API**: Laravel Sanctum for API authentication
-
-### Frontend
-- **CSS Framework**: Tailwind CSS 3.x
-- **UI Components**: DaisyUI
-- **JavaScript**: Alpine.js (via Livewire)
-- **Maps**: Leaflet 1.9.4
-- **Build Tool**: Vite
-
-### Development Tools
-- **PHP**: 8.1+
-- **Composer**: 2.x
-- **Node.js**: 18.x+
-- **npm**: 9.x+
-
-## 📦 Requirements
-
-- PHP >= 8.1
-- PostgreSQL >= 14.0
-- Composer >= 2.0
-- Node.js >= 18.0
-- npm >= 9.0
-- Git
-
-### PHP Extensions Required
-- OpenSSL
-- PDO
-- PDO_PGSQL
-- Mbstring
-- Tokenizer
-- XML
-- Ctype
-- JSON
-- BCMath
-
-## 🚀 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd mines
 ```
 
 ### 2. Install PHP Dependencies
@@ -162,7 +76,9 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=optimine
 DB_USERNAME=your_username
-DB_PASSWORD=your_password
+# Do NOT store secrets in this file. Set the password via your environment or secrets manager.
+# Example: set `DB_PASSWORD` in your host/CI environment or use a secrets manager integration.
+# DB_PASSWORD will be read from the environment at runtime; do not commit real values.
 
 SESSION_DRIVER=database
 SESSION_LIFETIME=120

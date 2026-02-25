@@ -8,6 +8,42 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * MaintenanceSchedule Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $machine_id
+ * @property string $maintenance_type
+ * @property string $title
+ * @property string|null $description
+ * @property string $schedule_type
+ * @property int|null $interval_hours
+ * @property int|null $interval_km
+ * @property int|null $interval_days
+ * @property int|null $last_service_hours
+ * @property int|null $last_service_km
+ * @property string|\Carbon\Carbon|null $last_service_date
+ * @property int|null $next_service_hours
+ * @property int|null $next_service_km
+ * @property string|\Carbon\Carbon|null $next_service_date
+ * @property string $priority
+ * @property string $status
+ * @property string|float|null $estimated_cost
+ * @property float|null $estimated_duration_hours
+ * @property array|null $required_parts
+ * @property array|null $required_tools
+ * @property bool $auto_generate_work_order
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceSchedule where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceSchedule whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceSchedule orderBy(string $column, string $direction = 'asc')
+ * @method static MaintenanceSchedule|null find(mixed $id, array $columns = ['*'])
+ * @method static MaintenanceSchedule findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class MaintenanceSchedule extends Model
 {
     use HasFactory, HasTeamFilters;

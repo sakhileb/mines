@@ -20,6 +20,51 @@
                 </a>
             </div>
 
+            <!-- Advanced Filters (View 2) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <!-- Mine Area Filter -->
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">Mine Area</label>
+                    <select
+                        wire:model.live="selectedMineAreaId"
+                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                        <option value="">All Mine Areas</option>
+                        @foreach($mineAreas ?? [] as $area)
+                            <option value="{{ $area->id }}">{{ $area->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Geofence Filter -->
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">Geofence</label>
+                    <select
+                        wire:model.live="selectedGeofenceId"
+                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                        <option value="">All Geofences</option>
+                        @foreach($geofences ?? [] as $geo)
+                            <option value="{{ $geo->id }}">{{ $geo->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Machine Name Filter -->
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">Machine Name</label>
+                    <select
+                        wire:model.live="selectedMachineId"
+                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                        <option value="">All Machines</option>
+                        @foreach($machinesList ?? [] as $m)
+                            <option value="{{ $m->id }}">{{ $m->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
             <!-- Filters -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- Search -->

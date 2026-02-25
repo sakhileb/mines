@@ -9,13 +9,15 @@ use App\Events\SensorStatusChanged;
 use App\Models\IoTSensor;
 use App\Models\Machine;
 use App\Models\Notification;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 
 class RealTimeAlertService
 {
     /**
      * Dispatch sensor reading alert
      */
-    public function dispatchSensorAlert(IoTSensor $sensor, array $reading, $teamId, bool $isAnomaly = false)
+    public function dispatchSensorAlert(IoTSensor $sensor, array $reading, int $teamId, bool $isAnomaly = false): void
     {
         // Create notification record
         Notification::create([
@@ -35,7 +37,7 @@ class RealTimeAlertService
     /**
      * Dispatch maintenance alert
      */
-    public function dispatchMaintenanceAlert(Machine $machine, $probability, $predictedDate, $teamId)
+    public function dispatchMaintenanceAlert(Machine $machine, float $probability, Carbon $predictedDate, int $teamId): void
     {
         $severity = match (true) {
             $probability >= 0.8 => 'critical',
@@ -64,8 +66,10 @@ class RealTimeAlertService
 
     /**
      * Dispatch compliance violation alert
+     *
+     * @param array<string, mixed>|\stdClass|object $violation
      */
-    public function dispatchComplianceAlert($violation, $teamId)
+    public function dispatchComplianceAlert($violation, int $teamId): void
     {
         $severityMap = [
             'critical' => 'critical',
@@ -106,7 +110,7 @@ class RealTimeAlertService
     /**
      * Dispatch sensor status change alert
      */
-    public function dispatchSensorStatusAlert(IoTSensor $sensor, $oldStatus, $newStatus, $teamId)
+    public function dispatchSensorStatusAlert(IoTSensor $sensor, string $oldStatus, string $newStatus, int $teamId): void
     {
         $alertLevel = $newStatus === 'inactive' ? 'warning' : 'info';
 
@@ -131,8 +135,10 @@ class RealTimeAlertService
 
     /**
      * Get recent alerts for team
+     *
+     * @return Collection<int,Notification>
      */
-    public function getRecentAlerts($teamId, $limit = 20)
+    public function getRecentAlerts(int $teamId, int $limit = 20): Collection
     {
         return Notification::where('team_id', $teamId)
             ->latest()
@@ -142,8 +148,10 @@ class RealTimeAlertService
 
     /**
      * Get unread alerts for user
+     *
+     * @return Collection<int,Notification>
      */
-    public function getUnreadAlerts($userId, $teamId, $limit = 20)
+    public function getUnreadAlerts(int $userId, int $teamId, int $limit = 20): Collection
     {
         return Notification::where('team_id', $teamId)
             ->whereDoesntHave('readBy', function ($query) use ($userId) {
@@ -157,7 +165,7 @@ class RealTimeAlertService
     /**
      * Mark alert as read
      */
-    public function markAsRead($notificationId, $userId)
+    public function markAsRead(int $notificationId, int $userId): bool
     {
         $notification = Notification::find($notificationId);
         if ($notification) {
@@ -170,8 +178,10 @@ class RealTimeAlertService
 
     /**
      * Batch mark alerts as read
+     *
+     * @param array<int> $notificationIds
      */
-    public function markMultipleAsRead(array $notificationIds, $userId)
+    public function markMultipleAsRead(array $notificationIds, int $userId): int
     {
         $count = 0;
         Notification::whereIn('id', $notificationIds)->each(function ($notification) use ($userId, &$count) {
@@ -184,8 +194,10 @@ class RealTimeAlertService
 
     /**
      * Get alert statistics
+     *
+     * @return array<string, mixed>
      */
-    public function getAlertStats($teamId, $days = 7)
+    public function getAlertStats(int $teamId, int $days = 7): array
     {
         $fromDate = now()->subDays($days);
 

@@ -6,10 +6,15 @@ use App\Models\ProductionRecord;
 use App\Models\ProductionTarget;
 use App\Models\ProductionForecast;
 use Carbon\Carbon;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class ProductionService
 {
-    public function getProductionByTeam($teamId, $startDate = null, $endDate = null)
+    /**
+     * @return \Illuminate\Pagination\Paginator<ProductionRecord>
+     */
+    public function getProductionByTeam(int $teamId, ?Carbon $startDate = null, ?Carbon $endDate = null)
     {
         $startDate = $startDate ?? Carbon::now()->subDays(30);
         $endDate = $endDate ?? Carbon::now();
@@ -20,14 +25,20 @@ class ProductionService
             ->paginate(15);
     }
 
-    public function getTodayProduction($teamId)
+    /**
+     * @return Collection<int,ProductionRecord>
+     */
+    public function getTodayProduction(int $teamId): Collection
     {
         return ProductionRecord::forTeam($teamId)
             ->where('record_date', Carbon::today())
             ->get();
     }
 
-    public function getProductionStatistics($teamId, $startDate = null, $endDate = null)
+    /**
+     * @return array<string, mixed>
+     */
+    public function getProductionStatistics(int $teamId, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
         $startDate = $startDate ?? Carbon::now()->subDays(30);
         $endDate = $endDate ?? Carbon::now();
@@ -55,7 +66,10 @@ class ProductionService
         ];
     }
 
-    public function createProductionRecord($teamId, $data)
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function createProductionRecord(int $teamId, array $data): ProductionRecord
     {
         return ProductionRecord::create([
             'team_id' => $teamId,
@@ -72,18 +86,24 @@ class ProductionService
         ]);
     }
 
-    public function updateProductionRecord(ProductionRecord $record, $data)
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function updateProductionRecord(ProductionRecord $record, array $data): ProductionRecord
     {
         $record->update($data);
         return $record;
     }
 
-    public function deleteProductionRecord(ProductionRecord $record)
+    public function deleteProductionRecord(ProductionRecord $record): bool|null
     {
         return $record->delete();
     }
 
-    public function getActiveTargets($teamId)
+    /**
+     * @return Collection<int,ProductionTarget>
+     */
+    public function getActiveTargets(int $teamId): Collection
     {
         return ProductionTarget::forTeam($teamId)
             ->active()
@@ -91,7 +111,10 @@ class ProductionService
             ->get();
     }
 
-    public function createTarget($teamId, $data)
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function createTarget(int $teamId, array $data): ProductionTarget
     {
         return ProductionTarget::create([
             'team_id' => $teamId,
@@ -106,7 +129,10 @@ class ProductionService
         ]);
     }
 
-    public function getProductionTrend($teamId, $days = 30)
+    /**
+     * @return \Illuminate\Support\Collection<string, array<string, mixed>>
+     */
+    public function getProductionTrend(int $teamId, int $days = 30): \Illuminate\Support\Collection
     {
         $records = ProductionRecord::forTeam($teamId)
             ->where('record_date', '>=', Carbon::now()->subDays($days))
@@ -124,7 +150,10 @@ class ProductionService
         });
     }
 
-    public function getProductionByMineArea($teamId)
+    /**
+     * @return \Illuminate\Support\Collection<string, array<string, mixed>>
+     */
+    public function getProductionByMineArea(int $teamId): \Illuminate\Support\Collection
     {
         $records = ProductionRecord::forTeam($teamId)
             ->where('record_date', '>=', Carbon::now()->subDays(30))
@@ -143,7 +172,10 @@ class ProductionService
         });
     }
 
-    public function getRecentForecasts($teamId, $days = 7)
+    /**
+     * @return Collection<int,ProductionForecast>
+     */
+    public function getRecentForecasts(int $teamId, int $days = 7): Collection
     {
         return ProductionForecast::forTeam($teamId)
             ->where('forecast_date', '>=', Carbon::now())

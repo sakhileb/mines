@@ -17,7 +17,7 @@
         }
 
         .mine-area-search-input {
-            @apply w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none;
+            @apply w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none;
         }
     </style>
 
@@ -62,18 +62,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Mode Tabs -->
-            @if($viewMode === 'list')
-                <div class="flex gap-2">
-                    <button 
-                        wire:click="switchToListMode"
-                        class="px-4 py-2 rounded-lg transition-colors bg-blue-600 text-white"
-                    >
-                        List View
-                    </button>
-                </div>
-            @endif
         </div>
     </div>
 
@@ -111,13 +99,13 @@
                                     type="text"
                                     wire:model.live="search"
                                     placeholder="Search mine areas..."
-                                    class="mine-area-search-input"
+                                    class="mine-area-search-input text-gray-900"
                                 >
                             </div>
                             <div>
                                 <select 
                                     wire:model.live="statusFilter"
-                                    class="mine-area-search-input"
+                                    class="mine-area-search-input animated input-animate text-gray-900"
                                 >
                                     <option value="">All Statuses</option>
                                     <option value="active">Active</option>
@@ -302,7 +290,7 @@
                                 type="text"
                                 wire:model="name"
                                 placeholder="Mine area name"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                             @error('name') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
@@ -313,7 +301,7 @@
                                 wire:model="description"
                                 placeholder="Area description"
                                 rows="2"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             ></textarea>
                         </div>
 
@@ -323,7 +311,7 @@
                                 type="text"
                                 wire:model="location"
                                 placeholder="Location details"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                         </div>
 
@@ -331,7 +319,7 @@
                             <label class="block text-sm font-medium text-gray-300 mb-1">Status *</label>
                             <select 
                                 wire:model="status"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
@@ -345,7 +333,7 @@
                                 type="text"
                                 wire:model="manager_name"
                                 placeholder="Manager name"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                         </div>
 
@@ -403,7 +391,7 @@
                                 type="text"
                                 wire:model="name"
                                 placeholder="Enter mine area name"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                             @error('name') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
                         </div>
@@ -414,7 +402,7 @@
                             </label>
                             <select 
                                 wire:model="status"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
@@ -430,7 +418,7 @@
                             wire:model="description"
                             placeholder="Describe the mine area"
                             rows="3"
-                            class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                         ></textarea>
                         @error('description') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
                     </div>
@@ -442,7 +430,7 @@
                                 type="text"
                                 wire:model="location"
                                 placeholder="e.g., North Pit, South Zone"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                             @error('location') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
                         </div>
@@ -454,7 +442,7 @@
                                 step="0.01"
                                 wire:model.live="area_size_hectares"
                                 placeholder="0.00"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                             @error('area_size_hectares') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
                         </div>
@@ -467,7 +455,7 @@
                                 type="text"
                                 wire:model="manager_name"
                                 placeholder="Mining operations manager"
-                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                             @error('manager_name') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
                         </div>

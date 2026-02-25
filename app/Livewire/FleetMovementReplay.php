@@ -8,32 +8,33 @@ use Carbon\Carbon;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FleetMovementReplay extends Component
 {
-    public $selectedMachine = null;
+    public ?\App\Models\Machine $selectedMachine = null;
     public array $activityFeed = [];
     public array $machineActivities = [];
     public bool $showActivities = false;
     public bool $isLoading = false;
-    public $startDate = '';
-    public $endDate = '';
-    public $startTime = '00:00';
-    public $endTime = '23:59';
+    public string $startDate = '';
+    public string $endDate = '';
+    public string $startTime = '00:00';
+    public string $endTime = '23:59';
     
     // Playback controls
-    public $isPlaying = false;
-    public $playbackSpeed = 1.0;
-    public $currentPosition = 0;
-    public $totalPositions = 0;
-    public $autoReplay = false;
-    public $showTrail = true;
-    public $smoothPan = true;
+    public bool $isPlaying = false;
+    public float $playbackSpeed = 1.0;
+    public int $currentPosition = 0;
+    public int $totalPositions = 0;
+    public bool $autoReplay = false;
+    public bool $showTrail = true;
+    public bool $smoothPan = true;
     
     // Map settings
-    public $centerLat = -26.2041;
-    public $centerLng = 28.0473;
-    public $zoomLevel = 10;
+    public float $centerLat = -26.2041;
+    public float $centerLng = 28.0473;
+    public int $zoomLevel = 10;
     
     protected $listeners = [
         'playback-stopped' => 'handlePlaybackStopped',
@@ -127,7 +128,7 @@ class FleetMovementReplay extends Component
         $selectedMachineDetails = null;
         
         if ($this->selectedMachine) {
-            $selectedMachineDetails = Machine::find($this->selectedMachine);
+            $selectedMachineDetails = Machine::where('team_id', $team->id)->find($this->selectedMachine);
             $start = Carbon::parse($this->startDate . ' ' . $this->startTime);
             $end = Carbon::parse($this->endDate . ' ' . $this->endTime);
             
@@ -234,7 +235,7 @@ class FleetMovementReplay extends Component
                             ];
                         }
                     } catch (\Exception $e) {
-                        \Log::warning('Failed to auto-calculate route for replay', [
+                        Log::warning('Failed to auto-calculate route for replay', [
                             'machine_id' => $this->selectedMachine,
                             'error' => $e->getMessage(),
                         ]);
@@ -377,7 +378,7 @@ class FleetMovementReplay extends Component
         }
         
         $team = Auth::user()->currentTeam;
-        $machine = Machine::find($this->selectedMachine);
+        $machine = Machine::where('team_id', $team->id)->find($this->selectedMachine);
         
         if (!$machine) {
             session()->flash('error', 'Machine not found');

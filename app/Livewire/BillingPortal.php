@@ -12,10 +12,10 @@ use Livewire\Component;
 
 class BillingPortal extends Component
 {
-    public $showConfirmModal = false;
+    public bool $showConfirmModal = false;
     // User-selected machine counts for new subscription
-    public $selectedAdtCount = 0;
-    public $selectedBigMachineCount = 0;
+    public int $selectedAdtCount = 0;
+    public int $selectedBigMachineCount = 0;
 
     public function updatedSelectedAdtCount()
     {
@@ -36,29 +36,29 @@ class BillingPortal extends Component
     {
         return $this->userSelectedMonthlyTotal * 12 * 0.9;
     }
-    public $currentSubscription = null;
-    public $currentPlan = null;
-    public $availablePlans = [];
-    public $selectedPlanId = null;
-    public $selectedBillingCycle = 'monthly';
-    public $showPlanSelector = false;
+    public mixed $currentSubscription = null;
+    public mixed $currentPlan = null;
+    public array $availablePlans = [];
+    public ?int $selectedPlanId = null;
+    public string $selectedBillingCycle = 'monthly';
+    public bool $showPlanSelector = false;
     
     // Stats
-    public $totalPaid = 0;
-    public $nextBillingDate = null;
-    public $trialDaysRemaining = null;
+    public float $totalPaid = 0;
+    public ?string $nextBillingDate = null;
+    public ?int $trialDaysRemaining = null;
     
         // Usage-based pricing
-        public $adtCount = 0;
-        public $bigMachineCount = 0;
-        public $monthlyPrice = 0;
-        public $yearlyPrice = 0;
-        public $ADT_PRICE = 1500; // R1,500 per ADT
-        public $BIG_MACHINE_PRICE = 2500; // R2,500 per bigger machine
+        public int $adtCount = 0;
+        public int $bigMachineCount = 0;
+        public float $monthlyPrice = 0;
+        public float $yearlyPrice = 0;
+        public int $ADT_PRICE = 1500; // R1,500 per ADT
+        public int $BIG_MACHINE_PRICE = 2500; // R2,500 per bigger machine
     
     // Recent activity
-    public $recentPayments = [];
-    public $recentInvoices = [];
+    public array $recentPayments = [];
+    public array $recentInvoices = [];
     
     public function mount()
     {

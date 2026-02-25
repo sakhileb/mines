@@ -10,27 +10,28 @@ use App\Models\MaintenanceAlert;
 use App\Models\Machine;
 use App\Services\AI\MaintenancePredictorAgent;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class MaintenanceDashboard extends Component
 {
-    public $selectedPeriod = 'month';
-    public $showCriticalOnly = false;
+    public string $selectedPeriod = 'month';
+    public bool $showCriticalOnly = false;
     
     // Modal state
-    public $showBookingModal = false;
-    public $editingScheduleId = null;
+    public bool $showBookingModal = false;
+    public ?int $editingScheduleId = null;
     
     // Form fields
-    public $machine_id = '';
-    public $maintenance_type = 'preventive';
-    public $title = '';
-    public $description = '';
-    public $scheduled_date = '';
-    public $estimated_duration_hours = 0;
-    public $estimated_cost = 0;
-    public $priority = 'medium';
-    public $required_parts = '';
-    public $technician_notes = '';
+    public string $machine_id = '';
+    public string $maintenance_type = 'preventive';
+    public string $title = '';
+    public string $description = '';
+    public string $scheduled_date = '';
+    public int $estimated_duration_hours = 0;
+    public int $estimated_cost = 0;
+    public string $priority = 'medium';
+    public string $required_parts = '';
+    public string $technician_notes = '';
     
     public function openBookingModal()
     {
@@ -83,7 +84,7 @@ class MaintenanceDashboard extends Component
             ->first();
             
         if (!$machine) {
-            $this->dispatch('alert', message: 'Invalid machine selected', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Invalid machine selected', 'type' => 'error']);
             return;
         }
         
@@ -105,29 +106,29 @@ class MaintenanceDashboard extends Component
                 'parts_used' => $this->required_parts ? ['notes' => strip_tags($this->required_parts)] : null,
             ]);
             
-            \Log::info('Maintenance scheduled', [
+            Log::info('Maintenance scheduled', [
                 'user_id' => $user->id,
                 'machine_id' => $this->machine_id,
                 'type' => $this->maintenance_type,
             ]);
             
-            $this->dispatch('alert', message: 'Maintenance scheduled successfully', type: 'success');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Maintenance scheduled successfully', 'type' => 'success']);
             $this->closeBookingModal();
             
         } catch (\Exception $e) {
-            \Log::error('Failed to schedule maintenance', [
+            Log::error('Failed to schedule maintenance', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
             
-            $this->dispatch('alert', message: 'Failed to schedule maintenance', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Failed to schedule maintenance', 'type' => 'error']);
         }
     }
     
     public function completeScheduledMaintenance($recordId)
     {
         if (!is_numeric($recordId)) {
-            $this->dispatch('alert', message: 'Invalid record ID', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Invalid record ID', 'type' => 'error']);
             return;
         }
         
@@ -135,7 +136,7 @@ class MaintenanceDashboard extends Component
             ->find($recordId);
         
         if (!$record) {
-            $this->dispatch('alert', message: 'Record not found or access denied', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Record not found or access denied', 'type' => 'error']);
             return;
         }
         
@@ -146,26 +147,26 @@ class MaintenanceDashboard extends Component
                 'completed_by' => auth()->id(),
             ]);
             
-            \Log::info('Maintenance completed', [
+            Log::info('Maintenance completed', [
                 'user_id' => auth()->id(),
                 'record_id' => $recordId,
             ]);
             
-            $this->dispatch('alert', message: 'Maintenance marked as completed', type: 'success');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Maintenance marked as completed', 'type' => 'success']);
         } catch (\Exception $e) {
-            \Log::error('Failed to complete maintenance', [
+            Log::error('Failed to complete maintenance', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);
             
-            $this->dispatch('alert', message: 'Failed to update maintenance status', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Failed to update maintenance status', 'type' => 'error']);
         }
     }
     
     public function cancelScheduledMaintenance($recordId)
     {
         if (!is_numeric($recordId)) {
-            $this->dispatch('alert', message: 'Invalid record ID', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Invalid record ID', 'type' => 'error']);
             return;
         }
         
@@ -173,26 +174,26 @@ class MaintenanceDashboard extends Component
             ->find($recordId);
         
         if (!$record) {
-            $this->dispatch('alert', message: 'Record not found or access denied', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Record not found or access denied', 'type' => 'error']);
             return;
         }
         
         try {
             $record->update(['status' => 'cancelled']);
             
-            \Log::info('Maintenance cancelled', [
+            Log::info('Maintenance cancelled', [
                 'user_id' => auth()->id(),
                 'record_id' => $recordId,
             ]);
             
-            $this->dispatch('alert', message: 'Maintenance cancelled', type: 'info');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Maintenance cancelled', 'type' => 'info']);
         } catch (\Exception $e) {
-            \Log::error('Failed to cancel maintenance', [
+            Log::error('Failed to cancel maintenance', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);
             
-            $this->dispatch('alert', message: 'Failed to cancel maintenance', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['message' => 'Failed to cancel maintenance', 'type' => 'error']);
         }
     }
     
@@ -292,6 +293,7 @@ class MaintenanceDashboard extends Component
         
         // Check for overdue scheduled maintenance causing delays
         $overdueMaintenance = MaintenanceRecord::where('machine_id', $machine->id)
+            ->where('team_id', $machine->team_id)
             ->where('status', 'scheduled')
             ->where('scheduled_date', '<', now()->subHours(2))
             ->first();

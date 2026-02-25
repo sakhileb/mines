@@ -13,6 +13,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Represents system alerts triggered by rules
  * Can be about machines, maintenance, fuel, or custom conditions
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int|null $machine_id
+ * @property int|null $mine_area_id
+ * @property string $type
+ * @property string $title
+ * @property string|null $description
+ * @property string $priority
+ * @property string $status
+ * @property \Carbon\Carbon $triggered_at
+ * @property \Carbon\Carbon|null $acknowledged_at
+ * @property \Carbon\Carbon|null $resolved_at
+ * @property int|null $acknowledged_by
+ * @property int|null $resolved_by
+ * @property array|null $metadata
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Alert where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Alert whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Alert orderBy(string $column, string $direction = 'asc')
+ * @method static Alert|null find(mixed $id, array $columns = ['*'])
+ * @method static Alert findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Alert extends Model
 {

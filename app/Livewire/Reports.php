@@ -3,21 +3,31 @@
 namespace App\Livewire;
 
 use App\Models\Report;
+use App\Models\MineArea;
+use App\Models\Geofence;
+use App\Models\Machine;
 use Livewire\Component;
+use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Reports extends Component
 {
+    use BrowserEventBridge;
     use WithPagination;
 
-    public $search = '';
-    public $sortBy = 'created_at';
-    public $sortDirection = 'desc';
-    public $selectedType = 'all';
-    public $selectedStatus = 'all';
-    public $showDeleteConfirm = false;
-    public $deleteReportId = null;
+    public string $search = '';
+    public string $sortBy = 'created_at';
+    public string $sortDirection = 'desc';
+    public string $selectedType = 'all';
+    public string $selectedStatus = 'all';
+    public string $selectedMineAreaId = '';
+    public string $selectedGeofenceId = '';
+    public string $selectedMachineId = '';
+    public ?\Illuminate\Support\Collection $machinesList = null;
+    public bool $showDeleteConfirm = false;
+    public ?int $deleteReportId = null;
 
     protected $reportTypes = [
         'production' => 'Production Summary',
@@ -32,6 +42,9 @@ class Reports extends Component
     {
         $this->sortBy = 'created_at';
         $this->sortDirection = 'desc';
+        $this->selectedMineAreaId = '';
+        $this->selectedGeofenceId = '';
+        $this->selectedMachineId = '';
     }
 
     public function getReports()
@@ -48,6 +61,15 @@ class Reports extends Component
             ->when($searchTerm, function ($query) use ($searchTerm) {
                 $query->where('title', 'like', '%' . $searchTerm . '%')
                     ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            })
+            ->when($this->selectedMineAreaId, function ($query) {
+                $query->where('filters->mine_area_id', $this->selectedMineAreaId);
+            })
+            ->when($this->selectedGeofenceId, function ($query) {
+                $query->where('filters->geofence_id', $this->selectedGeofenceId);
+            })
+            ->when($this->selectedMachineId, function ($query) {
+                $query->where('filters->machine_id', $this->selectedMachineId);
             })
             ->when($this->selectedType !== 'all', function ($query) {
                 $query->where('type', $this->selectedType);
@@ -73,7 +95,7 @@ class Reports extends Component
     {
         // Validate report ID
         if (!is_numeric($reportId)) {
-            $this->dispatch('notify', type: 'error', message: 'Invalid report ID');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Invalid report ID']);
             return;
         }
         
@@ -81,7 +103,7 @@ class Reports extends Component
         $report = Report::where('team_id', $team->id)->find($reportId);
 
         if (!$report) {
-            $this->dispatch('notify', type: 'error', message: 'Report not found or access denied');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report not found or access denied']);
             $this->showDeleteConfirm = false;
             return;
         }
@@ -94,21 +116,21 @@ class Reports extends Component
             
             $report->delete();
             
-            \Log::info('User deleted report', [
+            Log::info('User deleted report', [
                 'user_id' => Auth::id(),
                 'report_id' => $reportId,
                 'report_type' => $report->type,
             ]);
             
-            $this->dispatch('notify', type: 'success', message: 'Report deleted successfully');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Report deleted successfully']);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete report', [
+            Log::error('Failed to delete report', [
                 'user_id' => Auth::id(),
                 'report_id' => $reportId,
                 'error' => $e->getMessage(),
             ]);
             
-            $this->dispatch('notify', type: 'error', message: 'Failed to delete report');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to delete report']);
         }
 
         $this->showDeleteConfirm = false;
@@ -131,7 +153,7 @@ class Reports extends Component
     {
         // Validate report ID
         if (!is_numeric($reportId)) {
-            $this->dispatch('notify', type: 'error', message: 'Invalid report ID');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Invalid report ID']);
             return;
         }
         
@@ -139,19 +161,19 @@ class Reports extends Component
         $report = Report::where('team_id', $team->id)->find($reportId);
 
         if (!$report) {
-            $this->dispatch('notify', type: 'error', message: 'Report not found or access denied');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report not found or access denied']);
             return;
         }
         
         if ($report->status !== 'completed') {
-            $this->dispatch('notify', type: 'warning', message: 'Report is not ready for download');
+            $this->dispatchBrowserEvent('notify', ['type' => 'warning', 'message' => 'Report is not ready for download']);
             return;
         }
         
         // Prevent path traversal attacks
         if ($report->file_path && !str_contains($report->file_path, '..')) {
             if (\Storage::exists($report->file_path)) {
-                \Log::info('User downloaded report', [
+                Log::info('User downloaded report', [
                     'user_id' => Auth::id(),
                     'report_id' => $reportId,
                 ]);
@@ -160,14 +182,23 @@ class Reports extends Component
             }
         }
         
-        $this->dispatch('notify', type: 'error', message: 'Report file not found');
+        $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report file not found']);
     }
 
     public function render()
     {
+        $team = Auth::user()->currentTeam;
+
+        $mineAreas = $team ? MineArea::where('team_id', $team->id)->get() : collect();
+        $geofences = $team ? Geofence::where('team_id', $team->id)->get() : collect();
+        $this->machinesList = $team ? Machine::where('team_id', $team->id)->select('id','name')->get() : collect();
+
         return view('livewire.reports', [
             'reports' => $this->getReports(),
             'reportTypes' => $this->reportTypes,
+            'mineAreas' => $mineAreas,
+            'geofences' => $geofences,
+            'machinesList' => $this->machinesList,
         ]);
     }
 }

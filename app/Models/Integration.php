@@ -13,6 +13,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Represents a connection to a manufacturer API (Volvo, CAT, Komatsu, Bell, C-track)
  * Stores credentials and configuration for syncing data
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property string $provider
+ * @property string $name
+ * @property string|null $api_key
+ * @property string|null $api_secret
+ * @property array|null $credentials
+ * @property string|null $webhook_url
+ * @property string|null $webhook_secret
+ * @property string $status
+ * @property \Carbon\Carbon|null $last_sync_at
+ * @property string|null $last_sync_status
+ * @property string|null $last_error
+ * @property int $machines_count
+ * @property array|null $config
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
  */
 class Integration extends Model
 {

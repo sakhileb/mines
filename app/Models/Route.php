@@ -13,6 +13,36 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Represents a planned route for a machine from point A to point B
  * Includes waypoints, distance, fuel consumption, and time estimates
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int|null $machine_id
+ * @property int|null $mine_area_id
+ * @property string $name
+ * @property string|null $description
+ * @property float $start_latitude
+ * @property float $start_longitude
+ * @property float $end_latitude
+ * @property float $end_longitude
+ * @property float $total_distance
+ * @property int $estimated_time
+ * @property float $estimated_fuel
+ * @property string|null $route_type
+ * @property int|null $speed_limit
+ * @property string $status
+ * @property array|null $metadata
+ * @property array|null $route_geometry
+ * @property float $fuel_savings
+ * @property int $time_savings
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Route where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route whereIn(string $column, array<string|int> $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route orderBy(string $column, string $direction = 'asc')
+ * @method static Route|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static Route findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,Route> all(array<string> $columns = ['*'])
  */
 class Route extends Model
 {
@@ -126,7 +156,7 @@ class Route extends Model
     /**
      * Calculate distance between two coordinates using Haversine formula
      */
-    protected function calculateDistance($lat1, $lon1, $lat2, $lon2): float
+    protected function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
         $earthRadius = 6371; // km
 
@@ -145,7 +175,7 @@ class Route extends Model
     /**
      * Scope query to active routes only
      */
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('status', 'active');
     }
@@ -153,7 +183,7 @@ class Route extends Model
     /**
      * Scope query to draft routes only
      */
-    public function scopeDraft($query)
+    public function scopeDraft(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('status', 'draft');
     }

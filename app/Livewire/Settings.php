@@ -4,12 +4,14 @@ namespace App\Livewire;
 
 use App\Models\User;
 use Livewire\Component;
+use App\Traits\BrowserEventBridge;
 use Livewire\Attributes\Validate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Settings extends Component
 {
+    use BrowserEventBridge;
     public string $activeTab = 'general';
 
     // General Settings
@@ -92,7 +94,7 @@ class Settings extends Component
             'currency' => $this->currency,
         ]);
 
-        $this->dispatch('notify', title: 'Success', description: 'General settings updated', type: 'success');
+        $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'General settings updated']);
     }
 
     // ==================== USERS & ROLES ====================
@@ -137,7 +139,7 @@ class Settings extends Component
             // Check if user already invited/member
             $existingUser = User::where('email', $this->inviteEmail)->first();
             if ($existingUser && $team->users->contains($existingUser->id)) {
-                $this->dispatch('notify', title: 'Error', description: 'User is already a team member', type: 'error');
+                $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'User is already a team member']);
                 return;
             }
 
@@ -160,13 +162,13 @@ class Settings extends Component
                 $existingUser->roles()->attach($role->id);
             }
 
-            $this->dispatch('notify', title: 'Success', description: "Invitation sent to {$this->inviteEmail}", type: 'success');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => "Invitation sent to {$this->inviteEmail}"]);
             $this->showInviteForm = false;
             $this->inviteEmail = '';
             $this->selectedRole = 'operator';
             $this->loadTeamMembers();
         } catch (\Exception $e) {
-            $this->dispatch('notify', title: 'Error', description: 'Failed to invite user: ' . $e->getMessage(), type: 'error');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to invite user: ' . $e->getMessage()]);
         }
     }
 
@@ -178,23 +180,31 @@ class Settings extends Component
 
             // Prevent removing self
             if ($userId === $currentUser->id) {
-                $this->dispatch('notify', title: 'Error', description: 'Cannot remove yourself from the team', type: 'error');
+                $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Cannot remove yourself from the team']);
                 return;
             }
 
             $team->users()->detach($userId);
-            $this->dispatch('notify', title: 'Success', description: 'User removed from team', type: 'success');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'User removed from team']);
             $this->loadTeamMembers();
         } catch (\Exception $e) {
-            $this->dispatch('notify', title: 'Error', description: 'Failed to remove user', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to remove user']);
         }
     }
 
     public function updateUserRole($userId, $newRole)
     {
         try {
-            $user = User::findOrFail($userId);
-            
+            $team = auth()->user()->currentTeam;
+
+            // Ensure the user is a member of this team
+            if (! $team->users()->where('id', $userId)->exists()) {
+                $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'User is not a member of this team']);
+                return;
+            }
+
+            $team = auth()->user()->currentTeam;
+            $user = $team->users()->findOrFail($userId);
             // Remove old roles
             $user->roles()->detach();
             
@@ -204,10 +214,10 @@ class Settings extends Component
                 $user->roles()->attach($role->id);
             }
 
-            $this->dispatch('notify', title: 'Success', description: 'User role updated', type: 'success');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'User role updated']);
             $this->loadTeamMembers();
         } catch (\Exception $e) {
-            $this->dispatch('notify', title: 'Error', description: 'Failed to update role', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to update role']);
         }
     }
 
@@ -230,9 +240,9 @@ class Settings extends Component
             // Store preferences (would use a proper preferences table in production)
             // For now, just dispatch success
             
-            $this->dispatch('notify', title: 'Success', description: 'Notification settings saved', type: 'success');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Notification settings saved']);
         } catch (\Exception $e) {
-            $this->dispatch('notify', title: 'Error', description: 'Failed to save settings', type: 'error');
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to save settings']);
         }
     }
 

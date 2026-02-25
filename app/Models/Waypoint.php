@@ -11,6 +11,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Represents a point along a route
  * Waypoints are ordered and define the path a machine should follow
+ *
+ * @property int $id
+ * @property int $route_id
+ * @property int $sequence_order
+ * @property float $latitude
+ * @property float $longitude
+ * @property string $waypoint_type
+ * @property string|null $name
+ * @property string|null $notes
+ * @property int|null $estimated_time_from_previous
+ * @property float|null $distance_from_previous
+ * @property string $icon
+ * @property string $color
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Waypoint where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Waypoint whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Waypoint orderBy(string $column, string $direction = 'asc')
+ * @method static Waypoint|null find(mixed $id, array $columns = ['*'])
+ * @method static Waypoint findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Waypoint extends Model
 {

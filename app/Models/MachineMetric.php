@@ -12,6 +12,43 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Stores real-time metrics from machines
  * Includes engine data, fuel, temperature, and other sensor readings
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $machine_id
+ * @property float|null $latitude
+ * @property float|null $longitude
+ * @property float|null $speed
+ * @property float|null $heading
+ * @property float|null $altitude
+ * @property float|null $engine_rpm
+ * @property float|null $engine_temperature
+ * @property float|null $coolant_temperature
+ * @property float|null $oil_pressure
+ * @property float|null $fuel_level
+ * @property float|null $fuel_consumption_rate
+ * @property float|null $throttle_position
+ * @property float|null $battery_voltage
+ * @property float|null $total_hours
+ * @property float|null $idle_hours
+ * @property float|null $operating_hours
+ * @property float|null $load_weight
+ * @property float|null $payload_capacity_used
+ * @property float|null $tire_pressure_front_left
+ * @property float|null $tire_pressure_front_right
+ * @property float|null $tire_pressure_rear_left
+ * @property float|null $tire_pressure_rear_right
+ * @property array|null $raw_data
+ * @property \Carbon\Carbon $recorded_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|MachineMetric where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|MachineMetric whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MachineMetric orderBy(string $column, string $direction = 'asc')
+ * @method static MachineMetric|null find(mixed $id, array $columns = ['*'])
+ * @method static MachineMetric findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class MachineMetric extends Model
 {

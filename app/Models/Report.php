@@ -7,12 +7,35 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Mail\ReportReadyMail;
 
 /**
  * Report Model
  * 
  * Stores generated reports with configuration and file storage
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property string $title
+ * @property string $type
+ * @property string $status
+ * @property string|null $file_path
+ * @property int|null $file_size
+ * @property string|null $format
+ * @property array|null $filters
+ * @property int|string|null $generated_by
+ * @property \Carbon\Carbon|null $generated_at
+ * @property \Carbon\Carbon|null $expires_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Report where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Report whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Report orderBy(string $column, string $direction = 'asc')
+ * @method static Report|null find(mixed $id, array $columns = ['*'])
+ * @method static Report findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Report extends Model
 {
@@ -95,7 +118,7 @@ class Report extends Model
                 }
             }
         } catch (\Exception $e) {
-            \Log::error('Failed to send report-ready emails', ['report_id' => $this->id, 'error' => $e->getMessage()]);
+            Log::error('Failed to send report-ready emails', ['report_id' => $this->id, 'error' => $e->getMessage()]);
         }
 
         return $this;

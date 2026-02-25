@@ -11,6 +11,32 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Represents a billing invoice
  * Tracks line items and payment status
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int|null $subscription_id
+ * @property int|null $payment_id
+ * @property string $invoice_number
+ * @property string|null $stripe_invoice_id
+ * @property float $subtotal
+ * @property float $tax
+ * @property float $total
+ * @property string $currency
+ * @property string $status
+ * @property \Carbon\Carbon $issued_at
+ * @property \Carbon\Carbon|null $due_at
+ * @property \Carbon\Carbon|null $paid_at
+ * @property string|null $pdf_url
+ * @property array|null $line_items
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Invoice where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Invoice whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Invoice orderBy(string $column, string $direction = 'asc')
+ * @method static Invoice|null find(mixed $id, array $columns = ['*'])
+ * @method static Invoice findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Invoice extends Model
 {

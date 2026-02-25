@@ -6,23 +6,26 @@ use App\Models\Alert;
 use App\Models\Geofence;
 use App\Traits\RealtimeUpdates;
 use Livewire\Component;
+use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class Alerts extends Component
 {
-    use WithPagination, RealtimeUpdates;
+    use WithPagination, RealtimeUpdates, BrowserEventBridge;
 
-    public $search = '';
-    public $sortBy = 'created_at';
-    public $sortDirection = 'desc';
-    public $selectedPriority = 'all';
-    public $selectedStatus = 'all';
-    public $selectedType = 'all';
-    public $showDetailsModal = false;
-    public $selectedAlertId = null;
-    public $pendingDismissAlertId = null;
-    public $showDismissConfirm = false;
+    public string $search = '';
+    public string $sortBy = 'created_at';
+    public string $sortDirection = 'desc';
+    public string $selectedPriority = 'all';
+    public string $selectedStatus = 'all';
+    public string $selectedType = 'all';
+    public bool $showDetailsModal = false;
+    public ?int $selectedAlertId = null;
+    public ?int $pendingDismissAlertId = null;
+    public bool $showDismissConfirm = false;
+    // Track when a dismissed-unresolved alert was created so UI can render specially
+    public array $recentlyDismissedUnresolved = [];
 
     protected $alertPriorities = [
         'critical' => 'Critical',
@@ -93,7 +96,7 @@ class Alerts extends Component
                 'acknowledged_by' => Auth::id(),
                 'acknowledged_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert acknowledged');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert acknowledged']);
         }
     }
 
@@ -108,7 +111,7 @@ class Alerts extends Component
                 'resolved_by' => Auth::id(),
                 'resolved_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert resolved');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert resolved']);
 
             // If the resolved alert is currently selected in the details modal, close it
             if ($this->selectedAlertId === $alert->id) {
@@ -141,7 +144,7 @@ class Alerts extends Component
                 'dismissed_by' => Auth::id(),
                 'dismissed_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert dismissed');
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert dismissed']);
         }
     }
 
@@ -155,20 +158,29 @@ class Alerts extends Component
             $this->pendingDismissAlertId = null;
             return;
         }
-
-        if ($choice === 'dismiss') {
+        // If the alert is already resolved, allow normal dismissal which will remove it from active workflows
+        if ($alert->status === 'resolved') {
             $alert->update([
                 'status' => 'dismissed',
                 'dismissed_by' => Auth::id(),
                 'dismissed_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert dismissed');
-        } else {
-            // Keep the alert visible but mark as needing attention so it stands out
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert dismissed']);
+
+            $this->showDismissConfirm = false;
+            $this->pendingDismissAlertId = null;
+            return;
+        }
+
+        // For unresolved alerts: if the user confirms the dismiss warning, mark it as dismissed_unresolved
+        if ($choice === 'confirm') {
             $alert->update([
-                'status' => 'attention',
+                'status' => 'dismissed_unresolved',
+                'dismissed_by' => Auth::id(),
+                'dismissed_at' => now(),
             ]);
-            $this->dispatch('notify', message: 'Alert marked for attention');
+            $this->dispatchBrowserEvent('notify', ['type' => 'warning', 'message' => 'Alert marked Dismissed - Unresolved']);
+            $this->recentlyDismissedUnresolved[] = $alert->id;
         }
 
         $this->showDismissConfirm = false;
@@ -196,14 +208,19 @@ class Alerts extends Component
     public function getSelectedAlert()
     {
         if ($this->selectedAlertId) {
-            $alert = Alert::with(['machine', 'mineArea'])->find($this->selectedAlertId);
+            $team = Auth::user()->currentTeam;
+
+            // Ensure selected alert belongs to the current team to avoid cross-team access
+            $alert = Alert::where('team_id', $team->id)
+                ->with(['machine', 'mineArea'])
+                ->find($this->selectedAlertId);
 
             // If geofence id was stored in metadata, attach the geofence relation for convenience
             if ($alert && is_array($alert->metadata ?? [])) {
                 $meta = $alert->metadata;
                 $geofenceId = $meta['geofence_id'] ?? null;
                 if ($geofenceId) {
-                    $geofence = Geofence::find($geofenceId);
+                    $geofence = Geofence::where('team_id', $team->id)->find($geofenceId);
                     if ($geofence) {
                         $alert->setRelation('geofence', $geofence);
                     }

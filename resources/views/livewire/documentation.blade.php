@@ -628,7 +628,7 @@
                     <h3>2. Authentication</h3>
                     <p>Include your token in the Authorization header:</p>
                     <div class="mockup-code">
-                        <pre data-prefix="$"><code>curl -H "Authorization: Bearer REDACTED_TOKEN" \</code></pre>
+                        <pre data-prefix="$"><code>curl -H "Authorization: Bearer REPLACE_WITH_YOUR_API_TOKEN" \</code></pre>
                         <pre data-prefix=""><code>     -H "Accept: application/json" \</code></pre>
                         <pre data-prefix=""><code>     https://api.mines.com/api/machines</code></pre>
                     </div>
@@ -755,7 +755,7 @@
                     <h3>Create Machine</h3>
                     <div class="mockup-code">
                         <pre data-prefix="$"><code>curl -X POST https://api.mines.com/api/machines \</code></pre>
-                        <pre data-prefix=""><code>  -H "Authorization: Bearer REDACTED_TOKEN" \</code></pre>
+                        <pre data-prefix=""><code>  -H "Authorization: Bearer REPLACE_WITH_YOUR_API_TOKEN" \</code></pre>
                         <pre data-prefix=""><code>  -H "Content-Type: application/json" \</code></pre>
                         <pre data-prefix=""><code>  -d '{</code></pre>
                         <pre data-prefix=""><code>    "name": "Haul Truck 01",</code></pre>
@@ -767,7 +767,7 @@
                     <h3>Record Fuel Transaction</h3>
                     <div class="mockup-code">
                         <pre data-prefix="$"><code>curl -X POST https://api.mines.com/api/fuel/transactions \</code></pre>
-                        <pre data-prefix=""><code>  -H "Authorization: Bearer REDACTED_TOKEN" \</code></pre>
+                        <pre data-prefix=""><code>  -H "Authorization: Bearer REPLACE_WITH_YOUR_API_TOKEN" \</code></pre>
                         <pre data-prefix=""><code>  -H "Content-Type: application/json" \</code></pre>
                         <pre data-prefix=""><code>  -d '{</code></pre>
                         <pre data-prefix=""><code>    "fuel_tank_id": 1,</code></pre>

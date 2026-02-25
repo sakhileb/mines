@@ -43,6 +43,9 @@ class MachineStatusMonitoringJob implements ShouldQueue
         ]);
 
         try {
+            // Ensure model queries are scoped to the integration's team in queue context
+            app()->instance('current_team_id', $this->integration->team_id);
+
             // Verify integration is connected
             if ($this->integration->status !== 'connected') {
                 Log::warning('Integration not connected, skipping status monitoring', [
@@ -137,6 +140,10 @@ class MachineStatusMonitoringJob implements ShouldQueue
             ]);
 
             throw $e;
+        } finally {
+            if (app()->hasInstance('current_team_id')) {
+                app()->forgetInstance('current_team_id');
+            }
         }
     }
 
@@ -212,8 +219,11 @@ class MachineStatusMonitoringJob implements ShouldQueue
 
                 event(new MachineOffline(
                     machine: $machine,
-                    lastLocationUpdate: $machine->last_location_update,
                     reason: 'No location update for 5+ minutes',
+                    lastLocation: $machine->last_location_latitude && $machine->last_location_longitude ? [
+                        'latitude' => $machine->last_location_latitude,
+                        'longitude' => $machine->last_location_longitude,
+                    ] : null,
                 ));
 
                 Log::info('Machine marked offline due to timeout', [

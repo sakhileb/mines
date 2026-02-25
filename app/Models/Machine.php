@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Services\QueryCacheService;
 use App\Traits\HasTeamFilters;
+use Illuminate\Validation\ValidationException;
+use App\Models\MineArea;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +18,41 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * 
  * Represents a mining machine (Volvo, CAT, Komatsu, Bell truck, etc.)
  * Tracks metadata, status, and integrations with manufacturer systems
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property string $name
+ * @property string $machine_type
+ * @property string $manufacturer
+ * @property string $model
+ * @property int|null $year_of_manufacture
+ * @property string|null $registration_number
+ * @property string|null $serial_number
+ * @property string|null $manufacturer_id
+ * @property float $capacity
+ * @property float $fuel_capacity
+ * @property float $hours_meter
+ * @property string $status
+ * @property float|null $last_location_latitude
+ * @property float|null $last_location_longitude
+ * @property \Carbon\Carbon|null $last_location_update
+ * @property int|null $integration_id
+ * @property int|null $mine_area_id
+ * @property int|null $excavator_id
+ * @property \Carbon\Carbon|null $assigned_to_excavator_at
+ * @property string|null $notes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine whereIn(string $column, array<string|int> $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine orderBy(string $column, string $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine latest(string $column = 'created_at')
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine select(array<string> $columns = ['*'])
+ * @method static Machine|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static Machine findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,Machine> all(array<string> $columns = ['*'])
+ * @method static \Illuminate\Pagination\Paginator paginate(int $perPage = 15, array<string> $columns = ['*'], string $pageName = 'page', int $page = null)
  */
 class Machine extends Model
 {
@@ -164,7 +201,7 @@ class Machine extends Model
     /**
      * Assign this machine to an excavator
      */
-    public function assignToExcavator($excavatorId): void
+    public function assignToExcavator(int|string|null $excavatorId): void
     {
         $this->update([
             'excavator_id' => $excavatorId,
@@ -185,8 +222,10 @@ class Machine extends Model
 
     /**
      * Get active alerts for this machine
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function activeAlerts()
+    public function activeAlerts(): \Illuminate\Database\Eloquent\Builder
     {
         return $this->alerts()->where('status', 'active');
     }
@@ -194,7 +233,7 @@ class Machine extends Model
     /**
      * Update machine location
      */
-    public function updateLocation($latitude, $longitude)
+    public function updateLocation(float|string $latitude, float|string $longitude): void
     {
         $this->update([
             'last_location_latitude' => $latitude,
@@ -205,8 +244,10 @@ class Machine extends Model
 
     /**
      * Get latest metric
+     *
+     * @return \Illuminate\Database\Eloquent\Model|null
      */
-    public function getLatestMetric()
+    public function getLatestMetric(): ?\Illuminate\Database\Eloquent\Model
     {
         return $this->metrics()->latest('created_at')->first();
     }

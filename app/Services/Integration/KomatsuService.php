@@ -21,27 +21,17 @@ class KomatsuService extends BaseManufacturerService
     /**
      * Test connection to Komatsu KOMTRAX API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             // Test with machines endpoint
             $response = $this->makeRequest('GET', '/api/v2/machines');
-            
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Komatsu KOMTRAX API',
-                'status' => 'connected',
-                'api_system' => 'KOMTRAX',
-            ];
+            return !empty($response) && $response['success'] !== false;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-                'note' => 'Contact Komatsu representative for API access',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 
@@ -307,5 +297,105 @@ class KomatsuService extends BaseManufacturerService
         ];
 
         return $statusMap[strtolower($status)] ?? 'unknown';
+    }
+
+    /**
+     * Fetch machine details from Komatsu API
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineDetails(string $machineId): array
+    {
+        // Return location and metrics as a composite detail view
+        $location = $this->fetchLocation($machineId);
+        return [
+            'location' => $location['location'] ?? [],
+            'success' => $location['success'] ?? false,
+        ];
+    }
+
+    /**
+     * Fetch machine location
+     * 
+     * @param string $machineId
+     * @return array|null
+     */
+    public function fetchMachineLocation(string $machineId): ?array
+    {
+        try {
+            $result = $this->fetchLocation($machineId);
+            return ($result['location'] ?? null) ?? null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Fetch machine metrics
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineMetrics(string $machineId): array
+    {
+        try {
+            $result = $this->fetchMetrics($machineId);
+            return $result['metrics'] ?? [];
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fetch machine alerts
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineAlerts(string $machineId): array
+    {
+        try {
+            $result = $this->fetchAlerts($machineId);
+            return $result['alerts'] ?? [];
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fetch comprehensive machine data
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineData(string $machineId): array
+    {
+        return [
+            'details' => $this->fetchMachineDetails($machineId),
+            'location' => $this->fetchMachineLocation($machineId),
+            'metrics' => $this->fetchMachineMetrics($machineId),
+            'alerts' => $this->fetchMachineAlerts($machineId),
+        ];
+    }
+
+    /**
+     * Get the manufacturer name
+     * 
+     * @return string
+     */
+    public function getManufacturer(): string
+    {
+        return $this->manufacturer;
+    }
+
+    /**
+     * Get API error if any occurred
+     * 
+     * @return string|null
+     */
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 }

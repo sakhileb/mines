@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\URL;
 
 class MinePlanUpload extends Model
 {
@@ -37,6 +38,28 @@ class MinePlanUpload extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Build a temporary signed download URL for this mine plan.
+     *
+     * @param  \DateTimeInterface|int|null  $expires
+     * @return string
+     */
+    public function signedDownloadUrl($expires = null): string
+    {
+        $expires = $expires ?? now()->addHours(24);
+        $disk = data_get($this->metadata, 'disk', config('filesystems.default'));
+
+        return URL::temporarySignedRoute(
+            'mineplans.signed-download',
+            $expires,
+            [
+                'minePlan' => $this->id,
+                'disk' => $disk,
+                'path' => $this->file_path,
+            ]
+        );
     }
 
     public function mineArea(): BelongsTo

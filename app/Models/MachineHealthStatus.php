@@ -14,6 +14,36 @@ class MachineHealthStatus extends Model
 
     protected $table = 'machine_health_status';
 
+    /**
+     * MachineHealthStatus Model
+     *
+     * @property int $id
+     * @property int $team_id
+     * @property int $machine_id
+     * @property int $overall_health_score
+     * @property string $health_status
+     * @property array|null $component_scores
+     * @property int|null $engine_health
+     * @property int|null $transmission_health
+     * @property int|null $hydraulics_health
+     * @property int|null $electrical_health
+     * @property int|null $brakes_health
+     * @property int|null $cooling_system_health
+     * @property \Carbon\Carbon|null $last_diagnostic_scan
+     * @property array|null $active_fault_codes
+     * @property int $fault_code_count
+     * @property string|null $recommendations
+     * @property \Carbon\Carbon $created_at
+     * @property \Carbon\Carbon $updated_at
+     *
+     * @method static \Illuminate\Database\Eloquent\Builder|MachineHealthStatus where(string $column, mixed $operator = null, mixed $value = null)
+     * @method static \Illuminate\Database\Eloquent\Builder|MachineHealthStatus whereIn(string $column, array $values)
+     * @method static \Illuminate\Database\Eloquent\Builder|MachineHealthStatus orderBy(string $column, string $direction = 'asc')
+     * @method static MachineHealthStatus|null find(mixed $id, array $columns = ['*'])
+     * @method static MachineHealthStatus findOrFail(mixed $id, array $columns = ['*'])
+     * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+     */
+
     protected $fillable = [
         'team_id',
         'machine_id',

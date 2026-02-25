@@ -11,6 +11,25 @@ use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * User Model
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property \Carbon\Carbon|null $email_verified_at
+ * @property string $password
+ * @property string|null $remember_token
+ * @property int|null $current_team_id
+ * @property string|null $profile_photo_path
+ * @property bool $two_factor_confirmed
+ * @property string|null $two_factor_secret
+ * @property string|null $two_factor_recovery_codes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Team> $ownedTeams
+ */
 class User extends Authenticatable
 {
     use HasApiTokens;
@@ -81,12 +100,16 @@ class User extends Authenticatable
      */
     public function permissions()
     {
-        return $this->belongsToMany(
-            Permission::class,
-            'permission_role',
-            'role_id',
-            'permission_id'
-        )->through('roles');
+        // Return a query builder for permissions granted to this user via their roles.
+        // We join through permission_role -> roles -> role_user so callers can further
+        // scope by team or permission name.
+        return Permission::query()
+            ->select('permissions.*')
+            ->join('permission_role', 'permissions.id', '=', 'permission_role.permission_id')
+            ->join('roles', 'permission_role.role_id', '=', 'roles.id')
+            ->join('role_user', 'roles.id', '=', 'role_user.role_id')
+            ->where('role_user.user_id', $this->id)
+            ->where('roles.team_id', $this->current_team_id);
     }
 
     /**
@@ -117,8 +140,7 @@ class User extends Authenticatable
         }
 
         return $this->permissions()
-            ->where('team_id', $this->current_team_id)
-            ->where('name', $permission)
+            ->where('permissions.name', $permission)
             ->exists();
     }
 
@@ -132,8 +154,7 @@ class User extends Authenticatable
         }
 
         return $this->permissions()
-            ->where('team_id', $this->current_team_id)
-            ->whereIn('name', (array) $permissions)
+            ->whereIn('permissions.name', (array) $permissions)
             ->exists();
     }
 
@@ -147,8 +168,7 @@ class User extends Authenticatable
         }
 
         $count = $this->permissions()
-            ->where('team_id', $this->current_team_id)
-            ->whereIn('name', (array) $permissions)
+            ->whereIn('permissions.name', (array) $permissions)
             ->count();
 
         return $count === count((array) $permissions);
@@ -198,5 +218,25 @@ class User extends Authenticatable
         }
 
         return $this->roles()->detach($role->id);
+    }
+
+    /**
+     * Get the teams owned by the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Team>
+     */
+    public function ownedTeams()
+    {
+        return $this->hasMany(Team::class, 'user_id');
+    }
+
+    /**
+     * Get the current team of the user's context.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Team>
+     */
+    public function currentTeam()
+    {
+        return $this->belongsTo(Team::class, 'current_team_id');
     }
 }

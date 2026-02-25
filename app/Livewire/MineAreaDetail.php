@@ -15,6 +15,7 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class MineAreaDetail extends Component
 {
@@ -52,7 +53,7 @@ class MineAreaDetail extends Component
     public bool $showUploadModal = false;
     public string $planTitle = '';
     public string $planDescription = '';
-    public $planFile = null;
+    public ?\Illuminate\Http\UploadedFile $planFile = null;
     public string $planFileType = 'pdf';
     public string $planVersion = '1.0';
     public string $planStatus = 'draft';
@@ -150,7 +151,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeAssignModal();
-        $this->dispatch('alert', type: 'success', message: "{$machine->name} assigned to {$this->mineArea->name}");
+        $this->dispatchBrowserEvent('notify', ['message' => "{$machine->name} assigned to {$this->mineArea->name}", 'type' => 'success']);
     }
 
     public function unassignMachine(int $machineId)
@@ -164,9 +165,20 @@ class MineAreaDetail extends Component
             ->whereNull('unassigned_at')
             ->update(['unassigned_at' => now()]);
 
-        $machine->update(['mine_area_id' => null]);
+        // Try to find another active mine area to assign the machine to.
+        $otherArea = MineArea::where('team_id', $team->id)
+            ->where('status', 'active')
+            ->where('id', '!=', $this->mineArea->id)
+            ->first();
 
-        $this->dispatch('alert', type: 'success', message: "{$machine->name} unassigned from {$this->mineArea->name}");
+        if ($otherArea) {
+            $machine->update(['mine_area_id' => $otherArea->id]);
+            $this->dispatchBrowserEvent('notify', ['message' => "{$machine->name} reassigned to {$otherArea->name} (cannot leave unassigned)", 'type' => 'success']);
+        } else {
+            // No other active area exists — do not allow unassigning to null to preserve invariant
+            $this->dispatchBrowserEvent('notify', ['message' => "Cannot unassign {$machine->name}; at least one active mine area must be set. Assign to another area first.", 'type' => 'error']);
+            return;
+        }
     }
 
     // === PRODUCTION TRACKING ===
@@ -210,7 +222,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeProductionModal();
-        $this->dispatch('alert', type: 'success', message: 'Production record saved successfully');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Production record saved successfully', 'type' => 'success']);
     }
 
     public function openTargetModal()
@@ -248,7 +260,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeTargetModal();
-        $this->dispatch('alert', type: 'success', message: 'Production target created successfully');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Production target created successfully', 'type' => 'success']);
     }
 
     // === MINE PLAN UPLOADS ===
@@ -280,56 +292,63 @@ class MineAreaDetail extends Component
         $team = Auth::user()->currentTeam;
 
         $file = $this->planFile;
-        $fileName = $file->getClientOriginalName();
-        $extension = strtolower($file->getClientOriginalExtension());
 
-        // Determine file type category
-        $fileTypeMap = [
-            'pdf' => 'pdf',
-            'dwg' => 'dwg',
-            'dxf' => 'dxf',
-            'kml' => 'kml',
-            'kmz' => 'kmz',
-            'shp' => 'shapefile',
-            'png' => 'image',
-            'jpg' => 'image',
-            'jpeg' => 'image',
-            'gif' => 'image',
-            'tif' => 'image',
-            'tiff' => 'image',
-        ];
-        $fileType = $fileTypeMap[$extension] ?? $extension;
+        try {
+            $uploader = new \App\Services\FileUploadService();
+            $result = $uploader->storeMinePlan($file, $team->id, $this->mineArea->id);
 
-        $path = $file->store("mine-plans/{$team->id}/{$this->mineArea->id}", 'public');
+            // Map extension to type
+            $extension = strtolower($file->getClientOriginalExtension());
+            $fileTypeMap = [
+                'pdf' => 'pdf',
+                'dwg' => 'dwg',
+                'dxf' => 'dxf',
+                'kml' => 'kml',
+                'kmz' => 'kmz',
+                'shp' => 'shapefile',
+                'png' => 'image',
+                'jpg' => 'image',
+                'jpeg' => 'image',
+                'gif' => 'image',
+                'tif' => 'image',
+                'tiff' => 'image',
+            ];
+            $fileType = $fileTypeMap[$extension] ?? $extension;
 
-        MinePlanUpload::create([
-            'team_id' => $team->id,
-            'mine_area_id' => $this->mineArea->id,
-            'uploaded_by' => Auth::id(),
-            'title' => $this->planTitle,
-            'description' => $this->planDescription ?: null,
-            'file_name' => $fileName,
-            'file_path' => $path,
-            'file_type' => $fileType,
-            'file_size' => $file->getSize(),
-            'version' => $this->planVersion,
-            'status' => $this->planStatus,
-            'effective_date' => $this->planEffectiveDate ?: null,
-        ]);
+            MinePlanUpload::create([
+                'team_id' => $team->id,
+                'mine_area_id' => $this->mineArea->id,
+                'uploaded_by' => Auth::id(),
+                'title' => $this->planTitle,
+                'description' => $this->planDescription ?: null,
+                'file_name' => $result['file_name'],
+                'file_path' => $result['path'],
+                'file_type' => $fileType,
+                'file_size' => $result['size'],
+                'version' => $this->planVersion,
+                'status' => $this->planStatus,
+                'effective_date' => $this->planEffectiveDate ?: null,
+                'metadata' => array_merge($this->mineArea->metadata ?? [], ['disk' => $result['disk']]),
+            ]);
 
-        $this->closeUploadModal();
-        $this->dispatch('alert', type: 'success', message: 'Mine plan uploaded successfully');
+            $this->closeUploadModal();
+            $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan uploaded successfully', 'type' => 'success']);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to upload mine plan', ['error' => $e->getMessage()]);
+            $this->dispatchBrowserEvent('notify', ['message' => 'Failed to upload mine plan: ' . $e->getMessage(), 'type' => 'error']);
+        }
     }
 
     public function deleteMinePlan(int $planId)
     {
         $team = Auth::user()->currentTeam;
         $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
-
-        Storage::disk('public')->delete($plan->file_path);
+        $disk = data_get($plan->metadata, 'disk', 'public');
+        Storage::disk($disk)->delete($plan->file_path);
         $plan->delete();
 
-        $this->dispatch('alert', type: 'success', message: 'Mine plan deleted');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan deleted', 'type' => 'success']);
     }
 
     public function activateMinePlan(int $planId)
@@ -338,7 +357,7 @@ class MineAreaDetail extends Component
         $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
         $plan->update(['status' => 'active']);
 
-        $this->dispatch('alert', type: 'success', message: 'Mine plan activated');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan activated', 'type' => 'success']);
     }
 
     public function archiveMinePlan(int $planId)
@@ -347,7 +366,7 @@ class MineAreaDetail extends Component
         $plan = MinePlanUpload::where('team_id', $team->id)->findOrFail($planId);
         $plan->update(['status' => 'archived']);
 
-        $this->dispatch('alert', type: 'success', message: 'Mine plan archived');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Mine plan archived', 'type' => 'success']);
     }
 
     // === AREA-SPECIFIC ALERTS ===
@@ -380,7 +399,8 @@ class MineAreaDetail extends Component
             'mine_area_id' => $this->mineArea->id,
             'type' => $this->alertType,
             'title' => $this->alertTitle,
-            'description' => $this->alertDescription ?: null,
+            // Ensure description is not null (DB requires NOT NULL)
+            'description' => $this->alertDescription ?: '',
             'priority' => $this->alertPriority,
             'status' => 'active',
             'triggered_at' => now(),
@@ -391,7 +411,7 @@ class MineAreaDetail extends Component
         ]);
 
         $this->closeAlertModal();
-        $this->dispatch('alert', type: 'success', message: 'Area alert created');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Area alert created', 'type' => 'success']);
     }
 
     public function acknowledgeAlert(int $alertId)
@@ -400,7 +420,7 @@ class MineAreaDetail extends Component
         $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
         $alert->acknowledge(Auth::id());
 
-        $this->dispatch('alert', type: 'success', message: 'Alert acknowledged');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Alert acknowledged', 'type' => 'success']);
     }
 
     public function resolveAlert(int $alertId)
@@ -409,7 +429,7 @@ class MineAreaDetail extends Component
         $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
         $alert->resolve(Auth::id());
 
-        $this->dispatch('alert', type: 'success', message: 'Alert resolved');
+        $this->dispatchBrowserEvent('notify', ['message' => 'Alert resolved', 'type' => 'success']);
     }
 
     // === GEOFENCE INTEGRATION ===
@@ -436,7 +456,7 @@ class MineAreaDetail extends Component
         $geofence->update(['mine_area_id' => $this->mineArea->id]);
 
         $this->closeGeofenceModal();
-        $this->dispatch('alert', type: 'success', message: "{$geofence->name} linked to {$this->mineArea->name}");
+        $this->dispatchBrowserEvent('notify', ['message' => "{$geofence->name} linked to {$this->mineArea->name}", 'type' => 'success']);
     }
 
     public function unlinkGeofence(int $geofenceId)
@@ -445,7 +465,7 @@ class MineAreaDetail extends Component
         $geofence = Geofence::where('team_id', $team->id)->findOrFail($geofenceId);
         $geofence->update(['mine_area_id' => null]);
 
-        $this->dispatch('alert', type: 'success', message: "{$geofence->name} unlinked from area");
+        $this->dispatchBrowserEvent('notify', ['message' => "{$geofence->name} unlinked from area", 'type' => 'success']);
     }
 
     // === RENDER ===

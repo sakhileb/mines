@@ -255,10 +255,17 @@ class RoutePlanningService
         }
         
         // Get geofence bounds
-        $minLat = min(array_column($coordinates, 'lat'));
-        $maxLat = max(array_column($coordinates, 'lat'));
-        $minLon = min(array_column($coordinates, 'lng'));
-        $maxLon = max(array_column($coordinates, 'lng'));
+        $lats = array_column($coordinates, 'lat');
+        $lngs = array_column($coordinates, 'lng');
+        
+        if ($lats === [] || $lngs === []) {
+            return false;
+        }
+        
+        $minLat = min($lats);
+        $maxLat = max($lats);
+        $minLon = min($lngs);
+        $maxLon = max($lngs);
         
         // Check if line segment passes through bounding box
         $lineMinLat = min($startLat, $endLat);

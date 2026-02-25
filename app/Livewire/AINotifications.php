@@ -8,17 +8,17 @@ use Livewire\Attributes\On;
 
 class AINotifications extends Component
 {
-    public $notifications = [];
-    public $unreadCount = 0;
-    public $showPanel = false;
+    public array $notifications = [];
+    public int $unreadCount = 0;
+    public bool $showPanel = false;
 
-    public function mount()
+    public function mount(): void
     {
         $this->loadNotifications();
     }
 
     #[On('alert-created')]
-    public function loadNotifications()
+    public function loadNotifications(): void
     {
         $team = auth()->user()->currentTeam;
         
@@ -32,16 +32,17 @@ class AINotifications extends Component
         $this->unreadCount = $this->notifications->count();
     }
 
-    public function togglePanel()
+    public function togglePanel(): void
     {
         $this->showPanel = !$this->showPanel;
     }
 
-    public function acknowledge($alertId)
+    public function acknowledge(int $alertId): void
     {
-        $alert = AIPredictiveAlert::find($alertId);
-        
-        if ($alert && $alert->team_id === auth()->user()->currentTeam->id) {
+        $team = auth()->user()->currentTeam;
+        $alert = AIPredictiveAlert::where('team_id', $team->id)->find($alertId);
+
+        if ($alert) {
             $alert->update([
                 'is_acknowledged' => true,
                 'acknowledged_at' => now(),
@@ -54,7 +55,7 @@ class AINotifications extends Component
         }
     }
 
-    public function acknowledgeAll()
+    public function acknowledgeAll(): void
     {
         $team = auth()->user()->currentTeam;
         

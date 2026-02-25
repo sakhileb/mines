@@ -57,6 +57,7 @@
                         wire:model.live="selectedPriority"
                         class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
                     >
+
                         <option value="all">All Priorities</option>
                         @foreach ($alertPriorities as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
@@ -142,14 +143,28 @@
                                     </span>
 
                                     <!-- Status Badge -->
-                                    <span class="px-2 py-1 text-xs font-semibold rounded {{ 
-                                        $alert->status === 'new' ? 'bg-green-900 text-green-300' : 
-                                        ($alert->status === 'acknowledged' ? 'bg-blue-900 text-blue-300' : 
-                                        ($alert->status === 'resolved' ? 'bg-slate-700 text-slate-300' : 
-                                        ($alert->status === 'attention' ? 'bg-red-900 text-red-300' : 'bg-slate-600 text-slate-400'))) 
-                                    }}">
-                                        {{ ucfirst($alert->status) }}
-                                    </span>
+                                                    @php
+                                                        $statusLabel = match($alert->status) {
+                                                            'new' => 'New',
+                                                            'acknowledged' => 'Acknowledged',
+                                                            'resolved' => 'Resolved',
+                                                            'attention' => 'Attention',
+                                                            'dismissed_unresolved' => 'Dismissed - Unresolved',
+                                                            'dismissed' => 'Dismissed',
+                                                            default => ucfirst($alert->status),
+                                                        };
+
+                                                        $statusClass = match($alert->status) {
+                                                            'new' => 'bg-green-900 text-green-300',
+                                                            'acknowledged' => 'bg-blue-900 text-blue-300',
+                                                            'resolved' => 'bg-slate-700 text-slate-300',
+                                                            'attention' => 'bg-red-900 text-red-300',
+                                                            'dismissed_unresolved' => 'bg-red-900 text-red-300',
+                                                            'dismissed' => 'bg-slate-600 text-slate-400',
+                                                            default => 'bg-slate-600 text-slate-400',
+                                                        };
+                                                    @endphp
+                                                    <span class="px-2 py-1 text-xs font-semibold rounded {{ $statusClass }}">{{ $statusLabel }}</span>
 
                                     <!-- Type Badge -->
                                     <span class="px-2 py-1 text-xs font-medium rounded bg-slate-700 text-slate-300">
@@ -244,8 +259,12 @@
 
     <!-- Alert Details Modal -->
     @if($showDetailsModal && $selectedAlert)
+        @php
+            $isSpeedAlert = in_array(strtolower($selectedAlert->type ?? ''), ['speed', 'speed_limit', 'overspeed']);
+            $modalSizeClass = $isSpeedAlert ? 'w-full max-w-3xl max-h-[80vh]' : 'w-96 max-h-96';
+        @endphp
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div class="bg-slate-800 rounded-lg border border-slate-700 p-6 w-96 max-h-96 overflow-y-auto">
+            <div class="bg-slate-800 rounded-lg border border-slate-700 p-6 {{ $modalSizeClass }} overflow-y-auto">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-semibold text-white">{{ $selectedAlert->title }}</h3>
                     <button 
@@ -299,44 +318,168 @@
                     @endif
 
                     {{-- Location / Context --}}
-                    <div>
-                        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Location</div>
-                        <div class="text-slate-300 text-sm">
-                            @if(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['latitude']) && isset($selectedAlert->metadata['longitude']))
-                                {{ $selectedAlert->metadata['latitude'] }}, {{ $selectedAlert->metadata['longitude'] }}
-                                <a href="https://maps.google.com/?q={{ $selectedAlert->metadata['latitude'] }},{{ $selectedAlert->metadata['longitude'] }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
-                            @elseif($selectedAlert->machine && $selectedAlert->machine->last_location_latitude)
-                                {{ $selectedAlert->machine->last_location_latitude }}, {{ $selectedAlert->machine->last_location_longitude }}
-                                <a href="https://maps.google.com/?q={{ $selectedAlert->machine->last_location_latitude }},{{ $selectedAlert->machine->last_location_longitude }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
-                            @else
-                                <span class="text-slate-500">No coordinates available</span>
-                            @endif
-                        </div>
-                    </div>
+                    @if($isSpeedAlert)
+                        <!-- Expanded speed alert context -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">GPS Coordinates</div>
+                                <div class="text-slate-300 text-sm">
+                                    @if(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['latitude']) && isset($selectedAlert->metadata['longitude']))
+                                        {{ $selectedAlert->metadata['latitude'] }}, {{ $selectedAlert->metadata['longitude'] }}
+                                        <a href="https://maps.google.com/?q={{ $selectedAlert->metadata['latitude'] }},{{ $selectedAlert->metadata['longitude'] }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
+                                    @elseif($selectedAlert->machine && $selectedAlert->machine->last_location_latitude)
+                                        {{ $selectedAlert->machine->last_location_latitude }}, {{ $selectedAlert->machine->last_location_longitude }}
+                                        <a href="https://maps.google.com/?q={{ $selectedAlert->machine->last_location_latitude }},{{ $selectedAlert->machine->last_location_longitude }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
+                                    @else
+                                        <span class="text-slate-500">No coordinates available</span>
+                                    @endif
+                                </div>
+                            </div>
 
-                    <div>
-                        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Geofence</div>
-                        <div class="text-slate-300">
-                            @if(isset($selectedAlert->geofence) && $selectedAlert->geofence)
-                                {{ $selectedAlert->geofence->name }}
-                            @elseif(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['geofence_name']))
-                                {{ $selectedAlert->metadata['geofence_name'] }}
-                            @else
-                                <span class="text-slate-500">N/A</span>
-                            @endif
-                        </div>
-                    </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Associated Geofence</div>
+                                <div class="text-slate-300">
+                                    @if(isset($selectedAlert->geofence) && $selectedAlert->geofence)
+                                        {{ $selectedAlert->geofence->name }}
+                                    @elseif(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['geofence_name']))
+                                        {{ $selectedAlert->metadata['geofence_name'] }}
+                                    @else
+                                        <span class="text-slate-500">N/A</span>
+                                    @endif
+                                </div>
+                            </div>
 
-                    <div>
-                        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Mine Area</div>
-                        <div class="text-slate-300">
-                            @if($selectedAlert->mineArea)
-                                <a href="{{ route('mine-areas.show', $selectedAlert->mineArea->id) }}" class="text-amber-400 hover:text-amber-300">{{ $selectedAlert->mineArea->name }}</a>
-                            @else
-                                <span class="text-slate-500">N/A</span>
-                            @endif
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Mining Area</div>
+                                <div class="text-slate-300">
+                                    @if($selectedAlert->mineArea)
+                                        <a href="{{ route('mine-areas.show', $selectedAlert->mineArea->id) }}" class="text-amber-400 hover:text-amber-300">{{ $selectedAlert->mineArea->name }}</a>
+                                    @else
+                                        <span class="text-slate-500">N/A</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Asset</div>
+                                <div class="text-slate-300">
+                                    @if($selectedAlert->machine)
+                                        <a href="{{ route('fleet.show', $selectedAlert->machine->id) }}" class="text-amber-400 hover:text-amber-300">{{ $selectedAlert->machine->name }}</a>
+                                    @else
+                                        <span class="text-slate-500">Unlinked asset</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Timestamp</div>
+                                <div class="text-slate-300">{{ $selectedAlert->created_at->format('M d, Y H:i:s') }}</div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Management Chain</div>
+                                <div class="text-slate-300 text-sm">
+                                    @php
+                                        // Try to resolve management chain from alert data, else fall back to mineAreaManagers
+                                        $chain = $selectedAlert->management_chain ?? null;
+                                        $resolved = [];
+                                        if (!$chain || !is_array($chain)) {
+                                            $chain = [];
+                                            if (!empty($mineAreaManagers) && is_array($mineAreaManagers)) {
+                                                foreach ($mineAreaManagers as $m) {
+                                                    $roleKey = strtolower(trim($m['role'] ?? ''));
+                                                    $chain[$roleKey] = $m;
+                                                }
+                                            }
+                                        }
+
+                                        // Helper to find by role keywords
+                                        $findRole = function($keywords) use ($chain) {
+                                            foreach ($keywords as $k) {
+                                                foreach ($chain as $key => $val) {
+                                                    if (stripos($key, $k) !== false || (is_string($val['role'] ?? '') && stripos($val['role'], $k) !== false)) {
+                                                        return $val;
+                                                    }
+                                                }
+                                                // direct key check
+                                                if (isset($chain[$k])) return $chain[$k];
+                                            }
+                                            return null;
+                                        };
+
+                                        $supervisor = $findRole(['supervisor','mine supervisor','mine_supervisor']);
+                                        $opsManager = $findRole(['operations manager','operations_manager','operations','ops manager','ops']);
+                                        $safetyOfficer = $findRole(['safety officer','safety_officer','safety']);
+                                    @endphp
+
+                                    <ul class="space-y-2">
+                                        <li>
+                                            <strong>Mine Supervisor:</strong>
+                                            @if($supervisor)
+                                                {{ $supervisor['name'] }} <span class="text-slate-500">({{ $supervisor['role'] }})</span> — <a href="mailto:{{ $supervisor['email'] }}" class="text-amber-400">{{ $supervisor['email'] }}</a>
+                                            @else
+                                                <span class="text-slate-500">Unassigned</span>
+                                            @endif
+                                        </li>
+                                        <li>
+                                            <strong>Operations Manager:</strong>
+                                            @if($opsManager)
+                                                {{ $opsManager['name'] }} <span class="text-slate-500">({{ $opsManager['role'] }})</span> — <a href="mailto:{{ $opsManager['email'] }}" class="text-amber-400">{{ $opsManager['email'] }}</a>
+                                            @else
+                                                <span class="text-slate-500">Unassigned</span>
+                                            @endif
+                                        </li>
+                                        <li>
+                                            <strong>Safety Officer:</strong>
+                                            @if($safetyOfficer)
+                                                {{ $safetyOfficer['name'] }} <span class="text-slate-500">({{ $safetyOfficer['role'] }})</span> — <a href="mailto:{{ $safetyOfficer['email'] }}" class="text-amber-400">{{ $safetyOfficer['email'] }}</a>
+                                            @else
+                                                <span class="text-slate-500">Unassigned</span>
+                                            @endif
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Location</div>
+                            <div class="text-slate-300 text-sm">
+                                @if(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['latitude']) && isset($selectedAlert->metadata['longitude']))
+                                    {{ $selectedAlert->metadata['latitude'] }}, {{ $selectedAlert->metadata['longitude'] }}
+                                    <a href="https://maps.google.com/?q={{ $selectedAlert->metadata['latitude'] }},{{ $selectedAlert->metadata['longitude'] }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
+                                @elseif($selectedAlert->machine && $selectedAlert->machine->last_location_latitude)
+                                    {{ $selectedAlert->machine->last_location_latitude }}, {{ $selectedAlert->machine->last_location_longitude }}
+                                    <a href="https://maps.google.com/?q={{ $selectedAlert->machine->last_location_latitude }},{{ $selectedAlert->machine->last_location_longitude }}" target="_blank" class="text-amber-400 hover:text-amber-300 ml-2 text-xs">View on map →</a>
+                                @else
+                                    <span class="text-slate-500">No coordinates available</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Geofence</div>
+                            <div class="text-slate-300">
+                                @if(isset($selectedAlert->geofence) && $selectedAlert->geofence)
+                                    {{ $selectedAlert->geofence->name }}
+                                @elseif(is_array($selectedAlert->metadata ?? []) && isset($selectedAlert->metadata['geofence_name']))
+                                    {{ $selectedAlert->metadata['geofence_name'] }}
+                                @else
+                                    <span class="text-slate-500">N/A</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Mine Area</div>
+                            <div class="text-slate-300">
+                                @if($selectedAlert->mineArea)
+                                    <a href="{{ route('mine-areas.show', $selectedAlert->mineArea->id) }}" class="text-amber-400 hover:text-amber-300">{{ $selectedAlert->mineArea->name }}</a>
+                                @else
+                                    <span class="text-slate-500">N/A</span>
+                                @endif
+                            </div>
+                        </div>
 
                     <div>
                         <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Mine Area Managers</div>
@@ -353,6 +496,8 @@
                         </div>
                     </div>
                 </div>
+
+                    @endif
 
                 <div class="flex gap-2 justify-end mt-6 pt-4 border-t border-slate-700">
                     <button 
@@ -373,7 +518,7 @@
             <div class="bg-slate-800 rounded-lg border border-slate-700 p-6 w-96 max-h-80 overflow-y-auto">
                 <div class="mb-4">
                     <h3 class="text-lg font-semibold text-white">Confirm Dismissal</h3>
-                    <p class="text-sm text-slate-400 mt-2">This alert appears unresolved. Dismissing it will remove it from the active list even though the underlying issue is not resolved.</p>
+                    <p class="text-sm text-slate-400 mt-2">This issue remains unresolved. Dismissing may affect operational safety. Continue?</p>
                 </div>
 
                 <div class="space-y-3">
@@ -385,8 +530,7 @@
 
                 <div class="flex gap-2 justify-end mt-6 pt-4 border-t border-slate-700">
                     <button wire:click="cancelDismiss" class="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-600">Cancel</button>
-                    <button wire:click="confirmDismiss('highlight')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500">Keep & Highlight</button>
-                    <button wire:click="confirmDismiss('dismiss')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Dismiss anyway</button>
+                    <button wire:click="confirmDismiss('confirm')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500">Confirm Dismiss</button>
                 </div>
             </div>
         </div>

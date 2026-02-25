@@ -18,94 +18,6 @@
             height: 100%;
             width: 100%;
         }
-                @keyframes pulse-marker {
-            0%, 100% {
-                transform: scale(1);
-                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
-            }
-            50% {
-                transform: scale(1.05);
-                box-shadow: 0 6px 16px rgba(59, 130, 246, 0.8);
-            }
-        }
-
-        @keyframes shimmer {
-            0% {
-                transform: translateX(-100%);
-            }
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        .animate-shimmer {
-            animation: shimmer 3s infinite;
-        }
-
-        .replay-marker {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-        }
-
-        /* Custom Range Slider Styling */
-        input[type="range"].slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            background: transparent;
-            cursor: pointer;
-        }
-
-        input[type="range"].slider-thumb::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            cursor: grab;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.6);
-            border: 3px solid white;
-            transition: all 0.2s ease;
-        }
-
-        input[type="range"].slider-thumb::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.8);
-        }
-
-        input[type="range"].slider-thumb::-webkit-slider-thumb:active {
-            cursor: grabbing;
-            transform: scale(1.1);
-        }
-
-        input[type="range"].slider-thumb::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            cursor: grab;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.6);
-            border: 3px solid white;
-            transition: all 0.2s ease;
-        }
-
-        input[type="range"].slider-thumb::-moz-range-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.8);
-        }
-
-        input[type="range"].slider-thumb::-moz-range-thumb:active {
-            cursor: grabbing;
-            transform: scale(1.1);
-        }
     </style>
     
     <!-- Header -->
@@ -125,7 +37,7 @@
 
     <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
         <!-- Left Sidebar - Controls -->
-        <div class="w-full md:w-96 bg-gray-800 border-b md:border-b-0 md:border-r border-gray-700 overflow-y-auto p-4 md:p-6 pb-6 md:pb-0 relative">
+        <div class="w-full md:w-96 bg-gray-800 border-b md:border-b-0 md:border-r border-gray-700 overflow-y-auto p-4 md:p-6">
             <!-- Loading Spinner -->
             @if ($isLoading)
                 <div class="flex justify-center items-center h-96">
@@ -139,7 +51,7 @@
             <!-- Machine Selection -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Select Machine</label>
-                <select id="machine-select" wire:model.live="selectedMachine" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500">
+                <select wire:model.live="selectedMachine" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500">
                     <option value="">-- Choose a Machine --</option>
                     @foreach($machines as $machineType => $machineGroup)
                         <optgroup label="{{ strtoupper(str_replace('_', ' ', $machineType)) }}">
@@ -190,6 +102,14 @@
                     Routes
                 </button>
             </div>
+
+            <!-- Recent Activities (for selected machine / date range) -->
+            @if($showActivities)
+                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-white">Recent Activities</h4>
+                        <button wire:click="hideRecentActivities" class="text-xs text-gray-400 hover:text-gray-300">Close</button>
+                    </div>
                     @if(count($machineActivities) > 0)
                         <ul class="space-y-2 text-sm text-gray-300 max-h-64 overflow-y-auto">
                             @foreach($machineActivities as $act)
@@ -207,7 +127,7 @@
             @endif
 
             <!-- Enhanced Playback Player -->
-            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-2xl border border-gray-700 mb-6 md:mb-0 md:absolute md:inset-x-6 md:bottom-6 md:z-30">
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-2xl border border-gray-700 mb-6">
                 @if($selectedMachine && $totalPositions > 0)
                     <!-- Player Header -->
                     <div class="flex items-center justify-between mb-4">
@@ -323,10 +243,10 @@
                                 </label>
                                 <span class="text-amber-400 font-bold text-lg">{{ $playbackSpeed }}x</span>
                             </div>
-                            <div class="flex flex-wrap gap-2">
+                            <div class="flex gap-2">
                                 @foreach([0.25, 0.5, 1, 2, 4, 8] as $speed)
                                     <button wire:click="setSpeed({{ $speed }})" 
-                                            class="px-2 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 {{ $playbackSpeed == $speed ? 'bg-amber-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }}">
+                                            class="flex-1 px-2 py-2 rounded-lg text-sm font-medium transition-all {{ $playbackSpeed == $speed ? 'bg-amber-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }}">
                                         {{ $speed }}x
                                     </button>
                                 @endforeach
@@ -372,6 +292,7 @@
                 @endif
             </div>
 
+            @endif
         </div>
 
         <!-- Map Container -->
@@ -414,7 +335,7 @@
                 }
             </script>
         </div>
-    
+    </div>
 
 
     <!-- Leaflet JS - loaded directly in component -->
@@ -1713,5 +1634,96 @@
             }
         });
     </script>
+    
+    <style>
+        @keyframes pulse-marker {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 6px 16px rgba(59, 130, 246, 0.8);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .animate-shimmer {
+            animation: shimmer 3s infinite;
+        }
+
+        .replay-marker {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Custom Range Slider Styling */
+        input[type="range"].slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        input[type="range"].slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            cursor: grab;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.6);
+            border: 3px solid white;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"].slider-thumb::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.8);
+        }
+
+        input[type="range"].slider-thumb::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        input[type="range"].slider-thumb::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            cursor: grab;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.6);
+            border: 3px solid white;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"].slider-thumb::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.8);
+        }
+
+        input[type="range"].slider-thumb::-moz-range-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+    </style>
 </div>
 </div>

@@ -7,6 +7,34 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * ProductionRecord Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $mine_area_id
+ * @property int $machine_id
+ * @property string|\Carbon\Carbon $record_date
+ * @property string $shift
+ * @property string|float $quantity_produced
+ * @property string $unit
+ * @property string|float $target_quantity
+ * @property string|null $notes
+ * @property string $status
+ * @property array|null $metadata
+ * @property float $variance_percentage
+ * @property bool $is_above_target
+ * @property \Carbon\Carbon|null $deleted_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionRecord where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionRecord whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionRecord orderBy(string $column, string $direction = 'asc')
+ * @method static ProductionRecord|null find(mixed $id, array $columns = ['*'])
+ * @method static ProductionRecord findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class ProductionRecord extends Model
 {
     use SoftDeletes;

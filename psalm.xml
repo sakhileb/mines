@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="1"
+    resolveFromConfigFile="true"
+>
+  <projectFiles>
+    <directory name="app" />
+    <directory name="routes" />
+  </projectFiles>
+
+  <issueHandlers>
+    <SomeIssue severity="info" />
+  </issueHandlers>
+</psalm>

@@ -21,27 +21,22 @@ class BellService extends BaseManufacturerService
     /**
      * Test connection to Bell Fleetmatic API
      * 
-     * @return array
+     * @return bool
      */
-    public function testConnection(): array
+    public function testConnection(): bool
     {
         try {
             // Test with vehicles endpoint
             $response = $this->makeRequest('GET', '/fleetmatic/v1/vehicles');
             
-            return [
-                'success' => true,
-                'message' => 'Successfully connected to Bell Fleetmatic API',
-                'status' => 'connected',
-                'api_system' => 'Fleetmatic',
-            ];
+            if ($response && isset($response['success'])) {
+                return (bool) $response['success'];
+            }
+            
+            return true;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => 'CONNECTION_FAILED',
-                'note' => 'Contact Bell Equipment for API access',
-            ];
+            $this->lastError = $e->getMessage();
+            return false;
         }
     }
 
@@ -75,6 +70,161 @@ class BellService extends BaseManufacturerService
                 'machines' => [],
             ];
         }
+    }
+
+    /**
+     * Fetch location data for vehicle
+     * 
+     * @param string $machineId
+     * @return array|null
+     */
+    public function fetchMachineLocation(string $machineId): ?array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/fleetmatic/v1/vehicles/{$machineId}/location");
+            
+            return $this->parseLocation($response ?? []);
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch location', $e);
+            return null;
+        }
+    }
+
+    /**
+     * Fetch operational metrics for vehicle
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineMetrics(string $machineId): array
+    {
+        try {
+            // Fetch multiple metric types from Fleetmatic
+            $telemetry = $this->makeRequest('GET', "/fleetmatic/v1/vehicles/{$machineId}/telemetry");
+            $fuel = $this->makeRequest('GET', "/fleetmatic/v1/vehicles/{$machineId}/fuel");
+            $engine = $this->makeRequest('GET', "/fleetmatic/v1/vehicles/{$machineId}/engine");
+            $trips = $this->makeRequest('GET', "/fleetmatic/v1/vehicles/{$machineId}/trips");
+            
+            $metrics = [];
+            
+            // Parse telemetry
+            if (!empty($telemetry['data'])) {
+                foreach ($telemetry['data'] as $metric) {
+                    $metrics[] = $this->parseMetric($metric);
+                }
+            }
+            
+            // Add fuel data
+            if (!empty($fuel['fuelLevel'])) {
+                $metrics[] = [
+                    'type' => 'fuel_level',
+                    'value' => $fuel['fuelLevel'],
+                    'unit' => 'liters',
+                    'timestamp' => $fuel['timestamp'] ?? now(),
+                ];
+            }
+            
+            // Add engine data
+            if (!empty($engine['engineData'])) {
+                $metrics[] = [
+                    'type' => 'engine_status',
+                    'value' => $engine['engineData'],
+                    'timestamp' => $engine['timestamp'] ?? now(),
+                ];
+            }
+            
+            // Add trip data
+            if (!empty($trips['recentTrips'])) {
+                $metrics[] = [
+                    'type' => 'trips',
+                    'value' => count($trips['recentTrips']),
+                    'timestamp' => now(),
+                ];
+            }
+            
+            return $metrics;
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch metrics', $e);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch alerts for vehicle
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineAlerts(string $machineId): array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/fleetmatic/v1/vehicles/{$machineId}/alerts");
+            
+            $alerts = [];
+            if (!empty($response['alerts'])) {
+                foreach ($response['alerts'] as $alert) {
+                    $alerts[] = $this->parseAlert($alert);
+                }
+            }
+            
+            return $alerts;
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch alerts', $e);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch machine details from Bell API
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineDetails(string $machineId): array
+    {
+        try {
+            $response = $this->makeRequest('GET', "/fleetmatic/v1/vehicles/{$machineId}");
+            return $response ?? [];
+        } catch (Exception $e) {
+            $this->logError('Failed to fetch machine details', $e);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch comprehensive machine data
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineData(string $machineId): array
+    {
+        return [
+            'details' => $this->fetchMachineDetails($machineId),
+            'location' => $this->fetchMachineLocation($machineId),
+            'metrics' => $this->fetchMachineMetrics($machineId),
+            'alerts' => $this->fetchMachineAlerts($machineId),
+        ];
+    }
+
+    /**
+     * Get the manufacturer name
+     * 
+     * @return string
+     */
+    public function getManufacturer(): string
+    {
+        return $this->manufacturer;
+    }
+
+    /**
+     * Get API error if any occurred
+     * 
+     * @return string|null
+     */
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 
     /**

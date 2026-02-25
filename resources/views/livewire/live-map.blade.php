@@ -57,6 +57,16 @@
                                 <option value="maintenance">Maintenance Only</option>
                             </select>
                         </div>
+
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Select Mine Area</label>
+                            <select id="mineAreaSelect" wire:model.live="selectedMineAreaId" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500">
+                                <option value="">All Areas</option>
+                                @foreach($mineAreas ?? [] as $area)
+                                    <option value="{{ data_get($area, 'id') }}">{{ data_get($area, 'name') }} @if(data_get($area, 'type')) ({{ ucfirst(data_get($area, 'type')) }})@endif</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-4">
                         <div class="bg-green-600 bg-opacity-20 rounded-lg p-2 border border-green-600">
@@ -113,6 +123,9 @@
 
         let machinesData = @json($machines);
         let geofencesData = @json($geofences);
+        let mineAreasData = @json($mineAreas ?? []);
+        // Keep a copy of the original machines list for client-side filtering
+        let originalMachinesData = Array.isArray(machinesData) ? JSON.parse(JSON.stringify(machinesData)) : [];
         let mapStyleData = @js($mapStyle);
         let showMachinesData = @js($showMachines);
         let showGeofencesData = @js($showGeofences);
@@ -414,6 +427,89 @@
                 }
             });
             debugLog('Total geofences added:', Object.keys(geofencePolygons).length);
+            // Also add mine area polygons (if separate from geofences)
+            if (Array.isArray(mineAreasData) && mineAreasData.length > 0) {
+                mineAreasData.forEach(area => {
+                    try {
+                        if (!area.coordinates || area.coordinates.length < 3) return;
+                        const latlngs = area.coordinates.map(coord => {
+                            const lat = parseFloat(coord.lat !== undefined ? coord.lat : coord[0]);
+                            const lng = parseFloat(coord.lng !== undefined ? coord.lng : coord[1]);
+                            return [lat, lng];
+                        }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
+                        if (latlngs.length < 3) return;
+                        const polygon = L.polygon(latlngs, {
+                            color: '#f59e0b',
+                            weight: 2,
+                            opacity: 0.8,
+                            fillColor: '#f59e0b',
+                            fillOpacity: 0.08,
+                            className: 'mine-area-polygon'
+                        }).bindPopup(`<div class="p-2"><strong>${area.name}</strong></div>`).addTo(map);
+                        geofencePolygons['minearea-' + area.id] = polygon;
+                    } catch (e) {
+                        console.error('Error adding mine area polygon:', area.name, e);
+                    }
+                });
+                debugLog('Total mine area polygons added:', mineAreasData.length);
+            }
+        }
+
+        function centerToMineArea(areaId) {
+            debugLog('centerToMineArea called with', areaId);
+            if (!map) return;
+
+            if (!areaId) {
+                // restore full view and all machines
+                machinesData = JSON.parse(JSON.stringify(originalMachinesData));
+                clearMarkers();
+                addMachineMarkers();
+                // fit to all markers if any
+                const allBounds = L.latLngBounds(Object.values(markers).map(m => m.getLatLng()));
+                if (allBounds.isValid()) map.fitBounds(allBounds.pad(0.2));
+                return;
+            }
+
+            const area = mineAreasData.find(a => String(a.id) === String(areaId));
+            if (area && area.coordinates && area.coordinates.length >= 1) {
+                const latlngs = area.coordinates.map(coord => {
+                    const lat = parseFloat(coord.lat !== undefined ? coord.lat : coord[0]);
+                    const lng = parseFloat(coord.lng !== undefined ? coord.lng : coord[1]);
+                    return [lat, lng];
+                }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
+
+                if (latlngs.length >= 1) {
+                    const polygon = L.polygon(latlngs);
+                    const bounds = polygon.getBounds();
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds.pad(0.15));
+                        showToast('Centered to ' + (area.name || 'selected area'));
+                    }
+                }
+            }
+
+            // Filter machines client-side by mine_area_id if present
+            try {
+                const filtered = originalMachinesData.filter(m => String(m.mine_area_id) === String(areaId));
+                machinesData = filtered;
+                clearMarkers();
+                addMachineMarkers();
+
+                // If no machines in area, but polygon exists, show polygon only
+                if (filtered.length === 0 && area && area.coordinates) {
+                    const latlngs = area.coordinates.map(coord => {
+                        const lat = parseFloat(coord.lat !== undefined ? coord.lat : coord[0]);
+                        const lng = parseFloat(coord.lng !== undefined ? coord.lng : coord[1]);
+                        return [lat, lng];
+                    }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
+                    if (latlngs.length) {
+                        const bounds = L.polygon(latlngs).getBounds();
+                        if (bounds.isValid()) map.fitBounds(bounds.pad(0.15));
+                    }
+                }
+            } catch (err) {
+                console.error('Error filtering machines by mine area:', err);
+            }
         }
 
         function clearMarkers() {
@@ -517,6 +613,28 @@
                     console.error('Error updating geofences:', error);
                 }
             }
+
+                // If server indicated a selected mine area, center the map to it
+            if (data.selectedMineAreaId !== undefined && data.selectedMineAreaId !== null) {
+                try {
+                    centerToMineArea(data.selectedMineAreaId);
+                } catch (err) {
+                    console.error('Error centering to selected mine area from update:', err);
+                }
+            }
+        }
+
+        // Bind select change to center action (avoid inline handlers so function is resolvable
+        // within this closure and to be CSP-friendlier). Added here so `centerToMineArea` is defined.
+        const mineAreaSelectEl = document.getElementById('mineAreaSelect');
+        if (mineAreaSelectEl) {
+            mineAreaSelectEl.addEventListener('change', function(e) {
+                try {
+                    centerToMineArea(e.target.value);
+                } catch (err) {
+                    console.error('Error calling centerToMineArea from select change:', err);
+                }
+            });
         }
 
         initMap();

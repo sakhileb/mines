@@ -75,6 +75,16 @@ Route::middleware([
         return view('reports.generate');
     })->name('report-generator');
 
+        // Signed report download route (uses signed URLs created in emails)
+        Route::get('/reports/{report}/download', [\App\Http\Controllers\ReportDownloadController::class, 'download'])
+            ->middleware(['auth', 'throttle:downloads'])
+            ->name('reports.signed-download');
+
+        // Signed mine plan download route (mirror reports signed-download)
+        Route::get('/mine-plans/{minePlan}/download', [\App\Http\Controllers\MinePlanDownloadController::class, '__invoke'])
+            ->middleware(['auth', 'throttle:downloads'])
+            ->name('mineplans.signed-download');
+
     Route::get('/reports/{report}', function (Report $report) {
         return view('reports.show', ['report' => $report]);
     })->name('reports.show');
@@ -152,4 +162,11 @@ Route::prefix('core-features')->group(function () {
     Route::view('/maintenance', 'pages.core-features.maintenance')->name('core-features.maintenance');
     Route::view('/fuel', 'pages.core-features.fuel')->name('core-features.fuel');
 });
+
+// Ensure Livewire update route exists (helps when routes are cached or Livewire
+// couldn't register its default route). This route name ends with
+// "livewire.update" so Livewire will detect it as the update endpoint.
+Route::post('/livewire/update', [\Livewire\Mechanisms\HandleRequests\HandleRequests::class, 'handleUpdate'])
+    ->middleware('web')
+    ->name('default.livewire.update');
 

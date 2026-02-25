@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use App\Traits\BrowserEventBridge;
 use App\Models\Integration;
 use App\Services\Integration\IntegrationService;
 use Illuminate\Support\Facades\Auth;
@@ -10,14 +11,15 @@ use Illuminate\Support\Facades\Log;
 
 class IntegrationManager extends Component
 {
-    public $team;
-    public $integrations = [];
-    public $availableManufacturers = [];
-    public $showAddModal = false;
-    public $showTestModal = false;
-    public $selectedIntegration = null;
-    public $testResult = null;
-    public $formData = [
+    use BrowserEventBridge;
+    public mixed $team = null;
+    public array $integrations = [];
+    public array $availableManufacturers = [];
+    public bool $showAddModal = false;
+    public bool $showTestModal = false;
+    public mixed $selectedIntegration = null;
+    public mixed $testResult = null;
+    public array $formData = [
         'provider' => '',
         'name' => '',
         'endpoint' => '',
@@ -133,7 +135,7 @@ class IntegrationManager extends Component
                 ]),
             ]);
 
-            $this->dispatch('notify', message: "Integration created successfully!");
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => "Integration created successfully!"]);
             $this->closeAddModal();
             $this->loadIntegrations();
         } catch (\Exception $e) {
@@ -189,7 +191,7 @@ class IntegrationManager extends Component
     public function syncMachines($integrationId)
     {
         if (!$this->team) {
-            $this->dispatch('notify', message: "No team context available");
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => "No team context available"]);
             return;
         }
         
@@ -200,28 +202,28 @@ class IntegrationManager extends Component
             $service = app(IntegrationService::class);
             $result = $service->syncMachines($integration);
 
-            if ($result['success']) {
+                if ($result['success']) {
                 $integration->update([
                     'last_sync_at' => now(),
                     'last_sync_status' => 'success',
                 ]);
-                $this->dispatch('notify', message: "Sync started successfully!");
+                $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => "Sync started successfully!"]);
             } else {
                 $integration->update(['last_sync_status' => 'failed']);
-                $this->dispatch('notify', message: "Sync failed: " . $result['error']);
+                $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => "Sync failed: " . $result['error']]);
             }
 
             $this->loadIntegrations();
         } catch (\Exception $e) {
             Log::error('Sync machines failed', ['error' => $e->getMessage()]);
-            $this->dispatch('notify', message: "Error starting sync");
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => "Error starting sync"]);
         }
     }
 
     public function deleteIntegration($integrationId)
     {
         if (!$this->team) {
-            $this->dispatch('notify', message: "No team context available");
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => "No team context available"]);
             return;
         }
         
@@ -230,11 +232,11 @@ class IntegrationManager extends Component
                 ->findOrFail($integrationId)
                 ->delete();
 
-            $this->dispatch('notify', message: "Integration deleted successfully!");
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => "Integration deleted successfully!"]);
             $this->loadIntegrations();
         } catch (\Exception $e) {
             Log::error('Delete integration failed', ['error' => $e->getMessage()]);
-            $this->dispatch('notify', message: "Error deleting integration");
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => "Error deleting integration"]);
         }
     }
 

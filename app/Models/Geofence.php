@@ -13,6 +13,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Represents a pit or work area defined by coordinates
  * Used for geofencing, entry/exit tracking, and material tracking
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int|null $mine_area_id
+ * @property string $name
+ * @property string|null $description
+ * @property string $type
+ * @property array $coordinates
+ * @property float $center_latitude
+ * @property float $center_longitude
+ * @property float $area_sqm
+ * @property float $perimeter_m
+ * @property string $status
+ * @property string|null $notes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Geofence where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Geofence whereIn(string $column, array<string|int> $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Geofence orderBy(string $column, string $direction = 'asc')
+ * @method static Geofence|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static Geofence findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,Geofence> all(array<string> $columns = ['*'])
  */
 class Geofence extends Model
 {

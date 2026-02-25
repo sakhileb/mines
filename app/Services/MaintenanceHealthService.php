@@ -96,6 +96,8 @@ class MaintenanceHealthService
 
     /**
      * Check and update maintenance schedules
+     *
+     * @return array<int,MaintenanceSchedule>
      */
     public function checkSchedules(Machine $machine): array
     {

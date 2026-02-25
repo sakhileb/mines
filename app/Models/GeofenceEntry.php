@@ -12,6 +12,29 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Records machine entry and exit times from geofenced areas
  * Tracks tonnage and material movement
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $geofence_id
+ * @property int $machine_id
+ * @property \Carbon\Carbon $entry_time
+ * @property \Carbon\Carbon|null $exit_time
+ * @property float $entry_latitude
+ * @property float $entry_longitude
+ * @property float|null $exit_latitude
+ * @property float|null $exit_longitude
+ * @property float|null $tonnage_loaded
+ * @property string|null $material_type
+ * @property string|null $notes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|GeofenceEntry where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|GeofenceEntry whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|GeofenceEntry orderBy(string $column, string $direction = 'asc')
+ * @method static GeofenceEntry|null find(mixed $id, array $columns = ['*'])
+ * @method static GeofenceEntry findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class GeofenceEntry extends Model
 {

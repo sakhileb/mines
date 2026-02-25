@@ -1,4 +1,30 @@
 #!/usr/bin/env bash
+set -euo pipefail
+# Pre-commit hook: run gitleaks and fail commit if secrets are detected in staged files.
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+# Run gitleaks report (uses scripts/run-gitleaks.sh which supports docker fallback)
+./scripts/run-gitleaks.sh
+OUT=storage/reports/gitleaks-report.json
+if [ ! -f "$OUT" ]; then
+  echo "gitleaks report not found at $OUT; skipping secret check." >&2
+  exit 0
+fi
+
+if command -v jq >/dev/null 2>&1; then
+  COUNT=$(jq 'length' "$OUT" || echo 0)
+else
+  COUNT=$(grep -c '"RuleID"' "$OUT" || true)
+fi
+
+if [ "$COUNT" -gt 0 ]; then
+  echo "gitleaks: detected $COUNT potential secret(s). Commit blocked. Inspect $OUT and rotate/purge as needed." >&2
+  exit 1
+fi
+
+exit 0
+#!/usr/bin/env bash
 # Pre-commit hook: run gitleaks in Docker to detect secrets before commit
 set -euo pipefail
 

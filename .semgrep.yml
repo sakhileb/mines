@@ -1,0 +1,24 @@
+rules:
+  - id: php-unused-superglobal
+    patterns:
+      - pattern-either:
+          - pattern: $_GET
+          - pattern: $_POST
+          - pattern: $_REQUEST
+    message: Avoid using PHP superglobals directly; use framework input APIs.
+    severity: WARNING
+
+  - id: possible-ssrf
+    patterns:
+      - pattern: |-
+          curl_exec($X)
+    message: Detect possible use of curl_exec with dynamic input (SSRF risk).
+    severity: ERROR
+
+  - id: aws-secret-in-code
+    patterns:
+      - pattern: 'AWS_SECRET_ACCESS_KEY'
+    message: Found AWS secret pattern in code
+    severity: ERROR
+
+  # You can extend with more language-specific rules from the semgrep registry.

@@ -5,6 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * MachineAreaAssignment Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $machine_id
+ * @property int $mine_area_id
+ * @property int|null $assigned_by
+ * @property \Carbon\Carbon $assigned_at
+ * @property \Carbon\Carbon|null $unassigned_at
+ * @property string|null $reason
+ * @property string|null $notes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|MachineAreaAssignment where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|MachineAreaAssignment whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MachineAreaAssignment orderBy(string $column, string $direction = 'asc')
+ * @method static MachineAreaAssignment|null find(mixed $id, array $columns = ['*'])
+ * @method static MachineAreaAssignment findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class MachineAreaAssignment extends Model
 {
     protected $table = 'machine_mine_area_assignments';
