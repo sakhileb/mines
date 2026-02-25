@@ -48,7 +48,7 @@ use WithPagination;
     public float $latitude = 0;
     public float $longitude = 0;
 
-    protected array $listeners = ['machineCreated' => 'machineCreated', 'machineDeleted' => 'machineDeleted'];
+    protected $listeners = ['machineCreated' => 'machineCreated', 'machineDeleted' => 'machineDeleted'];
 
     public function updatedSearch(): void
     {
