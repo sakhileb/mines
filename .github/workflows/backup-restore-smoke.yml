@@ -45,7 +45,7 @@ jobs:
             echo "Backup object KMS key does not match expected S3_KMS_KEY_ID"; exit 1
           fi
 
-      - name: Optional: attempt restore (requires RESTORE_* secrets)
+      - name: "Optional: attempt restore (requires RESTORE_* secrets)"
         if: ${{ secrets.RESTORE_DB_HOST && secrets.RESTORE_DB_PASSWORD }}
         run: |
           KEY=${{ steps.latest.outputs.latest_key }}
