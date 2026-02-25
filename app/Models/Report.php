@@ -13,6 +13,13 @@ use App\Mail\ReportReadyMail;
  * Report Model
  * 
  * Stores generated reports with configuration and file storage
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Report where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Report whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Report orderBy(string $column, string $direction = 'asc')
+ * @method static Report|null find(mixed $id, array $columns = ['*'])
+ * @method static Report findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Report extends Model
 {

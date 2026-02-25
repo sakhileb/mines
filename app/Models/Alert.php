@@ -13,6 +13,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * Represents system alerts triggered by rules
  * Can be about machines, maintenance, fuel, or custom conditions
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Alert where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Alert whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Alert orderBy(string $column, string $direction = 'asc')
+ * @method static Alert|null find(mixed $id, array $columns = ['*'])
+ * @method static Alert findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Alert extends Model
 {

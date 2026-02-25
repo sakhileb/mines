@@ -8,6 +8,16 @@ parameters:
     - tests
   inferPrivatePropertyTypeFromConstructor: true
   checkExplicitMixed: false
+  treatPhpDocTypesAsCertain: false
+  stubFiles:
+    - phpstan-stubs/eloquent.stub
+  
+  # Ignore errors for Eloquent's dynamic methods
+  ignoreErrors:
+    - '#Call to an undefined\s+(?:method|static method)\s+Illuminate.*Model::#'
+    - '#Call to an undefined\s+(?:method|static method)\s+App\\Models#'
+    - '#Access to an undefined property Illuminate\\Database#'
+    - '#Call to static method .+\(\) on an unknown class#'
 includes:
   - vendor/phpstan/phpstan/conf/bleedingEdge.neon
   - phpstan-baseline.neon

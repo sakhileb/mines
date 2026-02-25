@@ -1,0 +1,92 @@
+<?php
+
+namespace Illuminate\Database\Eloquent;
+
+/**
+ * Magic stub for Eloquent Model query builder methods
+ * This file helps PHPStan understand common Eloquent methods
+ */
+
+// Stub for QueryBuilder methods on Model
+if (false) {
+    class Model
+    {
+        /** @return static */
+        public function where($column, $operator = null, $value = null) {}
+        
+        /** @return static */
+        public function whereIn($column, $values) {}
+        
+        /** @return static */
+        public function whereNotIn($column, $values) {}
+        
+        /** @return static|null */
+        public function find($id, $columns = ['*']) {}
+        
+        /** @return static */
+        public function findOrFail($id, $columns = ['*']) {}
+        
+        /** @return \Illuminate\Database\Eloquent\Collection */
+        public function get($columns = ['*']) {}
+        
+        /** @return static|null */
+        public function first($columns = ['*']) {}
+        
+        /** @return static */
+        public function firstOrFail($columns = ['*']) {}
+        
+        /** @return \Illuminate\Database\Eloquent\Collection */
+        public function all($columns = ['*']) {}
+        
+        /** @return bool */
+        public function exists() {}
+        
+        /** @return int */
+        public function count() {}
+        
+        /** @return \Illuminate\Database\Eloquent\Collection */
+        public function pluck($value, $key = null) {}
+        
+        /** @return static */
+        public function select($columns = ['*']) {}
+        
+        /** @return static */
+        public function orderBy($column, $direction = 'asc') {}
+        
+        /** @return static */
+        public function latest($column = 'created_at') {}
+        
+        /** @return static */
+        public function oldest($column = 'created_at') {}
+        
+        /** @return static */
+        public function limit($value) {}
+        
+        /** @return static */
+        public function offset($value) {}
+        
+        /** @return static */
+        public function take($value) {}
+        
+        /** @return static */
+        public function skip($value) {}
+        
+        /** @return static */
+        public function join($table, $first, $operator = null, $second = null) {}
+        
+        /** @return static */
+        public function leftJoin($table, $first, $operator = null, $second = null) {}
+        
+        /** @return static */
+        public function distinct() {}
+        
+        /** @return \Illuminate\Database\Eloquent\Collection */
+        public function paginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null) {}
+        
+        /** @return \Illuminate\Database\Eloquent\Collection|array */
+        public static function __callStatic($method, $parameters) {}
+        
+        /** @return mixed */
+        public function __call($method, $parameters) {}
+    }
+}

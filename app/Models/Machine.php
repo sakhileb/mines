@@ -18,6 +18,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * 
  * Represents a mining machine (Volvo, CAT, Komatsu, Bell truck, etc.)
  * Tracks metadata, status, and integrations with manufacturer systems
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine orderBy(string $column, string $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine latest(string $column = 'created_at')
+ * @method static \Illuminate\Database\Eloquent\Builder|Machine select(array $columns = ['*'])
+ * @method static Machine|null find(mixed $id, array $columns = ['*'])
+ * @method static Machine findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection paginate(int $perPage = 15, array $columns = ['*'], string $pageName = 'page', int $page = null)
  */
 class Machine extends Model
 {

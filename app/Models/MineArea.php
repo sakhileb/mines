@@ -7,6 +7,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * MineArea Model
+ * 
+ * Represents a mining area/site within a team
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|MineArea where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|MineArea whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MineArea orderBy(string $column, string $direction = 'asc')
+ * @method static MineArea|null find(mixed $id, array $columns = ['*'])
+ * @method static MineArea findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class MineArea extends Model
 {
     use SoftDeletes;

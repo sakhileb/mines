@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * FuelTank Model
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|FuelTank where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|FuelTank whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|FuelTank orderBy(string $column, string $direction = 'asc')
+ * @method static FuelTank|null find(mixed $id, array $columns = ['*'])
+ * @method static FuelTank findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class FuelTank extends Model
 {
     use HasFactory, HasTeamFilters;

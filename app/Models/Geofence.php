@@ -13,6 +13,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Represents a pit or work area defined by coordinates
  * Used for geofencing, entry/exit tracking, and material tracking
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Geofence where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Geofence whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Geofence orderBy(string $column, string $direction = 'asc')
+ * @method static Geofence|null find(mixed $id, array $columns = ['*'])
+ * @method static Geofence findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Geofence extends Model
 {
