@@ -10526,16 +10526,6 @@ parameters:
 			path: database/seeders/RealtimeScenarioSeeder.php
 
 		-
-			message: "#^Parameter \\#1 \\$columns of static method App\\\\Models\\\\Machine\\:\\:select\\(\\) expects array\\<string\\>, string given\\.$#"
-			count: 1
-			path: routes/api.php
-
-		-
-			message: "#^Static method App\\\\Models\\\\Machine\\:\\:select\\(\\) invoked with 7 parameters, 0\\-1 required\\.$#"
-			count: 1
-			path: routes/api.php
-
-		-
 			message: "#^Undefined variable\\: \\$this$#"
 			count: 1
 			path: routes/console.php
