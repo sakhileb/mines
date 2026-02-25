@@ -11,31 +11,64 @@ namespace Illuminate\Database\Eloquent;
 if (false) {
     class Model
     {
-        /** @return static */
+        /**
+         * @param string|array<string, mixed> $column
+         * @param string|null $operator
+         * @param mixed $value
+         * @return static
+         */
         public function where($column, $operator = null, $value = null) {}
         
-        /** @return static */
+        /**
+         * @param string $column
+         * @param array<int|string, mixed> $values
+         * @return static
+         */
         public function whereIn($column, $values) {}
         
-        /** @return static */
+        /**
+         * @param string $column
+         * @param array<int|string, mixed> $values
+         * @return static
+         */
         public function whereNotIn($column, $values) {}
         
-        /** @return static|null */
+        /**
+         * @param mixed $id
+         * @param array<int|string, string> $columns
+         * @return static|null
+         */
         public function find($id, $columns = ['*']) {}
         
-        /** @return static */
+        /**
+         * @param mixed $id
+         * @param array<int|string, string> $columns
+         * @return static
+         */
         public function findOrFail($id, $columns = ['*']) {}
         
-        /** @return \Illuminate\Database\Eloquent\Collection */
+        /**
+         * @param array<int|string, string> $columns
+         * @return Collection<static>
+         */
         public function get($columns = ['*']) {}
         
-        /** @return static|null */
+        /**
+         * @param array<int|string, string> $columns
+         * @return static|null
+         */
         public function first($columns = ['*']) {}
         
-        /** @return static */
+        /**
+         * @param array<int|string, string> $columns
+         * @return static
+         */
         public function firstOrFail($columns = ['*']) {}
         
-        /** @return \Illuminate\Database\Eloquent\Collection */
+        /**
+         * @param array<int|string, string> $columns
+         * @return Collection<static>
+         */
         public function all($columns = ['*']) {}
         
         /** @return bool */
@@ -44,49 +77,104 @@ if (false) {
         /** @return int */
         public function count() {}
         
-        /** @return \Illuminate\Database\Eloquent\Collection */
+        /**
+         * @param string|int $value
+         * @param string|null $key
+         * @return Collection<mixed>
+         */
         public function pluck($value, $key = null) {}
         
-        /** @return static */
+        /**
+         * @param array<int|string, string>|string $columns
+         * @return static
+         */
         public function select($columns = ['*']) {}
         
-        /** @return static */
+        /**
+         * @param string $column
+         * @param string $direction
+         * @return static
+         */
         public function orderBy($column, $direction = 'asc') {}
         
-        /** @return static */
+        /**
+         * @param string $column
+         * @return static
+         */
         public function latest($column = 'created_at') {}
         
-        /** @return static */
+        /**
+         * @param string $column
+         * @return static
+         */
         public function oldest($column = 'created_at') {}
         
-        /** @return static */
+        /**
+         * @param int $value
+         * @return static
+         */
         public function limit($value) {}
         
-        /** @return static */
+        /**
+         * @param int $value
+         * @return static
+         */
         public function offset($value) {}
         
-        /** @return static */
+        /**
+         * @param int $value
+         * @return static
+         */
         public function take($value) {}
         
-        /** @return static */
+        /**
+         * @param int $value
+         * @return static
+         */
         public function skip($value) {}
         
-        /** @return static */
-        public function join($table, $first, $operator = null, $second = null) {}
+        /**
+         * @param string $table
+         * @param string $first
+         * @param string $operator
+         * @param string|null $second
+         * @return static
+         */
+        public function join($table, $first, $operator = '=', $second = null) {}
         
-        /** @return static */
-        public function leftJoin($table, $first, $operator = null, $second = null) {}
+        /**
+         * @param string $table
+         * @param string $first
+         * @param string $operator
+         * @param string|null $second
+         * @return static
+         */
+        public function leftJoin($table, $first, $operator = '=', $second = null) {}
         
         /** @return static */
         public function distinct() {}
         
-        /** @return \Illuminate\Database\Eloquent\Collection */
+        /**
+         * @param int|null $perPage
+         * @param array<int|string, string> $columns
+         * @param string $pageName
+         * @param int|null $page
+         * @return \Illuminate\Pagination\Paginator
+         */
         public function paginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null) {}
         
-        /** @return \Illuminate\Database\Eloquent\Collection|array */
+        /**
+         * @param string $method
+         * @param array<int|string, mixed> $parameters
+         * @return mixed
+         */
         public static function __callStatic($method, $parameters) {}
         
-        /** @return mixed */
+        /**
+         * @param string $method
+         * @param array<int|string, mixed> $parameters
+         * @return mixed
+         */
         public function __call($method, $parameters) {}
     }
 }
