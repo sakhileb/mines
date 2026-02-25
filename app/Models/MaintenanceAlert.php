@@ -7,6 +7,34 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\HasTeamFilters;
 
+/**
+ * MaintenanceAlert Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $machine_id
+ * @property int|null $maintenance_schedule_id
+ * @property string $alert_type
+ * @property string $title
+ * @property string $message
+ * @property string $severity
+ * @property string $status
+ * @property \Carbon\Carbon $triggered_at
+ * @property \Carbon\Carbon|null $acknowledged_at
+ * @property int|null $acknowledged_by
+ * @property \Carbon\Carbon|null $resolved_at
+ * @property int|null $resolved_by
+ * @property string|null $notes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceAlert where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceAlert whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceAlert orderBy(string $column, string $direction = 'asc')
+ * @method static MaintenanceAlert|null find(mixed $id, array $columns = ['*'])
+ * @method static MaintenanceAlert findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class MaintenanceAlert extends Model
 {
     use HasFactory, HasTeamFilters;

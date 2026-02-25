@@ -7,6 +7,33 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\HasTeamFilters;
 
+/**
+ * HealthMetric Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $machine_id
+ * @property string $component
+ * @property string $metric_type
+ * @property float $value
+ * @property string $unit
+ * @property float|null $normal_min
+ * @property float|null $normal_max
+ * @property bool $is_normal
+ * @property string|null $severity
+ * @property string|null $sensor_id
+ * @property \Carbon\Carbon $recorded_at
+ * @property string|null $notes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|HealthMetric where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|HealthMetric whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|HealthMetric orderBy(string $column, string $direction = 'asc')
+ * @method static HealthMetric|null find(mixed $id, array $columns = ['*'])
+ * @method static HealthMetric findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class HealthMetric extends Model
 {
     use HasFactory, HasTeamFilters;
