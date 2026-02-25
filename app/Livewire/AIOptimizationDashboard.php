@@ -27,7 +27,7 @@ class AIOptimizationDashboard extends Component
     public ?string $pendingRecommendationAction = null; // 'implement'|'reject'
     public bool $showRecommendationConfirm = false;
 
-    protected $aiService;
+    protected ?AIOptimizationService $aiService = null;
 
     public function boot(AIOptimizationService $aiService)
     {

@@ -32,7 +32,7 @@ class IntegrationManager extends Component
         ],
     ];
 
-    protected $listeners = ['refresh' => '$refresh'];
+    protected array $listeners = ['refresh' => '$refresh'];
 
     public function mount()
     {

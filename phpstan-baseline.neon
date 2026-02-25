@@ -1601,11 +1601,6 @@ parameters:
 			path: app/Livewire/AIOptimizationDashboard.php
 
 		-
-			message: "#^Property App\\\\Livewire\\\\AIOptimizationDashboard\\:\\:\\$aiService has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/AIOptimizationDashboard.php
-
-		-
 			message: "#^Property App\\\\Livewire\\\\AIOptimizationDashboard\\:\\:\\$filters type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/AIOptimizationDashboard.php
@@ -1742,16 +1737,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:showDetails\\(\\) has parameter \\$alertId with no type specified\\.$#"
-			count: 1
-			path: app/Livewire/Alerts.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\Alerts\\:\\:\\$alertPriorities has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/Alerts.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\Alerts\\:\\:\\$alertTypes has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/Alerts.php
 
@@ -1991,11 +1976,6 @@ parameters:
 			path: app/Livewire/Fleet.php
 
 		-
-			message: "#^Property App\\\\Livewire\\\\Fleet\\:\\:\\$listeners has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/Fleet.php
-
-		-
 			message: "#^Property App\\\\Livewire\\\\Fleet\\:\\:\\$selectedAdtIds type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/Fleet.php
@@ -2182,11 +2162,6 @@ parameters:
 
 		-
 			message: "#^Property App\\\\Livewire\\\\FleetMovementReplay\\:\\:\\$activityFeed type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Livewire/FleetMovementReplay.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\FleetMovementReplay\\:\\:\\$listeners has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/FleetMovementReplay.php
 
@@ -2431,11 +2406,6 @@ parameters:
 			path: app/Livewire/GeofenceManager.php
 
 		-
-			message: "#^Property App\\\\Livewire\\\\GeofenceManager\\:\\:\\$listeners has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/GeofenceManager.php
-
-		-
 			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
 			count: 1
 			path: app/Livewire/IntegrationManager.php
@@ -2532,11 +2502,6 @@ parameters:
 
 		-
 			message: "#^Property App\\\\Livewire\\\\IntegrationManager\\:\\:\\$integrations type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Livewire/IntegrationManager.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\IntegrationManager\\:\\:\\$listeners has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/IntegrationManager.php
 
@@ -3016,11 +2981,6 @@ parameters:
 			path: app/Livewire/MineAreaManager.php
 
 		-
-			message: "#^Property App\\\\Livewire\\\\MineAreaManager\\:\\:\\$rules has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/MineAreaManager.php
-
-		-
 			message: "#^Access to an undefined property Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\:\\:\\$currentTeam\\.$#"
 			count: 1
 			path: app/Livewire/Navbar.php
@@ -3236,16 +3196,6 @@ parameters:
 			path: app/Livewire/ProductionDashboard.php
 
 		-
-			message: "#^Property App\\\\Livewire\\\\ProductionDashboard\\:\\:\\$productionService has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/ProductionDashboard.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\ProductionDashboard\\:\\:\\$team has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/ProductionDashboard.php
-
-		-
 			message: "#^Using nullsafe property access \"\\?\\-\\>id\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
 			count: 2
 			path: app/Livewire/ProductionDashboard.php
@@ -3322,21 +3272,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Livewire\\\\ReportGenerator\\:\\:toggleMachine\\(\\) has parameter \\$machineId with no type specified\\.$#"
-			count: 1
-			path: app/Livewire/ReportGenerator.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\ReportGenerator\\:\\:\\$messages has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/ReportGenerator.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\ReportGenerator\\:\\:\\$reportTypes has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/ReportGenerator.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\ReportGenerator\\:\\:\\$rules has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/ReportGenerator.php
 
@@ -3437,16 +3372,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Machine\\:\\:select\\(\\) invoked with 2 parameters, 0\\-1 required\\.$#"
-			count: 1
-			path: app/Livewire/Reports.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\Reports\\:\\:\\$machinesList with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
-			count: 1
-			path: app/Livewire/Reports.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\Reports\\:\\:\\$reportTypes has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/Reports.php
 
@@ -3571,11 +3496,6 @@ parameters:
 			path: app/Livewire/RoutePlanning.php
 
 		-
-			message: "#^Property App\\\\Livewire\\\\RoutePlanning\\:\\:\\$rules has no type specified\\.$#"
-			count: 1
-			path: app/Livewire/RoutePlanning.php
-
-		-
 			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
 			count: 1
 			path: app/Livewire/RoutePlanning.php
@@ -3677,11 +3597,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Livewire\\\\Settings\\:\\:updateUserRole\\(\\) has parameter \\$userId with no type specified\\.$#"
-			count: 1
-			path: app/Livewire/Settings.php
-
-		-
-			message: "#^Property App\\\\Livewire\\\\Settings\\:\\:\\$rules has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/Settings.php
 
@@ -7906,27 +7821,12 @@ parameters:
 			path: app/Models/TeamInvitation.php
 
 		-
-			message: "#^Generic type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Team\\> in PHPDoc tag @return does not specify all template types of class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: "#^Generic type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\Team\\> in PHPDoc tag @return does not specify all template types of class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: app/Models/User.php
-
-		-
 			message: "#^Method App\\\\Models\\\\User\\:\\:assignRole\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Models/User.php
 
 		-
 			message: "#^Method App\\\\Models\\\\User\\:\\:assignRole\\(\\) has parameter \\$role with no type specified\\.$#"
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: "#^Method App\\\\Models\\\\User\\:\\:currentTeam\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Team\\> but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Team, \\$this\\(App\\\\Models\\\\User\\)\\>\\.$#"
 			count: 1
 			path: app/Models/User.php
 
@@ -7952,11 +7852,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\User\\:\\:hasRole\\(\\) has parameter \\$role with no type specified\\.$#"
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: "#^Method App\\\\Models\\\\User\\:\\:ownedTeams\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\Team\\> but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\Team, \\$this\\(App\\\\Models\\\\User\\)\\>\\.$#"
 			count: 1
 			path: app/Models/User.php
 

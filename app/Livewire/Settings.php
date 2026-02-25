@@ -44,8 +44,7 @@ class Settings extends Component
     public string $quietHoursEnd = '08:00';
     public bool $quietHoursEnabled = false;
 
-    protected $rules = [
-        'teamName' => 'required|string|max:255',
+    protected array $rules = [
         'teamEmail' => 'nullable|email|max:255',
         'timezone' => 'required|timezone',
         'language' => 'required|in:en,es,fr,de,pt,zh,ar,af,zu',

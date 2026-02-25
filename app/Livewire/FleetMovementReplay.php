@@ -36,7 +36,7 @@ class FleetMovementReplay extends Component
     public float $centerLng = 28.0473;
     public int $zoomLevel = 10;
     
-    protected $listeners = [
+    protected array $listeners = [
         'playback-stopped' => 'handlePlaybackStopped',
         'position-updated' => 'handlePositionUpdated',
         // Allow client to emit a loadReplay event to trigger the existing method

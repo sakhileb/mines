@@ -223,7 +223,7 @@ class User extends Authenticatable
     /**
      * Get the teams owned by the user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Team>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Team, User>
      */
     public function ownedTeams()
     {
@@ -233,7 +233,7 @@ class User extends Authenticatable
     /**
      * Get the current team of the user's context.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Team>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Team, User>
      */
     public function currentTeam()
     {
