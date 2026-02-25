@@ -15,6 +15,21 @@ use App\Mail\ReportReadyMail;
  * 
  * Stores generated reports with configuration and file storage
  *
+ * @property int $id
+ * @property int $team_id
+ * @property string $title
+ * @property string $type
+ * @property string $status
+ * @property string|null $file_path
+ * @property int|null $file_size
+ * @property string|null $format
+ * @property array|null $filters
+ * @property int|string|null $generated_by
+ * @property \Carbon\Carbon|null $generated_at
+ * @property \Carbon\Carbon|null $expires_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Report where(string $column, mixed $operator = null, mixed $value = null)
  * @method static \Illuminate\Database\Eloquent\Builder|Report whereIn(string $column, array $values)
  * @method static \Illuminate\Database\Eloquent\Builder|Report orderBy(string $column, string $direction = 'asc')

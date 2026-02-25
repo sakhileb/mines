@@ -12,6 +12,25 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * 
  * Represents a mining area/site within a team
  *
+ * @property int $id
+ * @property int $team_id
+ * @property string $name
+ * @property string|null $description
+ * @property string|null $location
+ * @property array|null $coordinates
+ * @property float|null $center_latitude
+ * @property float|null $center_longitude
+ * @property float|null $latitude
+ * @property float|null $longitude
+ * @property float|null $area_size_hectares
+ * @property string $status
+ * @property string|null $manager_name
+ * @property string|null $manager_contact
+ * @property array|null $metadata
+ * @property \Carbon\Carbon|null $deleted_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|MineArea where(string $column, mixed $operator = null, mixed $value = null)
  * @method static \Illuminate\Database\Eloquent\Builder|MineArea whereIn(string $column, array $values)
  * @method static \Illuminate\Database\Eloquent\Builder|MineArea orderBy(string $column, string $direction = 'asc')

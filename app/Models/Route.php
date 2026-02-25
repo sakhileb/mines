@@ -13,6 +13,36 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Represents a planned route for a machine from point A to point B
  * Includes waypoints, distance, fuel consumption, and time estimates
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int|null $machine_id
+ * @property int|null $mine_area_id
+ * @property string $name
+ * @property string|null $description
+ * @property float $start_latitude
+ * @property float $start_longitude
+ * @property float $end_latitude
+ * @property float $end_longitude
+ * @property float $total_distance
+ * @property int $estimated_time
+ * @property float $estimated_fuel
+ * @property string|null $route_type
+ * @property int|null $speed_limit
+ * @property string $status
+ * @property array|null $metadata
+ * @property array|null $route_geometry
+ * @property float $fuel_savings
+ * @property int $time_savings
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Route where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route orderBy(string $column, string $direction = 'asc')
+ * @method static Route|null find(mixed $id, array $columns = ['*'])
+ * @method static Route findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
  */
 class Route extends Model
 {

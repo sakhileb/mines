@@ -19,6 +19,31 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * Represents a mining machine (Volvo, CAT, Komatsu, Bell truck, etc.)
  * Tracks metadata, status, and integrations with manufacturer systems
  *
+ * @property int $id
+ * @property int $team_id
+ * @property string $name
+ * @property string $machine_type
+ * @property string $manufacturer
+ * @property string $model
+ * @property int|null $year_of_manufacture
+ * @property string|null $registration_number
+ * @property string|null $serial_number
+ * @property string|null $manufacturer_id
+ * @property float $capacity
+ * @property float $fuel_capacity
+ * @property float $hours_meter
+ * @property string $status
+ * @property float|null $last_location_latitude
+ * @property float|null $last_location_longitude
+ * @property \Carbon\Carbon|null $last_location_update
+ * @property int|null $integration_id
+ * @property int|null $mine_area_id
+ * @property int|null $excavator_id
+ * @property \Carbon\Carbon|null $assigned_to_excavator_at
+ * @property string|null $notes
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Machine where(string $column, mixed $operator = null, mixed $value = null)
  * @method static \Illuminate\Database\Eloquent\Builder|Machine whereIn(string $column, array $values)
  * @method static \Illuminate\Database\Eloquent\Builder|Machine orderBy(string $column, string $direction = 'asc')

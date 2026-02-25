@@ -11,6 +11,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * FuelTank Model
  *
+ * @property int $id
+ * @property int $team_id
+ * @property int|null $mine_area_id
+ * @property string $name
+ * @property string|null $tank_number
+ * @property string|null $location_description
+ * @property string|float|null $location_latitude
+ * @property string|float|null $location_longitude
+ * @property string|float $capacity_liters
+ * @property string|float $current_level_liters
+ * @property string|float $minimum_level_liters
+ * @property string|null $fuel_type
+ * @property string $status
+ * @property string|\Carbon\Carbon|null $last_inspection_date
+ * @property string|\Carbon\Carbon|null $next_inspection_date
+ * @property string|null $notes
+ * @property float $fill_percentage
+ * @property float $available_capacity
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|FuelTank where(string $column, mixed $operator = null, mixed $value = null)
  * @method static \Illuminate\Database\Eloquent\Builder|FuelTank whereIn(string $column, array $values)
  * @method static \Illuminate\Database\Eloquent\Builder|FuelTank orderBy(string $column, string $direction = 'asc')

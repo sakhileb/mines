@@ -11,6 +11,41 @@ class FuelTransaction extends Model
 {
     use HasFactory, HasTeamFilters;
 
+    /**
+     * FuelTransaction Model
+     *
+     * @property int $id
+     * @property int $team_id
+     * @property int|null $monthly_allocation_id
+     * @property int|null $fuel_tank_id
+     * @property int|null $machine_id
+     * @property int|null $user_id
+     * @property string $transaction_type
+     * @property string|float $quantity_liters
+     * @property string|float $unit_price
+     * @property string|float $total_cost
+     * @property string|null $fuel_type
+     * @property \Carbon\Carbon $transaction_date
+     * @property string|float|null $odometer_reading
+     * @property string|float|null $machine_hours
+     * @property string|null $supplier
+     * @property string|null $invoice_number
+     * @property string|null $receipt_file_path
+     * @property int|null $from_tank_id
+     * @property int|null $to_tank_id
+     * @property string|null $notes
+     * @property float|null $cost_per_liter
+     * @property \Carbon\Carbon $created_at
+     * @property \Carbon\Carbon $updated_at
+     *
+     * @method static \Illuminate\Database\Eloquent\Builder|FuelTransaction where(string $column, mixed $operator = null, mixed $value = null)
+     * @method static \Illuminate\Database\Eloquent\Builder|FuelTransaction whereIn(string $column, array $values)
+     * @method static \Illuminate\Database\Eloquent\Builder|FuelTransaction orderBy(string $column, string $direction = 'asc')
+     * @method static FuelTransaction|null find(mixed $id, array $columns = ['*'])
+     * @method static FuelTransaction findOrFail(mixed $id, array $columns = ['*'])
+     * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+     */
+
     protected $fillable = [
         'team_id',
         'monthly_allocation_id',
