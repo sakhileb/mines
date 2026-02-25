@@ -47,8 +47,7 @@ class RoutePlanning extends Component
     public array $routes = [];
     public ?int $selectedRouteId = null;
     
-    protected $rules = [
-        'name' => 'required|min:3|max:255',
+    protected array $rules = [
         'machineId' => 'nullable|exists:machines,id',
         'mineAreaId' => 'nullable|exists:mine_areas,id',
         'startLat' => 'required|numeric|between:-90,90',

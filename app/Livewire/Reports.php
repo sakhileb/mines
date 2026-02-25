@@ -11,6 +11,7 @@ use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class Reports extends Component
 {
@@ -25,11 +26,12 @@ class Reports extends Component
     public string $selectedMineAreaId = '';
     public string $selectedGeofenceId = '';
     public string $selectedMachineId = '';
+    /** @var \Illuminate\Support\Collection<int, Machine>|null */
     public ?\Illuminate\Support\Collection $machinesList = null;
     public bool $showDeleteConfirm = false;
     public ?int $deleteReportId = null;
 
-    protected $reportTypes = [
+    protected array $reportTypes = [
         'production' => 'Production Summary',
         'fleet_utilization' => 'Fleet Utilization',
         'maintenance_schedule' => 'Maintenance Schedule',
@@ -110,8 +112,8 @@ class Reports extends Component
         
         try {
             // Delete associated files if they exist
-            if ($report->file_path && \Storage::exists($report->file_path)) {
-                \Storage::delete($report->file_path);
+            if ($report->file_path && Storage::exists($report->file_path)) {
+                Storage::delete($report->file_path);
             }
             
             $report->delete();
@@ -172,13 +174,13 @@ class Reports extends Component
         
         // Prevent path traversal attacks
         if ($report->file_path && !str_contains($report->file_path, '..')) {
-            if (\Storage::exists($report->file_path)) {
+            if (Storage::exists($report->file_path)) {
                 Log::info('User downloaded report', [
                     'user_id' => Auth::id(),
                     'report_id' => $reportId,
                 ]);
                 
-                return \Storage::download($report->file_path, $report->title . '.' . $report->format);
+                return Storage::download($report->file_path, $report->title . '.' . $report->format);
             }
         }
         

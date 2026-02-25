@@ -28,7 +28,7 @@ class ReportGenerator extends Component
     public bool $autoSchedule = false;
     public string $scheduleFrequency = 'weekly';
 
-    protected $reportTypes = [
+    protected array $reportTypes = [
         'production' => [
             'label' => 'Production Summary',
             'description' => 'Total material extracted, production rates, and efficiency metrics',
@@ -61,7 +61,7 @@ class ReportGenerator extends Component
         ],
     ];
 
-    protected $rules = [
+    protected array $rules = [
         'reportName' => 'required|string|max:255',
         'reportType' => 'required|in:production,fleet_utilization,maintenance_schedule,fuel_consumption,material_tracking,downtime_analysis',
         'description' => 'nullable|string|max:1000',
@@ -72,7 +72,7 @@ class ReportGenerator extends Component
         'selectedGeofences.*' => 'nullable|exists:geofences,id',
     ];
 
-    protected $messages = [
+    protected array $messages = [
         'reportName.required' => 'Please enter a report name.',
         'startDate.required' => 'Please select a start date.',
         'endDate.required' => 'Please select an end date.',

@@ -37,8 +37,8 @@ class ProductionDashboard extends Component
     public string $status = 'completed';
     public string $notes = '';
 
-    protected $productionService;
-    protected $team;
+    protected ?ProductionService $productionService = null;
+    protected ?\App\Models\Team $team = null;
     public int $teamId = 0;
 
     public function mount()
