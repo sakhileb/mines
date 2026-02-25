@@ -214,8 +214,10 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
      * Live Location endpoint (real-time)
      */
     Route::get('/live-locations', function (Request $request) {
-        $machines = \App\Models\Machine::select('id', 'name', 'machine_type', 'status', 
-            'last_location_latitude', 'last_location_longitude', 'last_location_update')
+        $machines = \App\Models\Machine::select(
+            'id', 'name', 'machine_type', 'status', 
+            'last_location_latitude', 'last_location_longitude', 'last_location_update'
+        )
             ->whereNotNull('last_location_latitude')
             ->get();
 
