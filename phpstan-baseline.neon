@@ -5816,42 +5816,12 @@ parameters:
 			path: app/Models/Machine.php
 
 		-
-			message: "#^Class App\\\\Models\\\\Machine has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Machine has PHPDoc tag @method for method find\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Machine has PHPDoc tag @method for method findOrFail\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Machine has PHPDoc tag @method for method paginate\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Machine has PHPDoc tag @method for method select\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Class App\\\\Models\\\\Machine has PHPDoc tag @method for method whereIn\\(\\) parameter \\#2 \\$values with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
 			message: "#^Class App\\\\Models\\\\Machine uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/Machine.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Machine\\:\\:activeAlerts\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\Machine\\:\\:activeAlerts\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/Machine.php
 
@@ -5862,11 +5832,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Machine\\:\\:areaAssignments\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Machine\\:\\:assignToExcavator\\(\\) has parameter \\$excavatorId with no type specified\\.$#"
 			count: 1
 			path: app/Models/Machine.php
 
@@ -5882,11 +5847,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Machine\\:\\:geofenceEntries\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Machine\\:\\:getLatestMetric\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Models/Machine.php
 
@@ -5931,27 +5891,7 @@ parameters:
 			path: app/Models/Machine.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Machine\\:\\:updateLocation\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Machine\\:\\:updateLocation\\(\\) has parameter \\$latitude with no type specified\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Machine\\:\\:updateLocation\\(\\) has parameter \\$longitude with no type specified\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
 			message: "#^Method App\\\\Models\\\\Machine\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
-			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Machine\\:\\:all\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
 			count: 1
 			path: app/Models/Machine.php
 
@@ -5966,7 +5906,7 @@ parameters:
 			path: app/Models/Machine.php
 
 		-
-			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Machine\\:\\:paginate\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Machine\\:\\:paginate\\(\\) return type contains generic class Illuminate\\\\Pagination\\\\Paginator but does not specify its types\\: TKey, TValue$#"
 			count: 1
 			path: app/Models/Machine.php
 
@@ -6281,26 +6221,6 @@ parameters:
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Class App\\\\Models\\\\MaintenanceAlert has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/MaintenanceAlert.php
-
-		-
-			message: "#^Class App\\\\Models\\\\MaintenanceAlert has PHPDoc tag @method for method find\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/MaintenanceAlert.php
-
-		-
-			message: "#^Class App\\\\Models\\\\MaintenanceAlert has PHPDoc tag @method for method findOrFail\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/MaintenanceAlert.php
-
-		-
-			message: "#^Class App\\\\Models\\\\MaintenanceAlert has PHPDoc tag @method for method whereIn\\(\\) parameter \\#2 \\$values with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Models/MaintenanceAlert.php
-
-		-
 			message: "#^Class App\\\\Models\\\\MaintenanceAlert uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
@@ -6326,32 +6246,32 @@ parameters:
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeActive\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeActive\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeActive\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeActive\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeAlertType\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeAlertType\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeAlertType\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeAlertType\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeCritical\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeCritical\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeCritical\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeCritical\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
@@ -6366,32 +6286,42 @@ parameters:
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeSeverity\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeSeverity\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeSeverity\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeSeverity\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnacknowledged\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnacknowledged\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnacknowledged\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnacknowledged\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnresolved\\(\\) has no return type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnacknowledged\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Builder but returns Illuminate\\\\Database\\\\Query\\\\Builder\\.$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnresolved\\(\\) has parameter \\$query with no type specified\\.$#"
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnresolved\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/MaintenanceAlert.php
+
+		-
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnresolved\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/MaintenanceAlert.php
+
+		-
+			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:scopeUnresolved\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Builder but returns Illuminate\\\\Database\\\\Query\\\\Builder\\.$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
@@ -6402,11 +6332,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\MaintenanceAlert\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
-			count: 1
-			path: app/Models/MaintenanceAlert.php
-
-		-
-			message: "#^PHPDoc tag @method for method App\\\\Models\\\\MaintenanceAlert\\:\\:all\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
 			count: 1
 			path: app/Models/MaintenanceAlert.php
 
@@ -9686,7 +9611,7 @@ parameters:
 			path: app/Services/MaintenanceHealthService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\MaintenanceHealthService\\:\\:checkSchedules\\(\\) return type has no value type specified in iterable type array\\.$#"
+			message: "#^Method App\\\\Services\\\\MaintenanceHealthService\\:\\:checkSchedules\\(\\) should return array\\<int, App\\\\Models\\\\MaintenanceSchedule\\> but returns array\\<int, Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\.$#"
 			count: 1
 			path: app/Services/MaintenanceHealthService.php
 
@@ -10026,42 +9951,27 @@ parameters:
 			path: app/Services/RealTimeAlertService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchComplianceAlert\\(\\) has no return type specified\\.$#"
+			message: "#^Access to an undefined property object\\:\\:\\$description\\.$#"
 			count: 1
 			path: app/Services/RealTimeAlertService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchComplianceAlert\\(\\) has parameter \\$teamId with no type specified\\.$#"
+			message: "#^Access to an undefined property object\\:\\:\\$id\\.$#"
 			count: 1
 			path: app/Services/RealTimeAlertService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchComplianceAlert\\(\\) has parameter \\$violation with no type specified\\.$#"
+			message: "#^Access to an undefined property object\\:\\:\\$remediation_deadline\\.$#"
 			count: 1
 			path: app/Services/RealTimeAlertService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchMaintenanceAlert\\(\\) has no return type specified\\.$#"
+			message: "#^Access to an undefined property object\\:\\:\\$severity\\.$#"
 			count: 1
 			path: app/Services/RealTimeAlertService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchMaintenanceAlert\\(\\) has parameter \\$predictedDate with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchMaintenanceAlert\\(\\) has parameter \\$probability with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchMaintenanceAlert\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchSensorAlert\\(\\) has no return type specified\\.$#"
+			message: "#^Access to an undefined property object\\:\\:\\$violation_type\\.$#"
 			count: 1
 			path: app/Services/RealTimeAlertService.php
 
@@ -10071,107 +9981,12 @@ parameters:
 			path: app/Services/RealTimeAlertService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchSensorAlert\\(\\) has parameter \\$teamId with no type specified\\.$#"
+			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getRecentAlerts\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Notification\\> but returns Illuminate\\\\Support\\\\Collection\\<int, stdClass\\>\\.$#"
 			count: 1
 			path: app/Services/RealTimeAlertService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchSensorStatusAlert\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchSensorStatusAlert\\(\\) has parameter \\$newStatus with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchSensorStatusAlert\\(\\) has parameter \\$oldStatus with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:dispatchSensorStatusAlert\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getAlertStats\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getAlertStats\\(\\) has parameter \\$days with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getAlertStats\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getRecentAlerts\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getRecentAlerts\\(\\) has parameter \\$limit with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getRecentAlerts\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getUnreadAlerts\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getUnreadAlerts\\(\\) has parameter \\$limit with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getUnreadAlerts\\(\\) has parameter \\$teamId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getUnreadAlerts\\(\\) has parameter \\$userId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:markAsRead\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:markAsRead\\(\\) has parameter \\$notificationId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:markAsRead\\(\\) has parameter \\$userId with no type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:markMultipleAsRead\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:markMultipleAsRead\\(\\) has parameter \\$notificationIds with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: app/Services/RealTimeAlertService.php
-
-		-
-			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:markMultipleAsRead\\(\\) has parameter \\$userId with no type specified\\.$#"
+			message: "#^Method App\\\\Services\\\\RealTimeAlertService\\:\\:getUnreadAlerts\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Notification\\> but returns Illuminate\\\\Support\\\\Collection\\<int, stdClass\\>\\.$#"
 			count: 1
 			path: app/Services/RealTimeAlertService.php
 
@@ -10566,7 +10381,7 @@ parameters:
 			path: database/seeders/RealtimeScenarioSeeder.php
 
 		-
-			message: "#^Parameter \\#1 \\$columns of static method App\\\\Models\\\\Machine\\:\\:select\\(\\) expects array, string given\\.$#"
+			message: "#^Parameter \\#1 \\$columns of static method App\\\\Models\\\\Machine\\:\\:select\\(\\) expects array\\<string\\>, string given\\.$#"
 			count: 1
 			path: routes/api.php
 

@@ -29,11 +29,11 @@ use App\Traits\HasTeamFilters;
  * @property \Carbon\Carbon $updated_at
  *
  * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceAlert where(string $column, mixed $operator = null, mixed $value = null)
- * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceAlert whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceAlert whereIn(string $column, array<string|int> $values)
  * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceAlert orderBy(string $column, string $direction = 'asc')
- * @method static MaintenanceAlert|null find(mixed $id, array $columns = ['*'])
- * @method static MaintenanceAlert findOrFail(mixed $id, array $columns = ['*'])
- * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ * @method static MaintenanceAlert|null find(mixed $id, array<string> $columns = ['*'])
+ * @method static MaintenanceAlert findOrFail(mixed $id, array<string> $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int,MaintenanceAlert> all(array<string> $columns = ['*'])
  */
 class MaintenanceAlert extends Model
 {
@@ -93,32 +93,32 @@ class MaintenanceAlert extends Model
     /**
      * Scopes
      */
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('status', 'active');
     }
 
-    public function scopeCritical($query)
+    public function scopeCritical(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('severity', 'critical');
     }
 
-    public function scopeUnacknowledged($query)
+    public function scopeUnacknowledged(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereNull('acknowledged_at');
     }
 
-    public function scopeUnresolved($query)
+    public function scopeUnresolved(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereNull('resolved_at');
     }
 
-    public function scopeAlertType($query, string $type)
+    public function scopeAlertType(\Illuminate\Database\Eloquent\Builder $query, string $type): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('alert_type', $type);
     }
 
-    public function scopeSeverity($query, string $severity)
+    public function scopeSeverity(\Illuminate\Database\Eloquent\Builder $query, string $severity): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('severity', $severity);
     }
