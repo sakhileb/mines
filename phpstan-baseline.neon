@@ -2376,7 +2376,7 @@ parameters:
 			path: app/Livewire/GeofenceDetail.php
 
 		-
-			message: "#^Method Illuminate\\\\Database\\\\Query\\\\Builder\\:\\:select\\(\\) invoked with 2 parameters, 0\\-1 required\\.$#"
+			message: "#^Method App\\\\Models\\\\Machine\\:\\:select\\(\\) invoked with 2 parameters, 0\\-1 required\\.$#"
 			count: 1
 			path: app/Livewire/GeofenceDetail.php
 
