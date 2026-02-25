@@ -36,6 +36,7 @@ class FleetMovementReplay extends Component
     public float $centerLng = 28.0473;
     public int $zoomLevel = 10;
     
+    /** @var array<string, string> */
     protected $listeners = [
         'playback-stopped' => 'handlePlaybackStopped',
         'position-updated' => 'handlePositionUpdated',

@@ -26,6 +26,7 @@ class Reports extends Component
     public string $selectedMineAreaId = '';
     public string $selectedGeofenceId = '';
     public string $selectedMachineId = '';
+    /** @var \Illuminate\Support\Collection<int, mixed>|null */
     public ?\Illuminate\Support\Collection $machinesList = null;
     public bool $showDeleteConfirm = false;
     public ?int $deleteReportId = null;
