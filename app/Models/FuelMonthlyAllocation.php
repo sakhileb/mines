@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * FuelMonthlyAllocation Model
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|FuelMonthlyAllocation where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|FuelMonthlyAllocation whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|FuelMonthlyAllocation orderBy(string $column, string $direction = 'asc')
+ * @method static FuelMonthlyAllocation|null find(mixed $id, array $columns = ['*'])
+ * @method static FuelMonthlyAllocation findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class FuelMonthlyAllocation extends Model
 {
     use HasFactory, HasTeamFilters;

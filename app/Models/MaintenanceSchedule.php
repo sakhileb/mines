@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * MaintenanceSchedule Model
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceSchedule where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceSchedule whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceSchedule orderBy(string $column, string $direction = 'asc')
+ * @method static MaintenanceSchedule|null find(mixed $id, array $columns = ['*'])
+ * @method static MaintenanceSchedule findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class MaintenanceSchedule extends Model
 {
     use HasFactory, HasTeamFilters;

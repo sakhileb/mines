@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * ProductionRecord Model
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionRecord where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionRecord whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductionRecord orderBy(string $column, string $direction = 'asc')
+ * @method static ProductionRecord|null find(mixed $id, array $columns = ['*'])
+ * @method static ProductionRecord findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ */
 class ProductionRecord extends Model
 {
     use SoftDeletes;
