@@ -253,6 +253,7 @@ class ProductionDashboard extends Component
         ]);
 
         if ($this->editingRecordId) {
+            /** @var \App\Models\ProductionRecord $record */
             $record = ProductionRecord::where('team_id', $this->teamId)->findOrFail($this->editingRecordId);
             $this->productionService()->updateProductionRecord($record, [
                 ...$validated,
@@ -273,6 +274,7 @@ class ProductionDashboard extends Component
 
     public function deleteRecord($id)
     {
+        /** @var \App\Models\ProductionRecord $record */
         $record = ProductionRecord::where('team_id', $this->teamId)->findOrFail($id);
         $this->productionService()->deleteProductionRecord($record);
     }
