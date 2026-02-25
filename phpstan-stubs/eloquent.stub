@@ -49,7 +49,7 @@ if (false) {
         
         /**
          * @param array<int|string, string> $columns
-         * @return Collection<static>
+         * @return Collection<int, static>
          */
         public function get($columns = ['*']) {}
         
@@ -67,7 +67,7 @@ if (false) {
         
         /**
          * @param array<int|string, string> $columns
-         * @return Collection<static>
+         * @return Collection<int, static>
          */
         public function all($columns = ['*']) {}
         
@@ -80,7 +80,7 @@ if (false) {
         /**
          * @param string|int $value
          * @param string|null $key
-         * @return Collection<mixed>
+         * @return Collection<int, mixed>
          */
         public function pluck($value, $key = null) {}
         
@@ -159,7 +159,7 @@ if (false) {
          * @param array<int|string, string> $columns
          * @param string $pageName
          * @param int|null $page
-         * @return \Illuminate\Pagination\Paginator
+         * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
          */
         public function paginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null) {}
         

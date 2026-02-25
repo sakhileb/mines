@@ -220,21 +220,11 @@ class User extends Authenticatable
         return $this->roles()->detach($role->id);
     }
 
-    /**
-     * Get the teams owned by the user.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Team, User>
-     */
     public function ownedTeams()
     {
         return $this->hasMany(Team::class, 'user_id');
     }
 
-    /**
-     * Get the current team of the user's context.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Team, User>
-     */
     public function currentTeam()
     {
         return $this->belongsTo(Team::class, 'current_team_id');

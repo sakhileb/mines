@@ -47,6 +47,7 @@ class RoutePlanning extends Component
     public array $routes = [];
     public ?int $selectedRouteId = null;
     
+    /** @var array<string, string> */
     protected array $rules = [
         'machineId' => 'nullable|exists:machines,id',
         'mineAreaId' => 'nullable|exists:mine_areas,id',

@@ -43,6 +43,7 @@ class MineAreaManager extends Component
     public int $zoomLevel = 10;
     public bool $isDrawing = false;
 
+    /** @var array<string, string> */
     protected array $rules = [
         'name' => 'required|string|max:255',
         'description' => 'nullable|string|max:1000',

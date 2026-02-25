@@ -51,7 +51,9 @@ class AIOptimizationDashboard extends Component
         $this->analysisRunning = true;
         
         try {
-            $this->aiService->runComprehensiveAnalysis(
+            $aiService = $this->aiService;
+            assert($aiService !== null);
+            $aiService->runComprehensiveAnalysis(
                 auth()->user()->currentTeam,
                 auth()->user()
             );
@@ -166,7 +168,9 @@ class AIOptimizationDashboard extends Component
         $team = auth()->user()->currentTeam;
 
         // Get dashboard data
-        $dashboardData = $this->aiService->getDashboardInsights($team);
+        $aiService = $this->aiService;
+        assert($aiService !== null);
+        $dashboardData = $aiService->getDashboardInsights($team);
 
         // Get recommendations with filters
         $recommendationsQuery = AIRecommendation::where('team_id', $team->id)
