@@ -38,6 +38,8 @@ jobs:
           fi
       - name: Install composer deps
         run: composer install --no-interaction --no-progress --prefer-dist
+        env:
+          BROADCAST_DRIVER: log
       - name: Run composer audit
         run: |
           composer audit --format=json > composer-audit.json || true
@@ -92,6 +94,8 @@ jobs:
           fi
       - name: Install composer deps
         run: composer install --no-interaction --no-progress --prefer-dist
+        env:
+          BROADCAST_DRIVER: log
       - name: Run PHPStan if available
         run: |
           if [ -x vendor/bin/phpstan ]; then
