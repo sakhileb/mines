@@ -6,6 +6,8 @@ use App\Contracts\ManufacturerServiceInterface;
 
 class YanmarService extends BaseManufacturerService implements ManufacturerServiceInterface
 {
+    protected string $manufacturer = 'yanmar';
+
     public function testConnection(): bool
     {
         // Implement Yanmar API connection test
@@ -18,9 +20,44 @@ class YanmarService extends BaseManufacturerService implements ManufacturerServi
         return [];
     }
 
+    public function fetchMachineDetails(string $machineId): array
+    {
+        // Implement Yanmar API fetch machine details
+        return [];
+    }
+
+    public function fetchMachineLocation(string $machineId): ?array
+    {
+        // Implement Yanmar API fetch machine location
+        return null;
+    }
+
+    public function fetchMachineMetrics(string $machineId): array
+    {
+        // Implement Yanmar API fetch machine metrics
+        return [];
+    }
+
+    public function fetchMachineAlerts(string $machineId): array
+    {
+        // Implement Yanmar API fetch machine alerts
+        return [];
+    }
+
+    public function fetchMachineData(string $machineId): array
+    {
+        // Implement Yanmar API fetch comprehensive machine data
+        return [];
+    }
+
+    public function getManufacturer(): string
+    {
+        return $this->manufacturer;
+    }
+
     public function getLastError(): ?string
     {
         // Return last error if any
-        return null;
+        return $this->lastError;
     }
 }

@@ -131,4 +131,94 @@ class KubotaService extends BaseManufacturerService implements ManufacturerServi
     {
         return $this->lastError;
     }
+
+    /**
+     * Fetch machine details from Kubota API
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineDetails(string $machineId): array
+    {
+        // Return location and metrics as a composite detail view
+        $location = $this->fetchLocation($machineId);
+        return [
+            'location' => $location['location'] ?? [],
+            'success' => $location['success'] ?? false,
+        ];
+    }
+
+    /**
+     * Fetch machine location
+     * 
+     * @param string $machineId
+     * @return array|null
+     */
+    public function fetchMachineLocation(string $machineId): ?array
+    {
+        try {
+            $result = $this->fetchLocation($machineId);
+            return ($result['location'] ?? null) ?? null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Fetch machine metrics
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineMetrics(string $machineId): array
+    {
+        try {
+            $result = $this->fetchMetrics($machineId);
+            return $result['metrics'] ?? [];
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fetch machine alerts
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineAlerts(string $machineId): array
+    {
+        try {
+            $result = $this->fetchAlerts($machineId);
+            return $result['alerts'] ?? [];
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fetch comprehensive machine data
+     * 
+     * @param string $machineId
+     * @return array
+     */
+    public function fetchMachineData(string $machineId): array
+    {
+        return [
+            'details' => $this->fetchMachineDetails($machineId),
+            'location' => $this->fetchMachineLocation($machineId),
+            'metrics' => $this->fetchMachineMetrics($machineId),
+            'alerts' => $this->fetchMachineAlerts($machineId),
+        ];
+    }
+
+    /**
+     * Get the manufacturer name
+     * 
+     * @return string
+     */
+    public function getManufacturer(): string
+    {
+        return $this->manufacturer;
+    }
 }
