@@ -13,24 +13,24 @@ use Carbon\Carbon;
 
 class MaintenanceDashboard extends Component
 {
-    public $selectedPeriod = 'month';
-    public $showCriticalOnly = false;
+    public string $selectedPeriod = 'month';
+    public bool $showCriticalOnly = false;
     
     // Modal state
-    public $showBookingModal = false;
-    public $editingScheduleId = null;
+    public bool $showBookingModal = false;
+    public ?int $editingScheduleId = null;
     
     // Form fields
-    public $machine_id = '';
-    public $maintenance_type = 'preventive';
-    public $title = '';
-    public $description = '';
-    public $scheduled_date = '';
-    public $estimated_duration_hours = 0;
-    public $estimated_cost = 0;
-    public $priority = 'medium';
-    public $required_parts = '';
-    public $technician_notes = '';
+    public string $machine_id = '';
+    public string $maintenance_type = 'preventive';
+    public string $title = '';
+    public string $description = '';
+    public string $scheduled_date = '';
+    public int $estimated_duration_hours = 0;
+    public int $estimated_cost = 0;
+    public string $priority = 'medium';
+    public string $required_parts = '';
+    public string $technician_notes = '';
     
     public function openBookingModal()
     {

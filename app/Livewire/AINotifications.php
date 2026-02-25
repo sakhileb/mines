@@ -8,9 +8,9 @@ use Livewire\Attributes\On;
 
 class AINotifications extends Component
 {
-    public $notifications = [];
-    public $unreadCount = 0;
-    public $showPanel = false;
+    public array $notifications = [];
+    public int $unreadCount = 0;
+    public bool $showPanel = false;
 
     public function mount()
     {

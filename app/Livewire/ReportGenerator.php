@@ -12,20 +12,20 @@ use Illuminate\Support\Facades\DB;
 class ReportGenerator extends Component
 {
     use BrowserEventBridge;
-    public $step = 1;
-    public $reportName = '';
-    public $reportType = 'production';
-    public $description = '';
-    public $startDate = '';
-    public $endDate = '';
-    public $format = 'pdf';
-    public $selectedMachines = [];
-    public $selectedGeofences = [];
-    public $includeMetrics = true;
-    public $includeAlerts = true;
-    public $includeChart = true;
-    public $autoSchedule = false;
-    public $scheduleFrequency = 'weekly';
+    public int $step = 1;
+    public string $reportName = '';
+    public string $reportType = 'production';
+    public string $description = '';
+    public string $startDate = '';
+    public string $endDate = '';
+    public string $format = 'pdf';
+    public array $selectedMachines = [];
+    public array $selectedGeofences = [];
+    public bool $includeMetrics = true;
+    public bool $includeAlerts = true;
+    public bool $includeChart = true;
+    public bool $autoSchedule = false;
+    public string $scheduleFrequency = 'weekly';
 
     protected $reportTypes = [
         'production' => [

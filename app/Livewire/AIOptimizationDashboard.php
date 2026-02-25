@@ -14,18 +14,18 @@ class AIOptimizationDashboard extends Component
 {
     use WithPagination, BrowserEventBridge;
 
-    public $activeTab = 'overview';
-    public $selectedCategory = 'all';
-    public $selectedPriority = 'all';
-    public $filters = [
+    public string $activeTab = 'overview';
+    public string $selectedCategory = 'all';
+    public string $selectedPriority = 'all';
+    public array $filters = [
         'category' => '',
         'priority' => '',
         'status' => '',
     ];
-    public $analysisRunning = false;
-    public $pendingRecommendationId = null;
-    public $pendingRecommendationAction = null; // 'implement'|'reject'
-    public $showRecommendationConfirm = false;
+    public bool $analysisRunning = false;
+    public ?int $pendingRecommendationId = null;
+    public ?string $pendingRecommendationAction = null; // 'implement'|'reject'
+    public bool $showRecommendationConfirm = false;
 
     protected $aiService;
 

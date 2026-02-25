@@ -16,30 +16,30 @@ class ProductionDashboard extends Component
 {
     use WithPagination;
 
-    public $viewMode = 'overview'; // overview, records, targets, analytics
-    public $search = '';
-    public $dateFilter = 'month';
-    public $startDate = null;
-    public $endDate = null;
-    public $mineAreaFilter = null;
-    public $statusFilter = '';
-    public $showCreateModal = false;
-    public $showEditModal = false;
-    public $editingRecordId = null;
+    public string $viewMode = 'overview'; // overview, records, targets, analytics
+    public string $search = '';
+    public string $dateFilter = 'month';
+    public ?string $startDate = null;
+    public ?string $endDate = null;
+    public ?int $mineAreaFilter = null;
+    public string $statusFilter = '';
+    public bool $showCreateModal = false;
+    public bool $showEditModal = false;
+    public ?int $editingRecordId = null;
 
     // Form fields
-    public $record_date;
-    public $shift = 'day';
-    public $quantity_produced = '';
-    public $target_quantity = '';
-    public $mine_area_id = null;
-    public $machine_id = null;
-    public $status = 'completed';
-    public $notes = '';
+    public ?string $record_date = null;
+    public string $shift = 'day';
+    public string $quantity_produced = '';
+    public string $target_quantity = '';
+    public ?int $mine_area_id = null;
+    public ?int $machine_id = null;
+    public string $status = 'completed';
+    public string $notes = '';
 
     protected $productionService;
     protected $team;
-    public $teamId = 0;
+    public int $teamId = 0;
 
     public function mount()
     {

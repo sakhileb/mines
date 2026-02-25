@@ -19,46 +19,46 @@ class FuelManagement extends Component
 {
     use BrowserEventBridge;
     // Unified modal state
-    public $showManageModal = false;
-    public $manageTab = 'dispense'; // 'dispense', 'allocation', 'tank'
+    public bool $showManageModal = false;
+    public string $manageTab = 'dispense'; // 'dispense', 'allocation', 'tank'
 
     // Dispense Fuel form
-    public $transactionTankId = '';
-    public $transactionQuantity = '';
-    public $transactionType = 'dispensing';
-    public $transactionMineAreaId = '';
-    public $transactionError = '';
+    public string $transactionTankId = '';
+    public string $transactionQuantity = '';
+    public string $transactionType = 'dispensing';
+    public string $transactionMineAreaId = '';
+    public string $transactionError = '';
 
-    public $selectedPeriod = 'week';
-    public $showLowFuelOnly = false;
+    public string $selectedPeriod = 'week';
+    public bool $showLowFuelOnly = false;
 
     // Monthly allocation form
-    public $allocationYear;
-    public $allocationMonth;
-    public $allocatedLiters;
-    public $fuelPricePerLiter;
-    public $allocationNotes = '';
-    public $mineAreaId = '';
+    public ?int $allocationYear = null;
+    public ?int $allocationMonth = null;
+    public ?float $allocatedLiters = null;
+    public ?float $fuelPricePerLiter = null;
+    public string $allocationNotes = '';
+    public string $mineAreaId = '';
 
     // Tank creation form
-    public $tankName = '';
-    public $tankNumber = '';
-    public $tankCapacity = '';
-    public $tankMinimumLevel = '';
-    public $tankFuelType = 'diesel';
-    public $tankLocationDescription = '';
-    public $tankNotes = '';
-    public $tankMineAreaId = '';
-    public $selectedTankId = '';
+    public string $tankName = '';
+    public string $tankNumber = '';
+    public string $tankCapacity = '';
+    public string $tankMinimumLevel = '';
+    public string $tankFuelType = 'diesel';
+    public string $tankLocationDescription = '';
+    public string $tankNotes = '';
+    public string $tankMineAreaId = '';
+    public string $selectedTankId = '';
 
     // Refuel form
-    public $refuelTankId = '';
-    public $refuelQuantity = '';
-    public $refuelUnitPrice = null;
-    public $refuelNotes = '';
-    public $showRefuelModal = false;
-    public $showDeleteConfirm = false;
-    public $confirmDeleteTankId = null;
+    public string $refuelTankId = '';
+    public string $refuelQuantity = '';
+    public ?float $refuelUnitPrice = null;
+    public string $refuelNotes = '';
+    public bool $showRefuelModal = false;
+    public bool $showDeleteConfirm = false;
+    public ?int $confirmDeleteTankId = null;
     public function recordDispensingTransaction()
     {
         $this->transactionError = '';

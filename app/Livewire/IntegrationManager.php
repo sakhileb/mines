@@ -12,14 +12,14 @@ use Illuminate\Support\Facades\Log;
 class IntegrationManager extends Component
 {
     use BrowserEventBridge;
-    public $team;
-    public $integrations = [];
-    public $availableManufacturers = [];
-    public $showAddModal = false;
-    public $showTestModal = false;
-    public $selectedIntegration = null;
-    public $testResult = null;
-    public $formData = [
+    public mixed $team = null;
+    public array $integrations = [];
+    public array $availableManufacturers = [];
+    public bool $showAddModal = false;
+    public bool $showTestModal = false;
+    public mixed $selectedIntegration = null;
+    public mixed $testResult = null;
+    public array $formData = [
         'provider' => '',
         'name' => '',
         'endpoint' => '',

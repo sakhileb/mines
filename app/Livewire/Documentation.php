@@ -6,7 +6,7 @@ use Livewire\Component;
 
 class Documentation extends Component
 {
-    public $activeSection = 'getting-started';
+    public string $activeSection = 'getting-started';
     
     public function setSection($section)
     {

@@ -14,18 +14,18 @@ class Alerts extends Component
 {
     use WithPagination, RealtimeUpdates, BrowserEventBridge;
 
-    public $search = '';
-    public $sortBy = 'created_at';
-    public $sortDirection = 'desc';
-    public $selectedPriority = 'all';
-    public $selectedStatus = 'all';
-    public $selectedType = 'all';
-    public $showDetailsModal = false;
-    public $selectedAlertId = null;
-    public $pendingDismissAlertId = null;
-    public $showDismissConfirm = false;
+    public string $search = '';
+    public string $sortBy = 'created_at';
+    public string $sortDirection = 'desc';
+    public string $selectedPriority = 'all';
+    public string $selectedStatus = 'all';
+    public string $selectedType = 'all';
+    public bool $showDetailsModal = false;
+    public ?int $selectedAlertId = null;
+    public ?int $pendingDismissAlertId = null;
+    public bool $showDismissConfirm = false;
     // Track when a dismissed-unresolved alert was created so UI can render specially
-    public $recentlyDismissedUnresolved = [];
+    public array $recentlyDismissedUnresolved = [];
 
     protected $alertPriorities = [
         'critical' => 'Critical',

@@ -18,7 +18,7 @@ use WithPagination;
 
     // AI recommendation interaction state
     public array $lastAiRecommendations = [];
-    public $pendingRecommendationIndex = null;
+    public ?int $pendingRecommendationIndex = null;
     public bool $showRejectRecommendationModal = false;
     public string $rejectReason = '';
 

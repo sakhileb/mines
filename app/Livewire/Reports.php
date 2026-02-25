@@ -16,17 +16,17 @@ class Reports extends Component
     use BrowserEventBridge;
     use WithPagination;
 
-    public $search = '';
-    public $sortBy = 'created_at';
-    public $sortDirection = 'desc';
-    public $selectedType = 'all';
-    public $selectedStatus = 'all';
-    public $selectedMineAreaId = '';
-    public $selectedGeofenceId = '';
-    public $selectedMachineId = '';
-    public $machinesList = null;
-    public $showDeleteConfirm = false;
-    public $deleteReportId = null;
+    public string $search = '';
+    public string $sortBy = 'created_at';
+    public string $sortDirection = 'desc';
+    public string $selectedType = 'all';
+    public string $selectedStatus = 'all';
+    public string $selectedMineAreaId = '';
+    public string $selectedGeofenceId = '';
+    public string $selectedMachineId = '';
+    public ?\Illuminate\Support\Collection $machinesList = null;
+    public bool $showDeleteConfirm = false;
+    public ?int $deleteReportId = null;
 
     protected $reportTypes = [
         'production' => 'Production Summary',

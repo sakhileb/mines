@@ -52,7 +52,7 @@ class MineAreaDetail extends Component
     public bool $showUploadModal = false;
     public string $planTitle = '';
     public string $planDescription = '';
-    public $planFile = null;
+    public ?\Illuminate\Http\UploadedFile $planFile = null;
     public string $planFileType = 'pdf';
     public string $planVersion = '1.0';
     public string $planStatus = 'draft';

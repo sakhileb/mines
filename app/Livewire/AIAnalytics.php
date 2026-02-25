@@ -12,9 +12,9 @@ use Carbon\Carbon;
 
 class AIAnalytics extends Component
 {
-    public $timeRange = '30'; // days
-    public $selectedAgent = 'all';
-    public $showDetails = true;
+    public string $timeRange = '30'; // days
+    public string $selectedAgent = 'all';
+    public bool $showDetails = true;
 
     public function mount()
     {

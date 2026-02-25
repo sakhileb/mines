@@ -14,38 +14,38 @@ use Livewire\Component;
 
 class RoutePlanning extends Component
 {
-    public $name = '';
-    public $description = '';
-    public $machineId = null;
-    public $mineAreaId = null;
-    public $routeType = 'optimal';
-    public $speedLimit = null;
+    public string $name = '';
+    public string $description = '';
+    public ?int $machineId = null;
+    public ?int $mineAreaId = null;
+    public string $routeType = 'optimal';
+    public ?float $speedLimit = null;
     
     // Route coordinates
-    public $startLat = null;
-    public $startLon = null;
-    public $endLat = null;
-    public $endLon = null;
+    public ?float $startLat = null;
+    public ?float $startLon = null;
+    public ?float $endLat = null;
+    public ?float $endLon = null;
     
     // Calculated route data
-    public $calculatedRoute = null;
-    public $savedRoute = null;
+    public mixed $calculatedRoute = null;
+    public mixed $savedRoute = null;
     
     // UI State
-    public $showCalculatedRoute = false;
-    public $isCalculating = false;
-    public $routeSaved = false;
-    public $isLoading = false;
+    public bool $showCalculatedRoute = false;
+    public bool $isCalculating = false;
+    public bool $routeSaved = false;
+    public bool $isLoading = false;
     
     // Map settings
-    public $centerLat = -26.2041;
-    public $centerLng = 28.0473;
-    public $zoomLevel = 10;
+    public float $centerLat = -26.2041;
+    public float $centerLng = 28.0473;
+    public int $zoomLevel = 10;
     
     // View mode
-    public $viewMode = 'create'; // create, view
-    public $routes = [];
-    public $selectedRouteId = null;
+    public string $viewMode = 'create'; // create, view
+    public array $routes = [];
+    public ?int $selectedRouteId = null;
     
     protected $rules = [
         'name' => 'required|min:3|max:255',
