@@ -15,7 +15,7 @@
         "autoprefixer": "^10.4.16",
         "axios": "^1.13.2",
         "concurrently": "^9.0.1",
-        "daisyui": "^5.5.14",
+        "daisyui": "^5.5.19",
         "laravel-echo": "^2.3.0",
         "laravel-vite-plugin": "^2.0.0",
         "postcss": "^8.4.32",
