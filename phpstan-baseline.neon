@@ -11,21 +11,6 @@ parameters:
 			path: app/Actions/Jetstream/AddTeamMember.php
 
 		-
-			message: "#^Method App\\\\Actions\\\\Jetstream\\\\CreateTeam\\:\\:create\\(\\) should return App\\\\Models\\\\Team but returns Illuminate\\\\Database\\\\Eloquent\\\\Model\\.$#"
-			count: 1
-			path: app/Actions/Jetstream/CreateTeam.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\User\\:\\:\\$ownedTeams\\.$#"
-			count: 1
-			path: app/Actions/Jetstream/DeleteUser.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\User\\:\\:\\$tokens\\.$#"
-			count: 1
-			path: app/Actions/Jetstream/DeleteUser.php
-
-		-
 			message: "#^Method App\\\\Actions\\\\Jetstream\\\\InviteTeamMember\\:\\:rules\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Actions/Jetstream/InviteTeamMember.php
@@ -34,11 +19,6 @@ parameters:
 			message: "#^Parameter \\#1 \\$invitation of class Laravel\\\\Jetstream\\\\Mail\\\\TeamInvitation constructor expects Laravel\\\\Jetstream\\\\TeamInvitation, Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
 			count: 1
 			path: app/Actions/Jetstream/InviteTeamMember.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Team\\:\\:\\$owner\\.$#"
-			count: 1
-			path: app/Actions/Jetstream/RemoveTeamMember.php
 
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\Route\\:\\:\\$waypoints\\.$#"
@@ -1476,32 +1456,7 @@ parameters:
 			path: app/Livewire/AIAnalytics.php
 
 		-
-			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:mount\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AIAnalytics.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:render\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AIAnalytics.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:setAgent\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AIAnalytics.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:setAgent\\(\\) has parameter \\$agentType with no type specified\\.$#"
-			count: 1
-			path: app/Livewire/AIAnalytics.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:setTimeRange\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AIAnalytics.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:setTimeRange\\(\\) has parameter \\$days with no type specified\\.$#"
+			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:render\\(\\) should return Illuminate\\\\View\\\\View but returns Illuminate\\\\Contracts\\\\View\\\\View\\.$#"
 			count: 1
 			path: app/Livewire/AIAnalytics.php
 
@@ -1526,37 +1481,7 @@ parameters:
 			path: app/Livewire/AINotifications.php
 
 		-
-			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:acknowledge\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AINotifications.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:acknowledge\\(\\) has parameter \\$alertId with no type specified\\.$#"
-			count: 1
-			path: app/Livewire/AINotifications.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:acknowledgeAll\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AINotifications.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:loadNotifications\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AINotifications.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:mount\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AINotifications.php
-
-		-
 			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:render\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: app/Livewire/AINotifications.php
-
-		-
-			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:togglePanel\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/AINotifications.php
 
@@ -7926,6 +7851,11 @@ parameters:
 			path: app/Models/SubscriptionPlan.php
 
 		-
+			message: "#^Generic type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\User\\> in PHPDoc tag @return does not specify all template types of class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/Team.php
+
+		-
 			message: "#^Method App\\\\Models\\\\Team\\:\\:alerts\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Models/Team.php
@@ -7942,6 +7872,11 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Team\\:\\:machines\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Models/Team.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Team\\:\\:owner\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\User\\> but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\User, \\$this\\(App\\\\Models\\\\Team\\)\\>\\.$#"
 			count: 1
 			path: app/Models/Team.php
 
@@ -7971,12 +7906,27 @@ parameters:
 			path: app/Models/TeamInvitation.php
 
 		-
+			message: "#^Generic type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Team\\> in PHPDoc tag @return does not specify all template types of class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: "#^Generic type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\Team\\> in PHPDoc tag @return does not specify all template types of class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/User.php
+
+		-
 			message: "#^Method App\\\\Models\\\\User\\:\\:assignRole\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Models/User.php
 
 		-
 			message: "#^Method App\\\\Models\\\\User\\:\\:assignRole\\(\\) has parameter \\$role with no type specified\\.$#"
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: "#^Method App\\\\Models\\\\User\\:\\:currentTeam\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Team\\> but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Team, \\$this\\(App\\\\Models\\\\User\\)\\>\\.$#"
 			count: 1
 			path: app/Models/User.php
 
@@ -8002,6 +7952,11 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\User\\:\\:hasRole\\(\\) has parameter \\$role with no type specified\\.$#"
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: "#^Method App\\\\Models\\\\User\\:\\:ownedTeams\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\Team\\> but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\Team, \\$this\\(App\\\\Models\\\\User\\)\\>\\.$#"
 			count: 1
 			path: app/Models/User.php
 
@@ -10259,11 +10214,6 @@ parameters:
 			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
 			count: 1
 			path: app/Services/ShiftService.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Team\\:\\:\\$owner\\.$#"
-			count: 1
-			path: app/Services/StripeService.php
 
 		-
 			message: "#^Access to property \\$billingPortal on an unknown class Stripe\\\\StripeClient\\.$#"
