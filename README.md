@@ -1,4 +1,4 @@
-# OptiMine Fleet Management System — Fully Functional
+# Mines Fleet Management System — Fully Functional
 
 Platform status: Fully functional and production-ready.
 
@@ -24,7 +24,7 @@ A comprehensive fleet management platform for mining operations, built with Lara
 
 ## 🎯 Overview
 
-OptiMine is a modern fleet management system designed specifically for mining operations. It provides real-time tracking, maintenance scheduling, fuel management, geofencing, and comprehensive reporting capabilities for mining fleets.
+Mines is a modern fleet management system designed specifically for mining operations. It provides real-time tracking, maintenance scheduling, fuel management, geofencing, and comprehensive reporting capabilities for mining fleets.
 
 ### Key Capabilities
 
@@ -65,7 +65,7 @@ cp .env.example .env
 Edit `.env` file with your configuration:
 
 ```env
-APP_NAME=OptiMine
+APP_NAME=Mines
 APP_ENV=local
 APP_KEY=
 APP_DEBUG=true
@@ -74,7 +74,7 @@ APP_URL=http://localhost
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=optimine
+DB_DATABASE=Mines
 DB_USERNAME=your_username
 # Do NOT store secrets in this file. Set the password via your environment or secrets manager.
 # Example: set `DB_PASSWORD` in your host/CI environment or use a secrets manager integration.
@@ -99,13 +99,13 @@ php artisan key:generate
 ### 1. Create PostgreSQL Database
 
 ```bash
-createdb optimine
+createdb Mines
 ```
 
 Or via PostgreSQL:
 
 ```sql
-CREATE DATABASE optimine;
+CREATE DATABASE Mines;
 ```
 
 ### 2. Run Migrations
@@ -347,7 +347,7 @@ php artisan test --coverage
 server {
     listen 80;
     server_name your-domain.com;
-    root /var/www/optimine/public;
+    root /var/www/Mines/public;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
@@ -382,9 +382,9 @@ server {
 ```apache
 <VirtualHost *:80>
     ServerName your-domain.com
-    DocumentRoot /var/www/optimine/public
+    DocumentRoot /var/www/Mines/public
 
-    <Directory /var/www/optimine/public>
+    <Directory /var/www/Mines/public>
         AllowOverride All
         Require all granted
     </Directory>
@@ -493,11 +493,11 @@ If you encounter issues not covered here:
 
 This project is proprietary software. All rights reserved.
 
-For licensing inquiries, contact: [your-contact@email.com]
+For licensing inquiries, contact: [info@mines.infodot.co.za]
 
 ---
 
-**OptiMine Fleet Management System** - Built with ❤️ for Mining Operations
+**Mines Fleet Management System** - Built with ❤️ for Mining Operations
 
 **Version**: 2.1  
 **Last Updated**: February 18, 2026
