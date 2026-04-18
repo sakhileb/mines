@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Machine;
 use App\Models\MineArea;
+use App\Models\Subscription;
 use App\Services\AI\FleetOptimizerAgent;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -47,6 +48,9 @@ use WithPagination;
     public float $capacity = 0;
     public float $latitude = 0;
     public float $longitude = 0;
+    public int $cycleTimeMinutes = 0;
+    public int $queueTimeMinutes = 0;
+    public int $loadingTimeMinutes = 0;
 
     protected $listeners = ['machineCreated' => 'machineCreated', 'machineDeleted' => 'machineDeleted'];
 
@@ -72,8 +76,56 @@ use WithPagination;
 
     public function openCreateModal(): void
     {
+        if ($this->isFleetFull()) {
+            $this->dispatchBrowserEvent('notify', [
+                'message' => 'Fleet slot limit reached for your subscription plan. Upgrade to add more machines.',
+                'type'    => 'error',
+            ]);
+            return;
+        }
         $this->resetForm();
         $this->showCreateModal = true;
+    }
+
+    /**
+     * Returns true when the team has reached its subscribed machine limit.
+     */
+    private function isFleetFull(): bool
+    {
+        $team = Auth::user()->currentTeam;
+        $subscription = Subscription::with('plan')
+            ->where('team_id', $team->id)
+            ->where('status', 'active')
+            ->first();
+
+        if (! $subscription || ! $subscription->plan) {
+            return false; // no active plan → no hard limit
+        }
+
+        $maxMachines = $subscription->plan->max_machines;
+        if (! $maxMachines) {
+            return false; // unlimited
+        }
+
+        return Machine::where('team_id', $team->id)->count() >= $maxMachines;
+    }
+
+    /**
+     * Returns [current, max] fleet slot counts for the current team.
+     */
+    public function fleetUsage(): array
+    {
+        $team = Auth::user()->currentTeam;
+        $current = Machine::where('team_id', $team->id)->count();
+
+        $subscription = Subscription::with('plan')
+            ->where('team_id', $team->id)
+            ->where('status', 'active')
+            ->first();
+
+        $max = $subscription?->plan?->max_machines ?? null;
+
+        return ['current' => $current, 'max' => $max];
     }
 
     public function closeModal(): void
@@ -94,6 +146,9 @@ use WithPagination;
         $this->capacity = 0;
         $this->latitude = 0;
         $this->longitude = 0;
+        $this->cycleTimeMinutes = 0;
+        $this->queueTimeMinutes = 0;
+        $this->loadingTimeMinutes = 0;
     }
 
     public function editMachine(Machine $machine): void
@@ -108,6 +163,9 @@ use WithPagination;
         $this->capacity = $machine->capacity ?? 0;
         $this->latitude = $machine->latitude ?? 0;
         $this->longitude = $machine->longitude ?? 0;
+        $this->cycleTimeMinutes = $machine->cycle_time_minutes ?? 0;
+        $this->queueTimeMinutes = $machine->queue_time_minutes ?? 0;
+        $this->loadingTimeMinutes = $machine->loading_time_minutes ?? 0;
         $this->showCreateModal = true;
     }
 
@@ -123,6 +181,9 @@ use WithPagination;
             'capacity' => 'nullable|numeric|min:0',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'cycleTimeMinutes' => 'nullable|integer|min:0|max:9999',
+            'queueTimeMinutes' => 'nullable|integer|min:0|max:9999',
+            'loadingTimeMinutes' => 'nullable|integer|min:0|max:9999',
         ]);
 
         $team = Auth::user()->currentTeam;
@@ -139,9 +200,18 @@ use WithPagination;
                 'capacity' => $this->capacity ?: null,
                 'latitude' => $this->latitude ?: null,
                 'longitude' => $this->longitude ?: null,
+                'cycle_time_minutes' => $this->cycleTimeMinutes ?: null,
+                'queue_time_minutes' => $this->queueTimeMinutes ?: null,
+                'loading_time_minutes' => $this->loadingTimeMinutes ?: null,
             ]);
             $this->dispatchBrowserEvent('notify', ['message' => 'Machine updated successfully', 'type' => 'success']);
         } else {
+            // Guard: enforce subscription fleet slot limit
+            if ($this->isFleetFull()) {
+                $this->addError('name', 'Fleet slot limit reached for your subscription plan.');
+                return;
+            }
+
             Machine::create([
                 'team_id' => $team->id,
                 'name' => $this->name,
@@ -153,6 +223,9 @@ use WithPagination;
                 'capacity' => $this->capacity ?: null,
                 'latitude' => $this->latitude ?: null,
                 'longitude' => $this->longitude ?: null,
+                'cycle_time_minutes' => $this->cycleTimeMinutes ?: null,
+                'queue_time_minutes' => $this->queueTimeMinutes ?: null,
+                'loading_time_minutes' => $this->loadingTimeMinutes ?: null,
             ]);
             $this->dispatchBrowserEvent('notify', ['message' => 'Machine created successfully', 'type' => 'success']);
         }
@@ -481,6 +554,8 @@ use WithPagination;
 
         $this->isLoading = false;
 
+        $fleetUsage = $this->fleetUsage();
+
         return view('livewire.fleet', [
             'machines' => $machinesQuery,
             'excavators' => $excavators,
@@ -493,6 +568,7 @@ use WithPagination;
             'aiInsights' => $aiInsights,
             'activityFeed' => $this->activityFeed,
             'isLoading' => $this->isLoading,
+            'fleetUsage' => $fleetUsage,
         ]);
     }
 

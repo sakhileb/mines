@@ -20,6 +20,16 @@ class RoutePlanning extends Component
     public ?int $mineAreaId = null;
     public string $routeType = 'optimal';
     public ?float $speedLimit = null;
+
+    // Traffic Management Plan settings
+    public bool $tmpEnable = true;
+    public bool $tmpAvoidRestricted = true;
+    public bool $tmpPreferSafe = true;
+    public bool $tmpEnforceOneWay = true;
+    public bool $tmpApplyAreaSpeedLimits = true;
+    public ?int $tmpHaulRoadSpeedLimit = 40;
+    public ?int $tmpLoadingZoneSpeedLimit = 20;
+    public ?int $tmpSharedZoneSpeedLimit = 15;
     
     // Route coordinates
     public ?float $startLat = null;
@@ -57,6 +67,9 @@ class RoutePlanning extends Component
         'endLon' => 'required|numeric|between:-180,180',
         'routeType' => 'required|in:optimal,shortest,safest,custom',
         'speedLimit' => 'nullable|integer|min:1|max:200',
+        'tmpHaulRoadSpeedLimit' => 'nullable|integer|min:1|max:120',
+        'tmpLoadingZoneSpeedLimit' => 'nullable|integer|min:1|max:80',
+        'tmpSharedZoneSpeedLimit' => 'nullable|integer|min:1|max:80',
     ];
     
     public function mount()
@@ -134,6 +147,14 @@ class RoutePlanning extends Component
                 $this->machineId,
                 $team->id
             );
+
+            // Attach Traffic Management Plan summary/rules to the calculated route
+            $this->calculatedRoute['traffic_plan'] = $this->buildTrafficPlanSummary($team->id);
+
+            // If no manual speed limit was selected, use TMP haul-road baseline by default
+            if ($this->tmpEnable && $this->speedLimit === null && $this->tmpHaulRoadSpeedLimit) {
+                $this->speedLimit = (float) $this->tmpHaulRoadSpeedLimit;
+            }
             
             $this->showCalculatedRoute = true;
             // Dispatch a browser event so frontend code can react
@@ -178,6 +199,9 @@ class RoutePlanning extends Component
                 'speed_limit' => $this->speedLimit,
                 'status' => 'active',
                 'route_geometry' => $this->calculatedRoute['route_geometry'] ?? null,
+                'metadata' => [
+                    'traffic_plan' => $this->calculatedRoute['traffic_plan'] ?? $this->buildTrafficPlanSummary($team->id),
+                ],
             ]);
             
             // Create waypoints
@@ -247,6 +271,7 @@ class RoutePlanning extends Component
                 'estimated_time' => $route->estimated_time,
                 'estimated_fuel' => $route->estimated_fuel,
                 'route_geometry' => $route->route_geometry,
+                'traffic_plan' => data_get($route->metadata, 'traffic_plan'),
                 'waypoints' => $route->waypoints->map(fn($w) => [
                     'latitude' => $w->latitude,
                     'longitude' => $w->longitude,
@@ -344,5 +369,35 @@ class RoutePlanning extends Component
         $this->calculatedRoute = null;
         $this->showCalculatedRoute = false;
             $this->dispatch('clearMapMarkers');
+    }
+
+    protected function buildTrafficPlanSummary(int $teamId): array
+    {
+        $restrictedCount = Geofence::where('team_id', $teamId)
+            ->where('geofence_type', 'restricted')
+            ->count();
+
+        $safeCount = Geofence::where('team_id', $teamId)
+            ->where('geofence_type', 'safe')
+            ->count();
+
+        return [
+            'enabled' => $this->tmpEnable,
+            'rules' => [
+                'avoid_restricted' => $this->tmpAvoidRestricted,
+                'prefer_safe_corridors' => $this->tmpPreferSafe,
+                'enforce_one_way' => $this->tmpEnforceOneWay,
+                'apply_area_speed_limits' => $this->tmpApplyAreaSpeedLimits,
+            ],
+            'speed_limits' => [
+                'haul_road' => $this->tmpHaulRoadSpeedLimit,
+                'loading_zone' => $this->tmpLoadingZoneSpeedLimit,
+                'shared_zone' => $this->tmpSharedZoneSpeedLimit,
+            ],
+            'network_context' => [
+                'restricted_zones' => $restrictedCount,
+                'safe_zones' => $safeCount,
+            ],
+        ];
     }
 }

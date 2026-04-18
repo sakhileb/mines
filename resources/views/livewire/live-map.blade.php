@@ -34,6 +34,14 @@
                                 </svg>
                                 Plan New Route
                             </a>
+                                <button wire:click="toggleRoutes" class="px-4 py-2 min-w-[9rem] rounded-lg transition-colors {{ $showRoutes ? 'bg-violet-600 hover:bg-violet-700' : 'bg-gray-700 hover:bg-gray-600' }} text-white text-sm">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"></path>
+                                        </svg>
+                                        Routes {{ $showRoutes ? '(On)' : '(Off)' }}
+                                    </span>
+                                </button>
                         </div>
                     </div>
                     <div class="flex flex-col md:flex-row gap-4 mb-4">
@@ -82,11 +90,47 @@
                             <p class="text-red-300 text-lg font-bold">{{ $machineStatuses['maintenance'] ?? 0 }}</p>
                         </div>
                     </div>
-                    <div wire:ignore id="map" class="w-full" style="height:36rem;" class="h-[36rem] rounded-lg shadow-lg bg-gray-900"></div>
+
+                    <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-white">Traffic Management Plan</h3>
+                            <span class="text-xs text-amber-300">Operational Rules</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-3">
+                            <div class="bg-red-900/30 border border-red-700 rounded p-2">
+                                <p class="text-[10px] text-red-300 uppercase">Restricted</p>
+                                <p class="text-red-200 font-bold">{{ data_get($trafficPlanData, 'restricted_zones', 0) }}</p>
+                            </div>
+                            <div class="bg-emerald-900/30 border border-emerald-700 rounded p-2">
+                                <p class="text-[10px] text-emerald-300 uppercase">Safe</p>
+                                <p class="text-emerald-200 font-bold">{{ data_get($trafficPlanData, 'safe_zones', 0) }}</p>
+                            </div>
+                            <div class="bg-amber-900/30 border border-amber-700 rounded p-2">
+                                <p class="text-[10px] text-amber-300 uppercase">Warning</p>
+                                <p class="text-amber-200 font-bold">{{ data_get($trafficPlanData, 'warning_zones', 0) }}</p>
+                            </div>
+                            <div class="bg-violet-900/30 border border-violet-700 rounded p-2">
+                                <p class="text-[10px] text-violet-300 uppercase">Active Routes</p>
+                                <p class="text-violet-200 font-bold">{{ data_get($trafficPlanData, 'active_routes', 0) }}</p>
+                            </div>
+                            <div class="bg-blue-900/30 border border-blue-700 rounded p-2">
+                                <p class="text-[10px] text-blue-300 uppercase">Speed-Limited</p>
+                                <p class="text-blue-200 font-bold">{{ data_get($trafficPlanData, 'routes_with_speed_limit', 0) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-gray-300 space-y-1">
+                            <p>Default speed limits: Haul Road {{ data_get($trafficPlanData, 'default_speed_limits.haul_road', 40) }} km/h, Loading Zone {{ data_get($trafficPlanData, 'default_speed_limits.loading_zone', 20) }} km/h, Shared Zone {{ data_get($trafficPlanData, 'default_speed_limits.shared_zone', 15) }} km/h.</p>
+                            <p>Rules: Avoid restricted zones, enforce one-way flow, and prioritize pedestrians in shared zones.</p>
+                        </div>
+                    </div>
+
+                    <div wire:ignore id="map" class="w-full h-[36rem] rounded-lg shadow-lg bg-gray-900"></div>
                     <div id="map-toast" class="hidden fixed top-4 right-4 z-50 pointer-events-none">
                         <div class="bg-amber-600 text-white px-4 py-2 rounded shadow-lg text-sm message"></div>
                     </div>
-                    <div id="map-loading" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50" style="display:none;">
+                    <div id="map-loading" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 hidden">
                         <div class="text-center">
                             <div class="text-6xl mb-4">🗺️</div>
                             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
@@ -108,10 +152,10 @@
     <!-- Map Toast and Loading Indicator (overlay, always present) removed: handled inside map card -->
     
     <!-- Leaflet JS - loaded directly in component -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}" src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
     document.addEventListener('DOMContentLoaded', function() {
         let map = null;
         let markers = {};
@@ -124,6 +168,9 @@
         let machinesData = @json($machines);
         let geofencesData = @json($geofences);
         let mineAreasData = @json($mineAreas ?? []);
+            let routesData = @json($routes ?? []);
+            let showRoutesData = @js($showRoutes);
+            let routeLayers = {}; // keyed by route id
         // Keep a copy of the original machines list for client-side filtering
         let originalMachinesData = Array.isArray(machinesData) ? JSON.parse(JSON.stringify(machinesData)) : [];
         let mapStyleData = @js($mapStyle);
@@ -138,8 +185,6 @@
 
         function initMap() {
             try {
-                debugLog('initMap called');
-                
                 // Check if Leaflet is loaded - more robust check
                 if (typeof L === 'undefined') {
                     initRetryCount++;
@@ -178,7 +223,7 @@
 
                 const loadingEl = document.getElementById('map-loading');
                 if (loadingEl) {
-                    loadingEl.style.display = 'none';
+                    loadingEl.classList.add('hidden');
                 }
 
                 debugLog('Map center:', {{ $centerLat }}, {{ $centerLng }}, 'Zoom:', {{ $zoomLevel }});
@@ -245,6 +290,9 @@
                 debugLog('Adding geofences');
                 addGeofences();
 
+                    debugLog('Adding routes');
+                    addRoutes();
+
                 // Listen for Livewire events
                 window.addEventListener('map-updated', (event) => {
                     debugLog('Livewire map-updated event received', event.detail);
@@ -269,7 +317,11 @@
         function showError(message) {
             const loadingEl = document.getElementById('map-loading');
             if (loadingEl) {
-                loadingEl.innerHTML = '<div class="text-center"><svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg><p class="text-white text-lg mb-2">Map Loading Error</p><p class="text-gray-400 text-sm">' + message + '</p><button onclick="location.reload()" class="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg">Refresh Page</button></div>';
+                loadingEl.innerHTML = '<div class="text-center"><svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg><p class="text-white text-lg mb-2">Map Loading Error</p><p class="text-gray-400 text-sm">' + message + '</p><button id="map-refresh-btn" class="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg">Refresh Page</button></div>';
+                const refreshBtn = loadingEl.querySelector('#map-refresh-btn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', () => location.reload());
+                }
             }
         }
         function handleTileError(layerKey, fallbackKey) {
@@ -319,21 +371,18 @@
 
                     debugLog('Adding machine marker:', machine.name, 'at', lat, lng);
 
-                    const statusColor = {
-                        'active': '#10b981',
-                        'idle': '#3b82f6',
-                        'maintenance': '#ef4444'
-                    }[machine.status] || '#6b7280';
+                    const statusClass = {
+                        'active': 'machine-status-active',
+                        'idle': 'machine-status-idle',
+                        'maintenance': 'machine-status-maintenance'
+                    }[machine.status] || 'machine-status-default';
                     
                     const emojiImageUrl = getMachineEmojiImage(machine.machine_type);
 
                     const statusIcon = L.divIcon({
                         html: `
-                            <div class="flex items-center justify-center w-10 h-10 rounded-full" style="background-color: ${statusColor}; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); padding: 4px;">
-                                <img src="${emojiImageUrl}" 
-                                     style="width: 28px; height: 28px; object-fit: contain;" 
-                                     onerror="this.style.display='none';" 
-                                     alt="Machine" />
+                            <div class="machine-status-icon ${statusClass}">
+                                <img src="${emojiImageUrl}" class="machine-emoji" alt="Machine" />
                             </div>
                         `,
                         iconSize: [40, 40],
@@ -346,7 +395,7 @@
                                 <p class="font-bold text-gray-900">${machine.name}</p>
                                 <p class="text-sm text-gray-700">${machine.manufacturer || 'Unknown'} ${machine.model || ''}</p>
                                 <p class="text-xs text-gray-600 mt-1">
-                                    <span class="inline-block px-2 py-1 rounded text-white" style="background-color: ${statusColor};">
+                                    <span class="inline-block px-2 py-1 rounded text-white ${statusClass}">
                                         ${machine.status.toUpperCase()}
                                     </span>
                                 </p>
@@ -455,8 +504,115 @@
             }
         }
 
+        function addRoutes() {
+            debugLog('addRoutes called - showRoutesData:', showRoutesData, 'routesData.length:', routesData.length);
+            if (!showRoutesData || !map) return;
+
+            routesData.forEach(route => {
+                try {
+                    // Ensure waypoints are sorted by sequence_order (server already orders them, but be safe)
+                    const waypoints = (route.waypoints || []).slice().sort((a, b) => a.sequence_order - b.sequence_order);
+
+                    // Build coordinate path: start → waypoints in order → end
+                    let coordinates = [];
+                    if (route.route_geometry && route.route_geometry.length > 1) {
+                        coordinates = route.route_geometry;
+                    } else {
+                        coordinates.push([route.start_latitude, route.start_longitude]);
+                        waypoints.forEach(wp => coordinates.push([wp.latitude, wp.longitude]));
+                        coordinates.push([route.end_latitude, route.end_longitude]);
+                    }
+
+                    const routeGroup = L.layerGroup();
+
+                    // Draw route polyline
+                    const polyline = L.polyline(coordinates, {
+                        color: '#8b5cf6',
+                        weight: 4,
+                        opacity: 0.85,
+                        lineJoin: 'round',
+                        lineCap: 'round',
+                        dashArray: null
+                    });
+                    const totalTime = route.estimated_time
+                        ? Math.floor(route.estimated_time / 60) + 'h ' + (route.estimated_time % 60) + 'm'
+                        : '';
+                    polyline.bindPopup(
+                        '<div class="route-popup">' +
+                        '<strong>' + route.name + '</strong><br>' +
+                        '<span class="route-popup-meta">📏 ' + (route.total_distance ? route.total_distance.toFixed(1) + ' km' : '') + (totalTime ? ' &bull; ⏱️ ' + totalTime : '') + '</span>' +
+                        '</div>'
+                    );
+                    polyline.addTo(routeGroup);
+
+                    // Start marker (green circle)
+                    L.marker([route.start_latitude, route.start_longitude], {
+                        icon: L.divIcon({
+                            html: '<div class="route-marker route-marker-start"></div>',
+                            className: '',
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8]
+                        }),
+                        title: route.name + ' — Start'
+                    }).bindPopup('<strong>' + route.name + '</strong><br><span class="route-label-start">● Start</span>').addTo(routeGroup);
+
+                    // Waypoint markers with sequence numbers
+                    waypoints.forEach((wp, idx) => {
+                        const typeIcons = {
+                            fuel_station: '⛽',
+                            loading_point: '📦',
+                            dump_point: '🚮',
+                            geofence: '🚧',
+                            standard: '' + (wp.sequence_order || (idx + 1))
+                        };
+                        const label = typeIcons[wp.waypoint_type] || (wp.sequence_order || (idx + 1));
+                        L.marker([wp.latitude, wp.longitude], {
+                            icon: L.divIcon({
+                                html: '<div class="route-marker route-marker-waypoint">' + label + '</div>',
+                                className: '',
+                                iconSize: [26, 26],
+                                iconAnchor: [13, 13]
+                            })
+                        }).bindPopup(
+                            '<strong>' + (wp.name || 'Waypoint ' + (wp.sequence_order || (idx + 1))) + '</strong>' +
+                            '<br>Type: ' + (wp.waypoint_type || 'standard') +
+                            (wp.distance_from_previous ? '<br>+' + parseFloat(wp.distance_from_previous).toFixed(1) + ' km' : '') +
+                            (wp.estimated_time_from_previous ? ' / ' + wp.estimated_time_from_previous + ' min' : '')
+                        ).addTo(routeGroup);
+                    });
+
+                    // End marker (red circle)
+                    L.marker([route.end_latitude, route.end_longitude], {
+                        icon: L.divIcon({
+                            html: '<div class="route-marker route-marker-end"></div>',
+                            className: '',
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8]
+                        }),
+                        title: route.name + ' — End'
+                    }).bindPopup('<strong>' + route.name + '</strong><br><span class="route-label-end">● End</span>').addTo(routeGroup);
+
+                    routeGroup.addTo(map);
+                    routeLayers[route.id] = routeGroup;
+                    debugLog('Route added to map:', route.name, 'waypoints:', waypoints.length);
+                } catch (err) {
+                    console.error('Error adding route to map:', route.name, err);
+                }
+            });
+            debugLog('Total route overlays:', Object.keys(routeLayers).length);
+        }
+
+        function clearRoutes() {
+            if (!map) return;
+            Object.values(routeLayers).forEach(group => {
+                try { if (map.hasLayer(group)) map.removeLayer(group); } catch (e) {}
+            });
+            routeLayers = {};
+        }
+
         function centerToMineArea(areaId) {
             debugLog('centerToMineArea called with', areaId);
+
             if (!map) return;
 
             if (!areaId) {
@@ -615,6 +771,25 @@
             }
 
                 // If server indicated a selected mine area, center the map to it
+
+                // Handle routes update
+                if (data.routes !== undefined) {
+                    try {
+                        clearRoutes();
+                        if (Array.isArray(data.routes) && data.routes.length > 0) {
+                            routesData = data.routes;
+                            showRoutesData = true;
+                            addRoutes();
+                        } else {
+                            routesData = [];
+                            showRoutesData = false;
+                        }
+                    } catch (error) {
+                        console.error('Error updating routes:', error);
+                    }
+                }
+
+                // If server indicated a selected mine area, center the map to it
             if (data.selectedMineAreaId !== undefined && data.selectedMineAreaId !== null) {
                 try {
                     centerToMineArea(data.selectedMineAreaId);
@@ -641,7 +816,7 @@
     });
     </script>
 
-    <style>
+    <style nonce="{{ request()->attributes->get('csp_nonce') }}">
     #map {
         width: 100%;
         height: 100%;
@@ -663,6 +838,57 @@
     .machine-marker {
         filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
     }
+    .machine-status-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        padding: 4px;
+    }
+    .machine-emoji {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+    }
+    .machine-status-active { background-color: #10b981; }
+    .machine-status-idle { background-color: #3b82f6; }
+    .machine-status-maintenance { background-color: #ef4444; }
+    .machine-status-default { background-color: #6b7280; }
+    .route-popup { min-width: 180px; }
+    .route-popup-meta { font-size: 12px; }
+    .route-marker {
+        border-radius: 9999px;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+    .route-marker-start {
+        width: 16px;
+        height: 16px;
+        background: #22c55e;
+    }
+    .route-marker-end {
+        width: 16px;
+        height: 16px;
+        background: #ef4444;
+    }
+    .route-marker-waypoint {
+        width: 26px;
+        height: 26px;
+        background: #8b5cf6;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+    }
+    .route-label-start { color: #16a34a; }
+    .route-label-end { color: #dc2626; }
     .geofence-polygon:hover {
         fill-opacity: 0.2 !important;
     }

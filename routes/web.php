@@ -38,6 +38,9 @@ Route::middleware([
     Route::get('/fleet/route-planning', App\Livewire\RoutePlanning::class)
         ->name('fleet.route-planning');
 
+    Route::get('/fleet/market', App\Livewire\FleetMarket::class)
+        ->name('fleet.market');
+
     // Parameterized route comes last
     Route::get('/fleet/{machine}', function (Machine $machine) {
         return view('fleet.show', ['machine' => $machine]);
@@ -136,6 +139,22 @@ Route::middleware([
     Route::get('/billing/success', function () {
         return redirect()->route('billing.index')->with('success', 'Subscription activated successfully!');
     })->name('billing.success');
+
+    // Feed
+    Route::get('/feed', App\Livewire\Feed::class)
+        ->name('feed');
+
+    // Feed admin panel (admins only)
+    Route::get('/feed/admin', App\Livewire\FeedAdminPanel::class)
+        ->name('feed.admin');
+
+    // WhatsApp migration dashboard (admins only)
+    Route::get('/feed/migration', App\Livewire\WhatsAppMigration::class)
+        ->name('feed.migration');
+
+    // Shift Templates management (admin/supervisor UI)
+    Route::get('/shift-templates', App\Livewire\ShiftTemplateManager::class)
+        ->name('shift-templates');
 
     // Settings
     Route::get('/settings', function () {

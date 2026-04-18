@@ -22,7 +22,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('shift:change 1 day')->dailyAt('06:00');
+        // Shift digest emails: send at the end of each shift
+        $schedule->command('feed:digest --shift=A')->dailyAt('14:00'); // Shift A ends 14:00
+        $schedule->command('feed:digest --shift=B')->dailyAt('22:00'); // Shift B ends 22:00
+        $schedule->command('feed:digest --shift=C')->dailyAt('06:00'); // Shift C ends 06:00
     }
 
     /**

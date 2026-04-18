@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\{
     MachineHealthController,
     MaintenanceScheduleController,
     MaintenanceRecordController,
+    FeedController,
+    FeedCommentController,
+    ShiftTemplateController,
 };
 
 /**
@@ -209,6 +212,38 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
             Route::delete('/{record}', [MaintenanceRecordController::class, 'destroy']);
         });
     });
+
+    /**
+     * Feed endpoints
+     */
+    Route::prefix('feed')->group(function () {
+        Route::get('/', [FeedController::class, 'index']);                          // List posts
+        Route::post('/', [FeedController::class, 'store']);                         // Create post
+        Route::delete('/{post}', [FeedController::class, 'destroy']);               // Soft-delete post
+        Route::post('/{post}/acknowledge', [FeedController::class, 'acknowledge']); // Acknowledge post
+        Route::get('/{post}/acknowledgements', [FeedController::class, 'acknowledgements']); // List acks
+        Route::post('/{post}/attachments', [FeedController::class, 'storeAttachment']); // Upload attachment
+        Route::post('/{post}/like', [FeedController::class, 'like']);               // Toggle like
+        Route::get('/{post}/likes', [FeedController::class, 'likes']);              // List likes
+        Route::post('/{post}/approve', [FeedController::class, 'approve']);         // Approve post
+        Route::post('/{post}/reject', [FeedController::class, 'reject']);           // Reject post
+
+        // Comments
+        Route::get('/{post}/comments', [FeedCommentController::class, 'index']);    // List comments
+        Route::post('/{post}/comments', [FeedCommentController::class, 'store']);   // Add comment
+    });
+
+    // Comment-level routes (no post prefix needed for edit/delete)
+    Route::prefix('feed/comments')->group(function () {
+        Route::put('/{comment}', [FeedCommentController::class, 'update']);          // Edit comment
+        Route::delete('/{comment}', [FeedCommentController::class, 'destroy']);     // Delete comment
+    });
+
+    // Shift Templates
+    Route::get('/shift-templates', [ShiftTemplateController::class, 'index']);
+    Route::post('/shift-templates', [ShiftTemplateController::class, 'store']);
+    Route::put('/shift-templates/{shiftTemplate}', [ShiftTemplateController::class, 'update']);
+    Route::delete('/shift-templates/{shiftTemplate}', [ShiftTemplateController::class, 'destroy']);
 
     /**
      * Live Location endpoint (real-time)

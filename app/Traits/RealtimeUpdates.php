@@ -109,6 +109,15 @@ trait RealtimeUpdates
     }
 
     /**
+     * Subscribe to the operations feed channel.
+     * Handles live events and missed-post catch-up after reconnection.
+     */
+    public function subscribeToFeed(): void
+    {
+        $this->dispatch('realtime:feed', teamId: (string) Auth::user()->current_team_id);
+    }
+
+    /**
      * Stop listening to a specific channel
      * @param string $machineId
      */

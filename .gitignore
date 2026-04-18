@@ -21,5 +21,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-mines-full-backup-20260212-131554.tar.gz
+*.tar.gz
+*.bak
 .env

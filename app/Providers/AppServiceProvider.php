@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Events\FeedCommentCreated;
+use App\Events\FeedPostCreated;
+use App\Events\FeedPostStatusChanged;
+use App\Listeners\SendFeedApprovalNotification;
+use App\Listeners\SendFeedCommentNotification;
+use App\Listeners\SendFeedPostNotification;
 use App\Services\RealtimeEventScheduler;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -53,6 +59,11 @@ class AppServiceProvider extends ServiceProvider
                 Log::error('Failed to queue welcome email', ['user_id' => $event->user->id, 'error' => $e->getMessage()]);
             }
         });
+
+        // Feed notification listeners
+        Event::listen(FeedPostCreated::class, SendFeedPostNotification::class);
+        Event::listen(FeedCommentCreated::class, SendFeedCommentNotification::class);
+        Event::listen(FeedPostStatusChanged::class, SendFeedApprovalNotification::class);
 
         // Listen for failed queue jobs and notify monitoring
         Event::listen(\Illuminate\Queue\Events\JobFailed::class, function ($event) {

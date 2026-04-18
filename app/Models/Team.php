@@ -115,4 +115,12 @@ class Team extends JetstreamTeam
     {
         return $this->hasMany(Integration::class);
     }
+
+    /**
+     * Get the mine areas for this team.
+     */
+    public function mineAreas()
+    {
+        return $this->hasMany(MineArea::class);
+    }
 }

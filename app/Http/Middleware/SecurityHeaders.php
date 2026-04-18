@@ -21,14 +21,23 @@ class SecurityHeaders
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
-        // Content Security Policy - Helps prevent XSS attacks
-        // Stronger CSP: remove 'unsafe-inline' and 'unsafe-eval'. Prefer nonces or SRI
-        // for inline assets. Generate a per-request nonce and add it to script/style-src.
+        // Generate nonce BEFORE calling $next() so Blade views can read it
+        // via request()->attributes->get('csp_nonce') during rendering.
+        // Generating it after $next() means the nonce in the HTML and the
+        // nonce in the CSP header would always be different (making nonces useless).
         $nonce = bin2hex(random_bytes(12));
+        $request->attributes->set('csp_nonce', $nonce);
 
-        $scriptSrc = "'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com";
-        $styleSrc = "'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://fonts.bunny.net https://unpkg.com";
+        $response = $next($request);
+
+        // Content Security Policy - Helps prevent XSS attacks
+        // 'unsafe-inline' is required in style-src because Leaflet.js dynamically
+        // sets inline style="" attributes and injects <style> elements via JavaScript;
+        // these cannot carry a nonce and cannot be hashed.
+        // 'unsafe-eval' is required because Alpine.js evaluates x-* expressions
+        // using new Function(), which triggers unsafe-eval.
+        $scriptSrc = "'self' 'nonce-{$nonce}' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com";
+        $styleSrc = "'self' 'unsafe-inline' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://fonts.bunny.net https://unpkg.com";
 
         $csp = "default-src 'self'; " .
                "script-src {$scriptSrc}; " .
@@ -39,9 +48,6 @@ class SecurityHeaders
                "img-src 'self' data: https: blob:; " .
                "connect-src 'self' https://unpkg.com https://cdnjs.cloudflare.com https://*.pusher.com https://*.pusherapp.com ws: wss:; " .
                "frame-ancestors 'none';";
-
-        // Share nonce with views (if used). Views can read via request()->attributes->get('csp_nonce')
-        $request->attributes->set('csp_nonce', $nonce);
 
         // Set enforcement in production; use report-only in staging/testing to collect violations.
         if (app()->environment('production')) {

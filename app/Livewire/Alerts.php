@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Alert;
+use App\Models\FeedPost;
 use App\Models\Geofence;
 use App\Traits\RealtimeUpdates;
 use Livewire\Component;
@@ -26,6 +27,14 @@ class Alerts extends Component
     public bool $showDismissConfirm = false;
     // Track when a dismissed-unresolved alert was created so UI can render specially
     public array $recentlyDismissedUnresolved = [];
+
+    // Tab navigation
+    public string $activeTab = 'alerts'; // alerts | incidents
+
+    // Incident report filters
+    public string $incidentSearch = '';
+    public string $incidentCategoryFilter = 'all'; // all | breakdown | safety_alert
+    public string $incidentPriorityFilter = 'all'; // all | normal | high | critical
 
     protected $alertPriorities = [
         'critical' => 'Critical',
@@ -265,10 +274,32 @@ class Alerts extends Component
 
         return view('livewire.alerts', [
             'alerts' => $this->getAlerts(),
+            'incidentReports' => $this->getIncidentReports(),
             'alertPriorities' => $this->alertPriorities,
             'alertTypes' => $this->alertTypes,
             'selectedAlert' => $selected,
             'mineAreaManagers' => $this->getMineAreaManagersForAlert($selected),
         ]);
+    }
+
+    public function getIncidentReports()
+    {
+        $team = Auth::user()->currentTeam;
+
+        return FeedPost::where('team_id', $team->id)
+            ->whereIn('category', ['breakdown', 'safety_alert'])
+            ->when($this->incidentSearch, function ($query) {
+                $query->where('body', 'like', "%{$this->incidentSearch}%");
+            })
+            ->when($this->incidentCategoryFilter !== 'all', function ($query) {
+                $query->where('category', $this->incidentCategoryFilter);
+            })
+            ->when($this->incidentPriorityFilter !== 'all', function ($query) {
+                $query->where('priority', $this->incidentPriorityFilter);
+            })
+            ->with(['author:id,name', 'mineArea:id,name'])
+            ->withCount('acknowledgements')
+            ->orderByDesc('created_at')
+            ->paginate(15, ['*'], 'incidentPage');
     }
 }

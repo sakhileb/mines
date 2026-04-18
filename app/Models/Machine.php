@@ -70,6 +70,9 @@ class Machine extends Model
         'manufacturer_id', // ID from manufacturer system
         'capacity', // in tonnes
         'fuel_capacity', // in litres
+        'cycle_time_minutes', // full haul cycle time in minutes
+        'queue_time_minutes', // queue / wait time in minutes
+        'loading_time_minutes', // loading time in minutes
         'hours_meter', // total hours
         'status', // active, idle, maintenance, offline
         'last_location_latitude',
@@ -85,6 +88,9 @@ class Machine extends Model
     protected $casts = [
         'capacity' => 'float',
         'fuel_capacity' => 'float',
+        'cycle_time_minutes' => 'integer',
+        'queue_time_minutes' => 'integer',
+        'loading_time_minutes' => 'integer',
         'hours_meter' => 'float',
         'last_location_latitude' => 'float',
         'last_location_longitude' => 'float',

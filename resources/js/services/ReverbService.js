@@ -220,6 +220,145 @@ class ReverbService {
     }
 
     /**
+     * Subscribe to the feed channel for a team.
+     * Handles live events AND missed-event catch-up on reconnection.
+     *
+     * @param {string} teamId
+     * @param {Object} callbacks
+     *   - onNewPost(postData)
+     *   - onAcknowledgementUpdated(data)
+     *   - onNewComment(data)
+     *   - onCommentUpdated(data)
+     *   - onCommentDeleted(data)
+     *   - onPostLiked(data)
+     *   - onPostStatusChanged(data)
+     *   - onMissedPosts(posts[])   – called once on reconnect with any posts missed offline
+     */
+    subscribeFeed(teamId, callbacks = {}) {
+        const channelName = `feed.team.${teamId}`;
+        const storageKey  = `feed_last_seen_${teamId}`;
+
+        if (this.subscriptions.has(channelName)) {
+            console.warn(`Already subscribed to ${channelName}`);
+            return;
+        }
+
+        // Record the last time this client received a live feed event so we
+        // can request missed posts after a reconnect.
+        const touchLastSeen = () => {
+            localStorage.setItem(storageKey, new Date().toISOString());
+        };
+
+        try {
+            const channel = window.Echo.private(channelName);
+
+            channel
+                .listen('.FeedPostCreated', (data) => {
+                    touchLastSeen();
+                    callbacks.onNewPost?.(data.post);
+                })
+                .listen('.FeedAcknowledgementUpdated', (data) => {
+                    touchLastSeen();
+                    callbacks.onAcknowledgementUpdated?.(data);
+                })
+                .listen('.FeedCommentCreated', (data) => {
+                    touchLastSeen();
+                    callbacks.onNewComment?.(data);
+                })
+                .listen('.FeedCommentUpdated', (data) => {
+                    touchLastSeen();
+                    callbacks.onCommentUpdated?.(data);
+                })
+                .listen('.FeedCommentDeleted', (data) => {
+                    touchLastSeen();
+                    callbacks.onCommentDeleted?.(data);
+                })
+                .listen('.FeedPostLiked', (data) => {
+                    touchLastSeen();
+                    callbacks.onPostLiked?.(data);
+                })
+                .listen('.FeedPostStatusChanged', (data) => {
+                    touchLastSeen();
+                    callbacks.onPostStatusChanged?.(data);
+                });
+
+            this.subscriptions.set(channelName, channel);
+            console.log(`✅ Subscribed to feed channel: ${channelName}`);
+
+            // ── Reconnection / missed-event catch-up ──────────────────────────
+            // Echo uses Pusher-JS under the hood. We watch for the connection
+            // transitioning back to "connected" and fetch any posts published
+            // while the socket was down.
+            const pusherConn = window.Echo.connector?.pusher?.connection;
+
+            if (pusherConn) {
+                pusherConn.bind('state_change', ({ previous, current }) => {
+                    const wasDisconnected = ['disconnected', 'unavailable', 'failed'].includes(previous);
+
+                    if (wasDisconnected && current === 'connected') {
+                        console.log('🔄 Feed channel reconnected — fetching missed posts');
+                        this._fetchMissedFeedPosts(storageKey, teamId, callbacks.onMissedPosts);
+                    }
+                });
+            }
+
+            // If the page loads while already connected (normal page load), set
+            // the baseline timestamp so the next reconnect knows where to start.
+            if (!localStorage.getItem(storageKey)) {
+                touchLastSeen();
+            }
+        } catch (error) {
+            console.error(`❌ Failed to subscribe to feed channel ${channelName}:`, error);
+        }
+    }
+
+    /**
+     * Fetch any feed posts published after the last seen timestamp and pass
+     * them to the caller's onMissedPosts callback.
+     *
+     * @private
+     */
+    async _fetchMissedFeedPosts(storageKey, teamId, onMissedPosts) {
+        const since = localStorage.getItem(storageKey);
+
+        if (!since || typeof onMissedPosts !== 'function') {
+            return;
+        }
+
+        try {
+            const url = new URL('/api/feed', window.location.origin);
+            url.searchParams.set('since', since);
+            url.searchParams.set('per_page', '50');
+
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                console.warn('Feed catch-up fetch failed:', response.status);
+                return;
+            }
+
+            const json = await response.json();
+            const missed = json.data ?? [];
+
+            if (missed.length > 0) {
+                console.log(`📬 Delivering ${missed.length} missed feed post(s)`);
+                onMissedPosts(missed);
+            }
+
+            // Advance the cursor so the next reconnect starts from now
+            localStorage.setItem(storageKey, new Date().toISOString());
+        } catch (err) {
+            console.error('❌ Feed catch-up fetch error:', err);
+        }
+    }
+
+    /**
      * Unsubscribe from a specific channel
      * @param {string} channelName - Channel to unsubscribe from
      */

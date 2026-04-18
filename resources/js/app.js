@@ -1,5 +1,8 @@
 import Alpine from 'alpinejs';
 window.Alpine = Alpine;
+
+import Chart from 'chart.js/auto';
+window.Chart = Chart;
 // Do not call `Alpine.start()` here because Livewire v3 bundles Alpine
 // and will initialize it. Starting Alpine twice triggers duplicate-instance
 // warnings. Mark this Alpine instance as coming from Livewire to avoid

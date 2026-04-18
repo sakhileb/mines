@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Machine;
 use App\Models\Geofence;
+use App\Models\Route;
 use App\Traits\RealtimeUpdates;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,7 @@ class LiveMap extends Component
     public string $mapStyle = 'satellite'; // 'osm' or 'satellite'
     public bool $showGeofences = true;
     public bool $showMachines = true;
+    public bool $showRoutes = false;
     public string $selectedStatus = '';
     public ?int $selectedMineAreaId = null;
 
@@ -70,9 +72,10 @@ class LiveMap extends Component
     {
         $this->showGeofences = !$this->showGeofences;
         $this->dispatch('map-updated', [
-            'mapStyle' => $this->mapStyle,
+            'mapStyle'  => $this->mapStyle,
             'geofences' => $this->showGeofences ? $this->getGeofences() : [],
-            'machines' => $this->showMachines ? $this->getMachines() : [],
+            'machines'  => $this->showMachines ? $this->getMachines() : [],
+            'routes'    => $this->showRoutes ? $this->getRoutes() : [],
         ]);
     }
 
@@ -80,9 +83,21 @@ class LiveMap extends Component
     {
         $this->showMachines = !$this->showMachines;
         $this->dispatch('map-updated', [
-            'mapStyle' => $this->mapStyle,
-            'machines' => $this->showMachines ? $this->getMachines() : [],
+            'mapStyle'  => $this->mapStyle,
+            'machines'  => $this->showMachines ? $this->getMachines() : [],
             'geofences' => $this->showGeofences ? $this->getGeofences() : [],
+            'routes'    => $this->showRoutes ? $this->getRoutes() : [],
+        ]);
+    }
+
+    public function toggleRoutes(): void
+    {
+        $this->showRoutes = !$this->showRoutes;
+        $this->dispatch('map-updated', [
+            'mapStyle'  => $this->mapStyle,
+            'machines'  => $this->showMachines ? $this->getMachines() : [],
+            'geofences' => $this->showGeofences ? $this->getGeofences() : [],
+            'routes'    => $this->showRoutes ? $this->getRoutes() : [],
         ]);
     }
 
@@ -90,9 +105,10 @@ class LiveMap extends Component
     {
         $this->mapStyle = $style;
         $this->dispatch('map-updated', [
-            'mapStyle' => $style,
-            'machines' => $this->showMachines ? $this->getMachines() : [],
+            'mapStyle'  => $style,
+            'machines'  => $this->showMachines ? $this->getMachines() : [],
             'geofences' => $this->showGeofences ? $this->getGeofences() : [],
+            'routes'    => $this->showRoutes ? $this->getRoutes() : [],
         ]);
     }
 
@@ -137,9 +153,10 @@ class LiveMap extends Component
     {
         // When user selects a mine area, push an update to the map with filtered machines
         $this->dispatch('map-updated', [
-            'mapStyle' => $this->mapStyle,
-            'machines' => $this->getMachines(),
-            'geofences' => $this->showGeofences ? $this->getGeofences() : [],
+            'mapStyle'           => $this->mapStyle,
+            'machines'           => $this->getMachines(),
+            'geofences'          => $this->showGeofences ? $this->getGeofences() : [],
+            'routes'             => $this->showRoutes ? $this->getRoutes() : [],
             'selectedMineAreaId' => $value,
         ]);
     }
@@ -152,19 +169,95 @@ class LiveMap extends Component
             ->get()
             ->map(function ($geofence) {
                 return [
-                    'id' => $geofence->id,
-                    'name' => $geofence->name,
-                    'center_latitude' => (float) $geofence->center_latitude,
+                    'id'               => $geofence->id,
+                    'name'             => $geofence->name,
+                    'center_latitude'  => (float) $geofence->center_latitude,
                     'center_longitude' => (float) $geofence->center_longitude,
-                    'coordinates' => is_string($geofence->coordinates) ? json_decode($geofence->coordinates, true) : $geofence->coordinates ?? [],
+                    'coordinates'      => is_string($geofence->coordinates)
+                        ? json_decode($geofence->coordinates, true)
+                        : $geofence->coordinates ?? [],
                 ];
             });
+    }
+
+    public function getRoutes(): array
+    {
+        $team = Auth::user()->currentTeam;
+
+        return Route::where('team_id', $team->id)
+            ->where('status', 'active')
+            ->with(['waypoints' => fn($q) => $q->orderBy('sequence_order')])
+            ->get()
+            ->map(fn($route) => [
+                'id'              => $route->id,
+                'name'            => $route->name,
+                'start_latitude'  => (float) $route->start_latitude,
+                'start_longitude' => (float) $route->start_longitude,
+                'end_latitude'    => (float) $route->end_latitude,
+                'end_longitude'   => (float) $route->end_longitude,
+                'total_distance'  => (float) $route->total_distance,
+                'estimated_time'  => (int) $route->estimated_time,
+                'route_geometry'  => $route->route_geometry,
+                'waypoints'       => $route->waypoints->map(fn($w) => [
+                    'sequence_order'               => $w->sequence_order,
+                    'latitude'                     => (float) $w->latitude,
+                    'longitude'                    => (float) $w->longitude,
+                    'waypoint_type'                => $w->waypoint_type,
+                    'name'                         => $w->name,
+                    'distance_from_previous'       => $w->distance_from_previous,
+                    'estimated_time_from_previous' => $w->estimated_time_from_previous,
+                ])->toArray(),
+            ])
+            ->toArray();
+    }
+
+    public function getTrafficPlanData(): array
+    {
+        $teamId = Auth::user()->currentTeam->id;
+
+        $restrictedZones = Geofence::where('team_id', $teamId)
+            ->where('geofence_type', 'restricted')
+            ->count();
+
+        $safeZones = Geofence::where('team_id', $teamId)
+            ->where('geofence_type', 'safe')
+            ->count();
+
+        $warningZones = Geofence::where('team_id', $teamId)
+            ->whereNotIn('geofence_type', ['restricted', 'safe'])
+            ->count();
+
+        $activeRoutesQuery = Route::where('team_id', $teamId)->where('status', 'active');
+        $activeRoutes = $activeRoutesQuery->count();
+
+        $routesWithSpeedLimit = (clone $activeRoutesQuery)
+            ->whereNotNull('speed_limit')
+            ->count();
+
+        return [
+            'restricted_zones' => $restrictedZones,
+            'safe_zones' => $safeZones,
+            'warning_zones' => $warningZones,
+            'active_routes' => $activeRoutes,
+            'routes_with_speed_limit' => $routesWithSpeedLimit,
+            'default_speed_limits' => [
+                'haul_road' => 40,
+                'loading_zone' => 20,
+                'shared_zone' => 15,
+            ],
+            'rules' => [
+                'avoid_restricted' => true,
+                'one_way_flow' => true,
+                'pedestrian_priority_shared_zones' => true,
+            ],
+        ];
     }
 
     public function render()
     {
         $machines = $this->getMachines();
         $geofences = $this->getGeofences();
+        $routes = $this->showRoutes ? $this->getRoutes() : [];
         $machineStatuses = Machine::where('team_id', Auth::user()->currentTeam->id)
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
@@ -172,10 +265,13 @@ class LiveMap extends Component
             ->toArray();
 
         return view('livewire.live-map', [
-            'machines' => $machines,
-            'geofences' => $geofences,
+            'machines'        => $machines,
+            'geofences'       => $geofences,
+            'routes'          => $routes,
+            'showRoutes'      => $this->showRoutes,
+            'trafficPlanData' => $this->getTrafficPlanData(),
             'machineStatuses' => $machineStatuses,
-            'mineAreas' => $this->getMineAreas(),
+            'mineAreas'       => $this->getMineAreas(),
         ]);
     }
 }

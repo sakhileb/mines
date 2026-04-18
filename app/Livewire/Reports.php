@@ -6,17 +6,22 @@ use App\Models\Report;
 use App\Models\MineArea;
 use App\Models\Geofence;
 use App\Models\Machine;
+use App\Models\FeedPost;
+use App\Models\User;
 use Livewire\Component;
 use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class Reports extends Component
 {
     use BrowserEventBridge;
     use WithPagination;
 
+    // ── Generated Reports tab ──────────────────────────────────────────────────
     public string $search = '';
     public string $sortBy = 'created_at';
     public string $sortDirection = 'desc';
@@ -28,6 +33,32 @@ class Reports extends Component
     public ?\Illuminate\Support\Collection $machinesList = null;
     public bool $showDeleteConfirm = false;
     public ?int $deleteReportId = null;
+
+    // ── Tab navigation ─────────────────────────────────────────────────────────
+    public string $activeTab = 'generated';
+
+    // ── 3.1 Shift Reports ──────────────────────────────────────────────────────
+    public string $shiftReportShift = '';
+    public string $shiftReportDate = '';
+
+    // ── 3.2 Breakdown Analytics ────────────────────────────────────────────────
+    public string $breakdownDateFrom = '';
+    public string $breakdownDateTo = '';
+
+    // ── 3.3 Production Analytics ───────────────────────────────────────────────
+    public string $productionShift = '';
+    public string $productionDateFrom = '';
+    public string $productionDateTo = '';
+    public string $productionMineAreaId = '';
+
+    // ── 3.4 Historical Log ─────────────────────────────────────────────────────
+    public string $historySearch = '';
+    public string $historyCategory = '';
+    public string $historyDateFrom = '';
+    public string $historyDateTo = '';
+    public string $historyAuthorId = '';
+    public string $historyShift = '';
+    public string $historyApproval = '';
 
     protected $reportTypes = [
         'production' => 'Production Summary',
@@ -42,21 +73,29 @@ class Reports extends Component
     {
         $this->sortBy = 'created_at';
         $this->sortDirection = 'desc';
-        $this->selectedMineAreaId = '';
-        $this->selectedGeofenceId = '';
-        $this->selectedMachineId = '';
+        $this->shiftReportDate = now()->format('Y-m-d');
+        $this->breakdownDateFrom = now()->subDays(29)->format('Y-m-d');
+        $this->breakdownDateTo = now()->format('Y-m-d');
+        $this->productionDateFrom = now()->subDays(13)->format('Y-m-d');
+        $this->productionDateTo = now()->format('Y-m-d');
     }
+
+    // ── Pagination reset on filter change ──────────────────────────────────────
+    public function updatingSearch(): void    { $this->resetPage(); }
+    public function updatingHistorySearch(): void { $this->resetPage('history_page'); }
+
+    // ── Generated Reports ──────────────────────────────────────────────────────
 
     public function getReports()
     {
         $team = Auth::user()->currentTeam;
-        
+
         if (!$team) {
             return collect();
         }
 
         $searchTerm = trim($this->search);
-        
+
         return Report::where('team_id', $team->id)
             ->when($searchTerm, function ($query) use ($searchTerm) {
                 $query->where('title', 'like', '%' . $searchTerm . '%')
@@ -93,12 +132,11 @@ class Reports extends Component
 
     public function deleteReport($reportId)
     {
-        // Validate report ID
         if (!is_numeric($reportId)) {
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Invalid report ID']);
             return;
         }
-        
+
         $team = Auth::user()->currentTeam;
         $report = Report::where('team_id', $team->id)->find($reportId);
 
@@ -107,21 +145,20 @@ class Reports extends Component
             $this->showDeleteConfirm = false;
             return;
         }
-        
+
         try {
-            // Delete associated files if they exist
             if ($report->file_path && \Storage::exists($report->file_path)) {
                 \Storage::delete($report->file_path);
             }
-            
+
             $report->delete();
-            
+
             Log::info('User deleted report', [
                 'user_id' => Auth::id(),
                 'report_id' => $reportId,
                 'report_type' => $report->type,
             ]);
-            
+
             $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Report deleted successfully']);
         } catch (\Exception $e) {
             Log::error('Failed to delete report', [
@@ -129,7 +166,7 @@ class Reports extends Component
                 'report_id' => $reportId,
                 'error' => $e->getMessage(),
             ]);
-            
+
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to delete report']);
         }
 
@@ -151,12 +188,11 @@ class Reports extends Component
 
     public function downloadReport($reportId)
     {
-        // Validate report ID
         if (!is_numeric($reportId)) {
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Invalid report ID']);
             return;
         }
-        
+
         $team = Auth::user()->currentTeam;
         $report = Report::where('team_id', $team->id)->find($reportId);
 
@@ -164,26 +200,301 @@ class Reports extends Component
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report not found or access denied']);
             return;
         }
-        
+
         if ($report->status !== 'completed') {
             $this->dispatchBrowserEvent('notify', ['type' => 'warning', 'message' => 'Report is not ready for download']);
             return;
         }
-        
-        // Prevent path traversal attacks
+
         if ($report->file_path && !str_contains($report->file_path, '..')) {
             if (\Storage::exists($report->file_path)) {
                 Log::info('User downloaded report', [
                     'user_id' => Auth::id(),
                     'report_id' => $reportId,
                 ]);
-                
+
                 return \Storage::download($report->file_path, $report->title . '.' . $report->format);
             }
         }
-        
+
         $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report file not found']);
     }
+
+    // ── 3.1 Shift Reports ──────────────────────────────────────────────────────
+
+    public function getShiftReportData(): array
+    {
+        if (!$this->shiftReportShift || !$this->shiftReportDate) {
+            return [];
+        }
+
+        try {
+            $date = Carbon::parse($this->shiftReportDate);
+        } catch (\Exception $e) {
+            return [];
+        }
+
+        $posts = FeedPost::where('shift', $this->shiftReportShift)
+            ->whereDate('created_at', $date)
+            ->with(['approval'])
+            ->get();
+
+        $categoryData = [];
+        foreach (FeedPost::CATEGORIES as $cat) {
+            $categoryData[$cat] = $posts->where('category', $cat)->count();
+        }
+
+        $unresolvedBreakdowns = $posts->where('category', 'breakdown')->filter(
+            fn($p) => !$p->approval || $p->approval->status !== 'approved'
+        )->count();
+
+        $topPosts = $posts->sortByDesc(
+            fn($p) => $p->like_count + $p->comment_count
+        )->take(5)->values()->map(fn($p) => [
+            'id' => $p->id,
+            'body' => Str::limit($p->body, 80),
+            'category' => $p->category,
+            'likes' => $p->like_count,
+            'comments' => $p->comment_count,
+            'acks' => $p->acknowledgement_count,
+        ])->toArray();
+
+        $approvalItems = $posts->filter(fn($p) => $p->approval);
+        $approvalStats = [
+            'approved' => $approvalItems->filter(fn($p) => $p->approval->status === 'approved')->count(),
+            'rejected' => $approvalItems->filter(fn($p) => $p->approval->status === 'rejected')->count(),
+            'pending'  => $approvalItems->filter(fn($p) => $p->approval->status === 'pending')->count(),
+        ];
+
+        return [
+            'total'                => $posts->count(),
+            'by_category'          => $categoryData,
+            'total_likes'          => $posts->sum('like_count'),
+            'total_comments'       => $posts->sum('comment_count'),
+            'total_acks'           => $posts->sum('acknowledgement_count'),
+            'unresolved_breakdowns'=> $unresolvedBreakdowns,
+            'top_posts'            => $topPosts,
+            'approval_stats'       => $approvalStats,
+        ];
+    }
+
+    public function exportShiftReportCsv()
+    {
+        if (!$this->shiftReportShift || !$this->shiftReportDate) {
+            return;
+        }
+
+        $data = $this->getShiftReportData();
+        if (empty($data)) {
+            return;
+        }
+
+        $shift = $this->shiftReportShift;
+        $date  = $this->shiftReportDate;
+
+        return response()->streamDownload(function () use ($data, $shift, $date) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['Shift Report Summary']);
+            fputcsv($handle, ['Shift', $shift, 'Date', $date]);
+            fputcsv($handle, []);
+
+            fputcsv($handle, ['Category Breakdown']);
+            fputcsv($handle, ['Category', 'Post Count']);
+            foreach ($data['by_category'] as $category => $count) {
+                fputcsv($handle, [ucfirst(str_replace('_', ' ', $category)), $count]);
+            }
+            fputcsv($handle, []);
+
+            fputcsv($handle, ['Engagement Metrics']);
+            fputcsv($handle, ['Metric', 'Value']);
+            fputcsv($handle, ['Total Posts', $data['total']]);
+            fputcsv($handle, ['Total Likes', $data['total_likes']]);
+            fputcsv($handle, ['Total Comments', $data['total_comments']]);
+            fputcsv($handle, ['Total Acknowledgements', $data['total_acks']]);
+            fputcsv($handle, ['Unresolved Breakdowns', $data['unresolved_breakdowns']]);
+            fputcsv($handle, []);
+
+            fputcsv($handle, ['Approval Statistics']);
+            fputcsv($handle, ['Status', 'Count']);
+            foreach ($data['approval_stats'] as $status => $count) {
+                fputcsv($handle, [ucfirst($status), $count]);
+            }
+            fputcsv($handle, []);
+
+            fputcsv($handle, ['Top Posts by Engagement']);
+            fputcsv($handle, ['Body', 'Category', 'Likes', 'Comments', 'Acknowledgements']);
+            foreach ($data['top_posts'] as $post) {
+                fputcsv($handle, [$post['body'], $post['category'], $post['likes'], $post['comments'], $post['acks']]);
+            }
+
+            fclose($handle);
+        }, "shift-report-{$shift}-{$date}.csv", ['Content-Type' => 'text/csv']);
+    }
+
+    // ── 3.2 Machine Breakdown Analytics ───────────────────────────────────────
+
+    public function getBreakdownData(): array
+    {
+        $posts = FeedPost::where('category', 'breakdown')
+            ->with(['mineArea:id,name', 'approval'])
+            ->when($this->breakdownDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->breakdownDateFrom))
+            ->when($this->breakdownDateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->breakdownDateTo))
+            ->orderBy('created_at')
+            ->get();
+
+        // Frequency per machine
+        $byMachine = $posts
+            ->filter(fn($p) => !empty($p->meta['machine_id']))
+            ->groupBy(fn($p) => $p->meta['machine_id'])
+            ->map(fn($g) => $g->count())
+            ->sortByDesc(fn($v) => $v);
+
+        // Frequency per section
+        $bySection = $posts
+            ->filter(fn($p) => $p->mine_area_id)
+            ->groupBy(fn($p) => $p->mineArea?->name ?? 'Unknown')
+            ->map(fn($g) => $g->count())
+            ->sortByDesc(fn($v) => $v);
+
+        // MTTR: diff from breakdown post created_at → approval reviewed_at
+        $mttrValues = $posts
+            ->filter(fn($p) => $p->approval && $p->approval->status === 'approved' && $p->approval->reviewed_at)
+            ->map(fn($p) => max(0, $p->created_at->diffInMinutes($p->approval->reviewed_at)));
+
+        $avgMttr = $mttrValues->isNotEmpty() ? round($mttrValues->avg()) : null;
+
+        return [
+            'total'              => $posts->count(),
+            'resolved_count'     => $posts->filter(fn($p) => $p->approval && $p->approval->status === 'approved')->count(),
+            'unresolved_count'   => $posts->filter(fn($p) => !$p->approval || $p->approval->status !== 'approved')->count(),
+            'avg_mttr_minutes'   => $avgMttr,
+            'by_machine'         => $byMachine->toArray(),
+            'by_section'         => $bySection->toArray(),
+            'chart_labels'       => $byMachine->keys()->values()->toArray(),
+            'chart_values'       => $byMachine->values()->toArray(),
+            'section_labels'     => $bySection->keys()->values()->toArray(),
+            'section_values'     => $bySection->values()->toArray(),
+        ];
+    }
+
+    // ── 3.3 Production Analytics ───────────────────────────────────────────────
+
+    public function getProductionData(): array
+    {
+        $posts = FeedPost::where('category', 'shift_update')
+            ->with(['mineArea:id,name'])
+            ->when($this->productionShift,       fn($q) => $q->where('shift', $this->productionShift))
+            ->when($this->productionDateFrom,    fn($q) => $q->whereDate('created_at', '>=', $this->productionDateFrom))
+            ->when($this->productionDateTo,      fn($q) => $q->whereDate('created_at', '<=', $this->productionDateTo))
+            ->when($this->productionMineAreaId,  fn($q) => $q->where('mine_area_id', $this->productionMineAreaId))
+            ->orderBy('created_at')
+            ->get();
+
+        // Per-shift aggregates
+        $byShift = [];
+        foreach (FeedPost::SHIFTS as $shift) {
+            $sp   = $posts->where('shift', $shift);
+            $lph  = $sp->filter(fn($p) => isset($p->meta['loads_per_hour']))->map(fn($p) => (float) $p->meta['loads_per_hour']);
+            $ton  = $sp->filter(fn($p) => isset($p->meta['tonnage']))->map(fn($p) => (float) $p->meta['tonnage']);
+            $byShift[$shift] = [
+                'count'            => $sp->count(),
+                'avg_loads_per_hour' => $lph->isNotEmpty() ? round($lph->avg(), 2) : null,
+                'total_tonnage'    => $ton->isNotEmpty()  ? round($ton->sum(), 2)  : null,
+            ];
+        }
+
+        // Week-on-week
+        $cwStart = now()->startOfWeek();
+        $lwStart = now()->subWeek()->startOfWeek();
+        $lwEnd   = now()->subWeek()->endOfWeek();
+
+        $cwPosts = FeedPost::where('category', 'shift_update')->whereDate('created_at', '>=', $cwStart)->get();
+        $lwPosts = FeedPost::where('category', 'shift_update')->whereDate('created_at', '>=', $lwStart)->whereDate('created_at', '<=', $lwEnd)->get();
+
+        $cwLph = $cwPosts->filter(fn($p) => isset($p->meta['loads_per_hour']))->avg(fn($p) => (float) $p->meta['loads_per_hour']) ?? 0;
+        $lwLph = $lwPosts->filter(fn($p) => isset($p->meta['loads_per_hour']))->avg(fn($p) => (float) $p->meta['loads_per_hour']) ?? 0;
+
+        // Month-on-month
+        $cmStart = now()->startOfMonth();
+        $lmStart = now()->subMonth()->startOfMonth();
+        $lmEnd   = now()->subMonth()->endOfMonth();
+
+        $cmPosts = FeedPost::where('category', 'shift_update')->whereDate('created_at', '>=', $cmStart)->get();
+        $lmPosts = FeedPost::where('category', 'shift_update')->whereDate('created_at', '>=', $lmStart)->whereDate('created_at', '<=', $lmEnd)->get();
+
+        $cmLph = $cmPosts->filter(fn($p) => isset($p->meta['loads_per_hour']))->avg(fn($p) => (float) $p->meta['loads_per_hour']) ?? 0;
+        $lmLph = $lmPosts->filter(fn($p) => isset($p->meta['loads_per_hour']))->avg(fn($p) => (float) $p->meta['loads_per_hour']) ?? 0;
+
+        // Daily timeline for chart
+        $rangeStart = $this->productionDateFrom ? Carbon::parse($this->productionDateFrom) : now()->subDays(13);
+        $rangeEnd   = $this->productionDateTo   ? Carbon::parse($this->productionDateTo)   : now();
+
+        $timelinePosts = FeedPost::where('category', 'shift_update')
+            ->when($this->productionShift,      fn($q) => $q->where('shift', $this->productionShift))
+            ->when($this->productionMineAreaId, fn($q) => $q->where('mine_area_id', $this->productionMineAreaId))
+            ->whereDate('created_at', '>=', $rangeStart)
+            ->whereDate('created_at', '<=', $rangeEnd)
+            ->orderBy('created_at')
+            ->get();
+
+        $timelineLabels = [];
+        $timelineValues = [];
+        $day = $rangeStart->copy()->startOfDay();
+        while ($day->lte($rangeEnd)) {
+            $dp  = $timelinePosts->filter(fn($p) => $p->created_at->isSameDay($day));
+            $lph = $dp->filter(fn($p) => isset($p->meta['loads_per_hour']))->avg(fn($p) => (float) $p->meta['loads_per_hour']);
+            $timelineLabels[] = $day->format('M d');
+            $timelineValues[] = $lph ? round($lph, 1) : 0;
+            $day->addDay();
+        }
+
+        return [
+            'total'            => $posts->count(),
+            'by_shift'         => $byShift,
+            'wow_current'      => round($cwLph, 2),
+            'wow_last'         => round($lwLph, 2),
+            'wow_change'       => $lwLph > 0 ? round((($cwLph - $lwLph) / $lwLph) * 100, 1) : null,
+            'mom_current'      => round($cmLph, 2),
+            'mom_last'         => round($lmLph, 2),
+            'mom_change'       => $lmLph > 0 ? round((($cmLph - $lmLph) / $lmLph) * 100, 1) : null,
+            'timeline_labels'  => $timelineLabels,
+            'timeline_values'  => $timelineValues,
+        ];
+    }
+
+    // ── 3.4 Historical Log ─────────────────────────────────────────────────────
+
+    public function getHistory()
+    {
+        $term = trim($this->historySearch);
+
+        return FeedPost::withTrashed()
+            ->with(['author:id,name', 'mineArea:id,name', 'approval'])
+            ->when($term, function ($query) use ($term) {
+                $safe = '%' . addcslashes($term, '%_\\') . '%';
+                $query->where(function ($q) use ($safe) {
+                    $q->whereRaw('body ILIKE ?', [$safe])
+                      ->orWhereHas('allComments', fn($c) => $c->whereRaw('body ILIKE ?', [$safe]));
+                });
+            })
+            ->when($this->historyCategory,  fn($q) => $q->where('category', $this->historyCategory))
+            ->when($this->historyDateFrom,  fn($q) => $q->whereDate('created_at', '>=', $this->historyDateFrom))
+            ->when($this->historyDateTo,    fn($q) => $q->whereDate('created_at', '<=', $this->historyDateTo))
+            ->when($this->historyAuthorId,  fn($q) => $q->where('author_id', $this->historyAuthorId))
+            ->when($this->historyShift,     fn($q) => $q->where('shift', $this->historyShift))
+            ->when($this->historyApproval, function ($query) {
+                if ($this->historyApproval === 'none') {
+                    $query->doesntHave('approval');
+                } else {
+                    $query->whereHas('approval', fn($q) => $q->where('status', $this->historyApproval));
+                }
+            })
+            ->orderByDesc('created_at')
+            ->paginate(20, ['*'], 'history_page');
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────────
 
     public function render()
     {
@@ -191,14 +502,20 @@ class Reports extends Component
 
         $mineAreas = $team ? MineArea::where('team_id', $team->id)->get() : collect();
         $geofences = $team ? Geofence::where('team_id', $team->id)->get() : collect();
-        $this->machinesList = $team ? Machine::where('team_id', $team->id)->select('id','name')->get() : collect();
+        $this->machinesList = $team ? Machine::where('team_id', $team->id)->select('id', 'name')->get() : collect();
+        $teamUsers = $team ? User::whereHas('teams', fn($q) => $q->where('teams.id', $team->id))->select('id', 'name')->orderBy('name')->get() : collect();
 
         return view('livewire.reports', [
-            'reports' => $this->getReports(),
-            'reportTypes' => $this->reportTypes,
-            'mineAreas' => $mineAreas,
-            'geofences' => $geofences,
-            'machinesList' => $this->machinesList,
+            'reports'        => $this->activeTab === 'generated' ? $this->getReports() : collect(),
+            'reportTypes'    => $this->reportTypes,
+            'mineAreas'      => $mineAreas,
+            'geofences'      => $geofences,
+            'machinesList'   => $this->machinesList,
+            'shiftReportData'=> $this->activeTab === 'shift_reports' ? $this->getShiftReportData() : [],
+            'breakdownData'  => $this->activeTab === 'breakdown'     ? $this->getBreakdownData()   : [],
+            'productionData' => $this->activeTab === 'production'    ? $this->getProductionData()  : [],
+            'history'        => $this->activeTab === 'history'       ? $this->getHistory()         : null,
+            'teamUsers'      => $teamUsers,
         ]);
     }
 }

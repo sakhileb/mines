@@ -205,6 +205,43 @@ function setupLivewireListeners() {
     });
 
     /**
+     * Subscribe to the operations feed channel.
+     * Handles live events and missed-post catch-up after reconnection.
+     */
+    window.Livewire.on('realtime:feed', ({ teamId }) => {
+        console.log('📡 Subscribing to feed channel for team:', teamId);
+
+        ReverbService.subscribeFeed(teamId, {
+            onNewPost: (post) => {
+                // Tell the Livewire Feed component to prepend the new post
+                window.Livewire.dispatch('feed:new-post', { post });
+            },
+            onAcknowledgementUpdated: (data) => {
+                window.Livewire.dispatch('feed:acknowledgement-updated', data);
+            },
+            onNewComment: (data) => {
+                window.Livewire.dispatch('feed:new-comment', data);
+            },
+            onCommentUpdated: (data) => {
+                window.Livewire.dispatch('feed:comment-updated', data);
+            },
+            onCommentDeleted: (data) => {
+                window.Livewire.dispatch('feed:comment-deleted', data);
+            },
+            onPostLiked: (data) => {
+                window.Livewire.dispatch('feed:post-liked', data);
+            },
+            onPostStatusChanged: (data) => {
+                window.Livewire.dispatch('feed:post-status-changed', data);
+            },
+            onMissedPosts: (posts) => {
+                // Ask the Livewire component to refresh so missed posts appear
+                window.Livewire.dispatch('feed:reconnected', { count: posts.length });
+            },
+        });
+    });
+
+    /**
      * Custom event listener registration
      * Allows components to listen to real-time events
      */

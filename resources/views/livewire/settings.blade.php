@@ -297,6 +297,68 @@
                             Save Settings
                         </button>
                     </div>
+
+                    {{-- Feed Notification Preferences --}}
+                    <div class="border-t border-slate-700 pt-6 space-y-4">
+                        <h3 class="text-lg font-semibold text-white">Feed Notifications</h3>
+                        <p class="text-sm text-slate-400">Choose which feed posts notify you in-app.</p>
+
+                        {{-- Per-category toggles --}}
+                        <div class="space-y-2">
+                            @foreach ([
+                                'breakdown'    => 'Breakdown posts',
+                                'shift_update' => 'Shift Update posts',
+                                'safety_alert' => 'Safety Alert posts',
+                                'production'   => 'Production posts',
+                                'general'      => 'General posts',
+                            ] as $cat => $label)
+                                <div class="flex items-center justify-between bg-slate-700/50 rounded-lg px-4 py-3 border border-slate-600">
+                                    <span class="text-sm text-white">{{ $label }}</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" wire:model="feedCategoryPrefs.{{ $cat }}" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Event toggles --}}
+                        <div class="space-y-2 pt-2">
+                            @foreach ([
+                                'feedNotifyOnComment'  => 'Notify when someone comments on your post',
+                                'feedNotifyOnReply'    => 'Notify when someone replies to your comment',
+                                'feedNotifyOnApproval' => 'Notify when your post is approved or rejected',
+                                'feedNotifyOnMention'  => 'Notify when you are @mentioned',
+                            ] as $prop => $label)
+                                <div class="flex items-center justify-between bg-slate-700/50 rounded-lg px-4 py-3 border border-slate-600">
+                                    <span class="text-sm text-white">{{ $label }}</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" wire:model="{{ $prop }}" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Shift digest subscription --}}
+                        <div class="flex items-center justify-between bg-slate-700/50 rounded-lg px-4 py-3 border border-slate-600">
+                            <div>
+                                <p class="text-sm text-white font-medium">Shift Digest Email</p>
+                                <p class="text-xs text-slate-400">Receive a summary email at the end of each shift (supervisors &amp; managers).</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model="digestSubscribed" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="pt-2">
+                            <button wire:click="saveFeedPreferences"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition text-sm">
+                                Save Feed Preferences
+                            </button>
+                        </div>
+                    </div>
                 </div>
             @endif
         </div>

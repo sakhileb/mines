@@ -6,7 +6,6 @@ use App\Traits\HasTeamFilters;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
 class MaintenanceRecord extends Model
 {
     use HasFactory, HasTeamFilters;
@@ -105,6 +104,42 @@ class MaintenanceRecord extends Model
         static::creating(function ($record) {
             if (!$record->work_order_number) {
                 $record->work_order_number = 'WO-' . strtoupper(uniqid());
+            }
+        });
+
+        // When a maintenance booking is created, put the machine into Maintenance status.
+        static::created(function (self $record) {
+            if (in_array($record->status, ['scheduled', 'in_progress'])) {
+                Machine::where('id', $record->machine_id)
+                    ->whereNotIn('status', ['maintenance'])
+                    ->update(['status' => 'maintenance']);
+            }
+        });
+
+        // When a maintenance record status changes, sync the machine status.
+        static::updated(function (self $record) {
+            if (! $record->wasChanged('status')) {
+                return;
+            }
+
+            $newStatus = $record->status;
+
+            if (in_array($newStatus, ['scheduled', 'in_progress'])) {
+                // Booking moved to active — ensure machine is in maintenance.
+                Machine::where('id', $record->machine_id)
+                    ->update(['status' => 'maintenance']);
+            } elseif (in_array($newStatus, ['completed', 'cancelled'])) {
+                // Check whether any other open records still hold this machine.
+                $stillActive = static::where('machine_id', $record->machine_id)
+                    ->whereIn('status', ['scheduled', 'in_progress'])
+                    ->exists();
+
+                if (! $stillActive) {
+                    // No more active bookings — restore machine to active.
+                    Machine::where('id', $record->machine_id)
+                        ->where('status', 'maintenance')
+                        ->update(['status' => 'active']);
+                }
             }
         });
     }

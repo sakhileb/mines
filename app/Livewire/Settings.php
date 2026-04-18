@@ -8,6 +8,8 @@ use App\Traits\BrowserEventBridge;
 use Livewire\Attributes\Validate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\DigestSubscription;
+use App\Models\UserFeedPreference;
 
 class Settings extends Component
 {
@@ -44,6 +46,20 @@ class Settings extends Component
     public string $quietHoursEnd = '08:00';
     public bool $quietHoursEnabled = false;
 
+    // Feed Notification Preferences
+    public array $feedCategoryPrefs = [
+        'breakdown'    => true,
+        'shift_update' => true,
+        'safety_alert' => true,
+        'production'   => true,
+        'general'      => false,
+    ];
+    public bool $feedNotifyOnComment  = true;
+    public bool $feedNotifyOnReply    = true;
+    public bool $feedNotifyOnApproval = true;
+    public bool $feedNotifyOnMention  = true;
+    public bool $digestSubscribed     = false;
+
     protected $rules = [
         'teamName' => 'required|string|max:255',
         'teamEmail' => 'nullable|email|max:255',
@@ -62,6 +78,7 @@ class Settings extends Component
         $this->currency = $team->currency ?? 'USD';
 
         $this->loadTeamMembers();
+        $this->loadFeedPreferences();
     }
 
     public function render()
@@ -219,6 +236,55 @@ class Settings extends Component
         } catch (\Exception $e) {
             $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Failed to update role']);
         }
+    }
+
+    // ==================== FEED NOTIFICATION PREFERENCES ====================
+
+    public function loadFeedPreferences(): void
+    {
+        $user   = auth()->user();
+        $teamId = $user->current_team_id;
+
+        $pref = UserFeedPreference::where('user_id', $user->id)
+            ->where('team_id', $teamId)
+            ->first();
+
+        if ($pref) {
+            $this->feedCategoryPrefs  = array_merge($this->feedCategoryPrefs, $pref->category_preferences ?? []);
+            $this->feedNotifyOnComment  = $pref->notify_on_comment;
+            $this->feedNotifyOnReply    = $pref->notify_on_reply;
+            $this->feedNotifyOnApproval = $pref->notify_on_approval;
+            $this->feedNotifyOnMention  = $pref->notify_on_mention;
+        }
+
+        $this->digestSubscribed = DigestSubscription::where('user_id', $user->id)
+            ->where('team_id', $teamId)
+            ->where('enabled', true)
+            ->exists();
+    }
+
+    public function saveFeedPreferences(): void
+    {
+        $user   = auth()->user();
+        $teamId = $user->current_team_id;
+
+        UserFeedPreference::updateOrCreate(
+            ['user_id' => $user->id, 'team_id' => $teamId],
+            [
+                'category_preferences' => $this->feedCategoryPrefs,
+                'notify_on_comment'    => $this->feedNotifyOnComment,
+                'notify_on_reply'      => $this->feedNotifyOnReply,
+                'notify_on_approval'   => $this->feedNotifyOnApproval,
+                'notify_on_mention'    => $this->feedNotifyOnMention,
+            ]
+        );
+
+        DigestSubscription::updateOrCreate(
+            ['user_id' => $user->id, 'team_id' => $teamId],
+            ['enabled' => $this->digestSubscribed]
+        );
+
+        $this->dispatch('notify', type: 'success', message: 'Feed notification preferences saved.');
     }
 
     // ==================== NOTIFICATION SETTINGS ====================

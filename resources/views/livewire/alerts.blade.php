@@ -2,8 +2,8 @@
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-4xl font-bold text-white mb-2">Alerts</h1>
-            <p class="text-slate-400">Monitor and manage machine alerts and notifications</p>
+            <h1 class="text-4xl font-bold text-white mb-2">Alerts &amp; Incidents</h1>
+            <p class="text-slate-400">Monitor machine alerts, safety incidents, and breakdown reports</p>
         </div>
 
         <!-- Stats Cards -->
@@ -36,6 +36,29 @@
             </div>
         </div>
 
+        <!-- Tab Navigation -->
+        <div class="flex gap-1 mb-6 bg-slate-800/60 p-1 rounded-xl border border-slate-700">
+            <button wire:click="$set('activeTab', 'alerts')"
+                class="flex-1 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all
+                       {{ $activeTab === 'alerts' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white' }}">
+                <svg class="inline w-4 h-4 mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                Machine Alerts
+                <span class="ml-1.5 bg-slate-700/80 text-slate-300 text-xs px-1.5 py-0.5 rounded-full">{{ $alerts->total() }}</span>
+            </button>
+            <button wire:click="$set('activeTab', 'incidents')"
+                class="flex-1 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all
+                       {{ $activeTab === 'incidents' ? 'bg-rose-600 text-white shadow' : 'text-slate-400 hover:text-white' }}">
+                <svg class="inline w-4 h-4 mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                Incident Reports
+                <span class="ml-1.5 bg-slate-700/80 text-slate-300 text-xs px-1.5 py-0.5 rounded-full">{{ $incidentReports->total() }}</span>
+            </button>
+        </div>
+
+        @if($activeTab === 'alerts')
         <!-- Filters Bar -->
         <div class="bg-slate-800 rounded-lg p-6 mb-6 border border-slate-700">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -535,4 +558,178 @@
             </div>
         </div>
     @endif
+        @elseif($activeTab === 'incidents')
+        <!-- ── Incident Reports Tab ───────────────────────────────────── -->
+
+        <!-- Incident Stats -->
+        @php
+            $incidentCritical  = $incidentReports->getCollection()->where('priority', 'critical')->count();
+            $incidentBreakdown = $incidentReports->getCollection()->where('category', 'breakdown')->count();
+            $incidentSafety    = $incidentReports->getCollection()->where('category', 'safety_alert')->count();
+        @endphp
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-rose-900/30 border border-rose-700 rounded-lg p-4">
+                <div class="text-rose-400 text-sm font-medium">Total Incidents</div>
+                <div class="text-3xl font-bold text-rose-300 mt-2">{{ $incidentReports->total() }}</div>
+            </div>
+            <div class="bg-red-900/30 border border-red-700 rounded-lg p-4">
+                <div class="text-red-400 text-sm font-medium">Critical</div>
+                <div class="text-3xl font-bold text-red-300 mt-2">{{ $incidentCritical }}</div>
+            </div>
+            <div class="bg-orange-900/30 border border-orange-700 rounded-lg p-4">
+                <div class="text-orange-400 text-sm font-medium">Breakdowns</div>
+                <div class="text-3xl font-bold text-orange-300 mt-2">{{ $incidentBreakdown }}</div>
+            </div>
+            <div class="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4">
+                <div class="text-yellow-400 text-sm font-medium">Safety Alerts</div>
+                <div class="text-3xl font-bold text-yellow-300 mt-2">{{ $incidentSafety }}</div>
+            </div>
+        </div>
+
+        <!-- Incident Filters -->
+        <div class="bg-slate-800 rounded-lg p-4 mb-6 border border-slate-700">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">Search Incidents</label>
+                    <input type="text" wire:model.live="incidentSearch"
+                        placeholder="Search by description..."
+                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">Category</label>
+                    <select wire:model.live="incidentCategoryFilter"
+                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none">
+                        <option value="all">All Categories</option>
+                        <option value="breakdown">Breakdown</option>
+                        <option value="safety_alert">Safety Alert</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">Priority</label>
+                    <select wire:model.live="incidentPriorityFilter"
+                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none">
+                        <option value="all">All Priorities</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="normal">Normal</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incident List -->
+        @if($incidentReports->count() > 0)
+            <div class="space-y-4">
+                @foreach($incidentReports as $post)
+                    @php
+                        $catColor = $post->category === 'safety_alert'
+                            ? 'border-yellow-700 bg-yellow-900/10'
+                            : 'border-orange-700 bg-orange-900/10';
+                        $catLabel = $post->category === 'safety_alert' ? 'Safety Alert' : 'Breakdown';
+                        $catBadge = $post->category === 'safety_alert'
+                            ? 'bg-yellow-900 text-yellow-300'
+                            : 'bg-orange-900 text-orange-300';
+                        $priBadge = match($post->priority) {
+                            'critical' => 'bg-red-900 text-red-300',
+                            'high'     => 'bg-orange-900 text-orange-300',
+                            default    => 'bg-slate-700 text-slate-300',
+                        };
+                        $machineName = $post->meta['machine_name'] ?? ($post->meta['machine_id'] ?? null);
+                    @endphp
+                    <div class="bg-slate-800 rounded-xl border {{ $catColor }} p-5 hover:border-rose-600 transition">
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <!-- Badges -->
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <span class="px-2 py-0.5 text-xs font-semibold rounded {{ $catBadge }}">{{ $catLabel }}</span>
+                                    <span class="px-2 py-0.5 text-xs font-semibold rounded {{ $priBadge }}">{{ ucfirst($post->priority) }}</span>
+                                    @if($post->is_pinned)
+                                        <span class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-900 text-blue-300">&#128204; Pinned</span>
+                                    @endif
+                                    @if($post->shift)
+                                        <span class="px-2 py-0.5 text-xs font-medium rounded bg-slate-700 text-slate-300">Shift {{ $post->shift }}</span>
+                                    @endif
+                                </div>
+
+                                <!-- Body -->
+                                <p class="text-slate-200 text-sm leading-relaxed mb-3 line-clamp-3">{{ $post->body }}</p>
+
+                                <!-- Meta details -->
+                                <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                        {{ $post->author?->name ?? 'Unknown' }}
+                                    </span>
+                                    @if($post->mineArea)
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"/>
+                                            </svg>
+                                            {{ $post->mineArea->name }}
+                                        </span>
+                                    @endif
+                                    @if($machineName)
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
+                                            </svg>
+                                            {{ $machineName }}
+                                        </span>
+                                    @endif
+                                    @if(isset($post->meta['failure_type']) && $post->meta['failure_type'])
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/>
+                                            </svg>
+                                            {{ ucwords(str_replace('_', ' ', $post->meta['failure_type'])) }}
+                                        </span>
+                                    @endif
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        {{ $post->created_at->diffForHumans() }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Right side counters -->
+                            <div class="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-2 text-xs text-slate-400 shrink-0">
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>{{ $post->acknowledgements_count }} ack</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    <span>{{ $post->comment_count }} comments</span>
+                                </div>
+                                <div class="text-slate-500 text-xs">
+                                    {{ $post->created_at->format('d M Y, H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-6">
+                {{ $incidentReports->links() }}
+            </div>
+        @else
+            <div class="flex flex-col items-center justify-center py-20 text-slate-500">
+                <svg class="w-16 h-16 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <p class="text-sm">No incident reports found</p>
+                <p class="text-xs mt-2 text-slate-600">Breakdowns and safety alerts posted from the Feed will appear here</p>
+            </div>
+        @endif
+        @endif
 </div>

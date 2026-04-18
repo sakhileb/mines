@@ -115,59 +115,99 @@
         </div>
 
         <!-- Charts Section -->
+        @php
+            $trendChartKey = 'prod-trend-' . md5(json_encode($productionChartData['daily'] ?? []));
+            $machineChartKey = 'prod-machine-' . md5(json_encode($productionChartData['per_machine'] ?? []));
+        @endphp
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Daily Production Trend -->
+            <!-- Daily Production Trend (Chart.js) -->
             <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                     </svg>
                     Daily Production Trend
                 </h2>
 
-                @if(count($dailyChart) > 0)
-                    <div class="space-y-6">
-                        @php 
-                            $maxTonnage = collect($dailyChart)->max('tonnage') ?: 1;
-                            $maxLoads = collect($dailyChart)->max('loads') ?: 1;
-                        @endphp
-
-                        <!-- Tonnage Chart -->
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Tonnage (T)</h3>
-                            <div class="flex items-end gap-1 h-32">
-                                @foreach($dailyChart as $day)
-                                    <div class="flex-1 flex flex-col items-center gap-1 group">
-                                        <div class="w-full bg-green-500 hover:bg-green-600 rounded-t transition-all relative" 
-                                             style="height: {{ $maxTonnage > 0 ? ($day['tonnage'] / $maxTonnage * 100) : 0 }}%"
-                                             title="{{ $day['date'] }}: {{ number_format($day['tonnage'], 2) }}T">
-                                            <span class="hidden group-hover:block absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                                                {{ number_format($day['tonnage'], 2) }}T
-                                            </span>
-                                        </div>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400 rotate-45 origin-left mt-2">{{ $day['date'] }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <!-- Loads Chart -->
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Loads</h3>
-                            <div class="flex items-end gap-1 h-32">
-                                @foreach($dailyChart as $day)
-                                    <div class="flex-1 flex flex-col items-center gap-1 group">
-                                        <div class="w-full bg-blue-500 hover:bg-blue-600 rounded-t transition-all relative" 
-                                             style="height: {{ $maxLoads > 0 ? ($day['loads'] / $maxLoads * 100) : 0 }}%"
-                                             title="{{ $day['date'] }}: {{ number_format($day['loads']) }} loads">
-                                            <span class="hidden group-hover:block absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                                                {{ number_format($day['loads']) }} loads
-                                            </span>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
+                @if(count($productionChartData['daily'] ?? []) > 0)
+                    <div
+                        wire:key="{{ $trendChartKey }}"
+                        x-data="{
+                            chart: null,
+                            init() {
+                                const daily = @js($productionChartData['daily'] ?? []);
+                                const labels   = daily.map(d => d.date);
+                                const tonnage  = daily.map(d => d.tonnage);
+                                const target   = daily.map(d => d.target);
+                                const loads    = daily.map(d => d.loads);
+                                this.chart = new Chart(this.$refs.trendCanvas.getContext('2d'), {
+                                    type: 'bar',
+                                    data: {
+                                        labels,
+                                        datasets: [
+                                            {
+                                                label: 'Tonnage (T)',
+                                                data: tonnage,
+                                                backgroundColor: 'rgba(34,197,94,0.75)',
+                                                borderColor: 'rgba(22,163,74,1)',
+                                                borderWidth: 1,
+                                                yAxisID: 'yTonnage',
+                                                order: 2,
+                                            },
+                                            {
+                                                label: 'Target (T)',
+                                                data: target,
+                                                type: 'line',
+                                                borderColor: 'rgba(250,204,21,1)',
+                                                backgroundColor: 'rgba(250,204,21,0.15)',
+                                                borderWidth: 2,
+                                                borderDash: [6, 3],
+                                                pointBackgroundColor: 'rgba(250,204,21,1)',
+                                                pointRadius: 3,
+                                                fill: false,
+                                                tension: 0.3,
+                                                yAxisID: 'yTonnage',
+                                                order: 1,
+                                            },
+                                            {
+                                                label: 'Loads',
+                                                data: loads,
+                                                backgroundColor: 'rgba(59,130,246,0.65)',
+                                                borderColor: 'rgba(37,99,235,1)',
+                                                borderWidth: 1,
+                                                yAxisID: 'yLoads',
+                                                order: 3,
+                                            },
+                                        ]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        interaction: { mode: 'index', intersect: false },
+                                        plugins: {
+                                            legend: {
+                                                labels: { color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151', boxWidth: 12 }
+                                            },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: ctx => {
+                                                        if (ctx.dataset.yAxisID === 'yTonnage') return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} T`;
+                                                        return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`;
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        scales: {
+                                            x: { ticks: { color: '#94a3b8', maxRotation: 45 }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                                            yTonnage: { position: 'left', ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' }, beginAtZero: true, title: { display: true, text: 'Tonnes', color: '#94a3b8' } },
+                                            yLoads:   { position: 'right', ticks: { color: '#94a3b8', stepSize: 1 }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Loads', color: '#94a3b8' } },
+                                        }
+                                    }
+                                });
+                            }
+                        }"
+                        x-init="init()"
+                    >
+                        <canvas x-ref="trendCanvas" class="w-full" style="max-height:280px"></canvas>
                     </div>
                 @else
                     <div class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
@@ -179,46 +219,199 @@
                 @endif
             </div>
 
-            <!-- Material Type Breakdown -->
+            <!-- Machine Tonnage Breakdown (Chart.js) -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
                     </svg>
-                    Material Breakdown
+                    Tonnage per Machine
                 </h2>
 
-                @if(count($materialBreakdown) > 0)
-                    <div class="space-y-4">
-                        @php 
-                            $maxMaterialTonnage = collect($materialBreakdown)->max('tonnage') ?: 1;
-                            $colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-amber-500', 'bg-red-500', 'bg-indigo-500'];
-                        @endphp
-                        
-                        @foreach($materialBreakdown as $index => $material)
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $material['material'] }}</span>
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ number_format($material['tonnage'], 2) }}T</span>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                    <div class="{{ $colors[$index % count($colors)] }} h-2 rounded-full transition-all" 
-                                         style="width: {{ ($material['tonnage'] / $maxMaterialTonnage * 100) }}%"></div>
-                                </div>
-                                <div class="flex justify-between items-center mt-1">
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ number_format($material['loads']) }} loads</span>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ $material['records'] }} records</span>
-                                </div>
-                            </div>
-                        @endforeach
+                @if(count($productionChartData['per_machine'] ?? []) > 0)
+                    <div
+                        wire:key="{{ $machineChartKey }}"
+                        x-data="{
+                            init() {
+                                const machines = @js($productionChartData['per_machine'] ?? []);
+                                const palette  = ['#3b82f6','#22c55e','#a855f7','#f59e0b','#ef4444','#06b6d4','#f97316','#84cc16'];
+                                new Chart(this.$refs.machineCanvas.getContext('2d'), {
+                                    type: 'bar',
+                                    data: {
+                                        labels: machines.map(m => m.machine_name),
+                                        datasets: [
+                                            {
+                                                label: 'Tonnage (T)',
+                                                data: machines.map(m => m.tonnage),
+                                                backgroundColor: machines.map((_, i) => palette[i % palette.length] + 'cc'),
+                                                borderColor: machines.map((_, i) => palette[i % palette.length]),
+                                                borderWidth: 1,
+                                            },
+                                            {
+                                                label: 'Loads',
+                                                data: machines.map(m => m.loads),
+                                                backgroundColor: machines.map((_, i) => palette[i % palette.length] + '55'),
+                                                borderColor: machines.map((_, i) => palette[i % palette.length]),
+                                                borderWidth: 1,
+                                                hidden: true,
+                                            },
+                                        ]
+                                    },
+                                    options: {
+                                        indexAxis: 'y',
+                                        responsive: true,
+                                        plugins: {
+                                            legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
+                                            tooltip: { callbacks: { label: ctx => ctx.dataset.label === 'Tonnage (T)' ? ` ${ctx.parsed.x.toLocaleString()} T` : ` ${ctx.parsed.x} loads` } }
+                                        },
+                                        scales: {
+                                            x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' }, beginAtZero: true },
+                                            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                                        }
+                                    }
+                                });
+                            }
+                        }"
+                        x-init="init()"
+                    >
+                        <canvas x-ref="machineCanvas" class="w-full" style="max-height:280px"></canvas>
                     </div>
                 @else
                     <div class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
                         <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
                         </svg>
-                        <p class="text-sm">No material data available</p>
+                        <p class="text-sm">No machine data available</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Load Comparison Section -->
+        @php $compKey = 'load-cmp-' . md5(json_encode($loadComparisonData)); @endphp
+        <div class="mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Recorded vs Reported Loads — Per Machine
+                    </h2>
+                    <div class="flex gap-3 text-xs">
+                        <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-blue-500"></span> Machine Recorded (sensor)</span>
+                        <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-emerald-500"></span> Manually Reported</span>
+                    </div>
+                </div>
+
+                @if(count($loadComparisonData) > 0)
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <!-- Grouped Bar Chart -->
+                        <div
+                            wire:key="{{ $compKey }}"
+                            x-data="{
+                                init() {
+                                    const data = @js($loadComparisonData);
+                                    new Chart(this.$refs.compCanvas.getContext('2d'), {
+                                        type: 'bar',
+                                        data: {
+                                            labels: data.map(d => d.machine_name),
+                                            datasets: [
+                                                {
+                                                    label: 'Recorded Tonnage (sensor)',
+                                                    data: data.map(d => d.recorded_tonnage),
+                                                    backgroundColor: 'rgba(59,130,246,0.75)',
+                                                    borderColor: 'rgba(37,99,235,1)',
+                                                    borderWidth: 1,
+                                                },
+                                                {
+                                                    label: 'Reported Tonnage (manual)',
+                                                    data: data.map(d => d.reported_tonnage),
+                                                    backgroundColor: 'rgba(16,185,129,0.75)',
+                                                    borderColor: 'rgba(5,150,105,1)',
+                                                    borderWidth: 1,
+                                                },
+                                            ]
+                                        },
+                                        options: {
+                                            responsive: true,
+                                            interaction: { mode: 'index', intersect: false },
+                                            plugins: {
+                                                legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} T`,
+                                                        afterBody: (items) => {
+                                                            const d = data[items[0].dataIndex];
+                                                            const diff = d.reported_tonnage - d.recorded_tonnage;
+                                                            return [`Variance: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)} T`];
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            scales: {
+                                                x: { ticks: { color: '#94a3b8', maxRotation: 30 }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                                                y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' }, beginAtZero: true, title: { display: true, text: 'Tonnes', color: '#94a3b8' } },
+                                            }
+                                        }
+                                    });
+                                }
+                            }"
+                            x-init="init()"
+                        >
+                            <canvas x-ref="compCanvas" class="w-full" style="max-height:300px"></canvas>
+                        </div>
+
+                        <!-- Comparison Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Machine</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rec. Loads</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rec. Tonnage</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rep. Loads</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rep. Tonnage</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Variance</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                    @foreach($loadComparisonData as $row)
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <td class="px-4 py-3 whitespace-nowrap">
+                                                <div class="font-medium text-gray-900 dark:text-white">{{ $row['machine_name'] }}</div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ $row['machine_type'] }}</div>
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-right text-blue-600 dark:text-blue-400 font-medium">
+                                                {{ number_format($row['recorded_loads']) }}
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-right text-blue-600 dark:text-blue-400 font-medium">
+                                                {{ number_format($row['recorded_tonnage'], 2) }} T
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-right text-emerald-600 dark:text-emerald-400 font-medium">
+                                                {{ number_format($row['reported_loads']) }}
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-right text-emerald-600 dark:text-emerald-400 font-medium">
+                                                {{ number_format($row['reported_tonnage'], 2) }} T
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-right font-semibold
+                                                {{ $row['variance'] > 0 ? 'text-amber-600 dark:text-amber-400' : ($row['variance'] < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400') }}">
+                                                {{ $row['variance'] >= 0 ? '+' : '' }}{{ number_format($row['variance'], 2) }} T
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @else
+                    <div class="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+                        <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <p class="text-sm">No load comparison data available for this period</p>
+                        <p class="text-xs mt-2">Assign machines to production records and ensure machine metrics are being recorded</p>
                     </div>
                 @endif
             </div>

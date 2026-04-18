@@ -169,6 +169,45 @@
                         @error('speedLimit') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
                     </div>
 
+                    <!-- Traffic Management Plan -->
+                    <div class="border border-gray-700 rounded-lg p-3 bg-gray-700/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-white">Traffic Management Plan</h3>
+                            <label class="inline-flex items-center gap-2 text-xs text-gray-300">
+                                <input type="checkbox" wire:model="tmpEnable" class="rounded border-gray-500 bg-gray-800 text-amber-500 focus:ring-amber-500">
+                                Enable TMP
+                            </label>
+                        </div>
+
+                        @if($tmpEnable)
+                            <div class="grid grid-cols-1 gap-2 text-xs text-gray-300">
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" wire:model="tmpAvoidRestricted" class="rounded border-gray-500 bg-gray-800 text-amber-500 focus:ring-amber-500"> Avoid restricted geofences</label>
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" wire:model="tmpPreferSafe" class="rounded border-gray-500 bg-gray-800 text-amber-500 focus:ring-amber-500"> Prefer safe corridors</label>
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" wire:model="tmpEnforceOneWay" class="rounded border-gray-500 bg-gray-800 text-amber-500 focus:ring-amber-500"> Enforce one-way traffic flow</label>
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" wire:model="tmpApplyAreaSpeedLimits" class="rounded border-gray-500 bg-gray-800 text-amber-500 focus:ring-amber-500"> Apply area speed limits</label>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[11px] text-gray-400 mb-1">Haul Road</label>
+                                    <input type="number" min="1" max="120" wire:model="tmpHaulRoadSpeedLimit"
+                                        class="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:ring-1 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-gray-400 mb-1">Loading Zone</label>
+                                    <input type="number" min="1" max="80" wire:model="tmpLoadingZoneSpeedLimit"
+                                        class="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:ring-1 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-gray-400 mb-1">Shared Zone</label>
+                                    <input type="number" min="1" max="80" wire:model="tmpSharedZoneSpeedLimit"
+                                        class="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:ring-1 focus:ring-amber-500">
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-gray-400">These rules are saved in route metadata and can be used by operations monitoring.</p>
+                        @endif
+                    </div>
+
                     <div class="border-t border-gray-700 pt-4">
                         <h3 class="text-lg font-semibold text-white mb-3">Start & End Points</h3>
                         <p class="text-sm text-gray-400 mb-3">Click on the map to set start and end points</p>
@@ -266,6 +305,17 @@
                                     <div class="text-xs text-gray-400">Route optimized to avoid restricted zones</div>
                                 </div>
                             @endif
+
+                            @if(!empty($calculatedRoute['traffic_plan']))
+                                <div class="bg-indigo-600/20 border border-indigo-600/40 rounded-lg p-3">
+                                    <div class="text-sm text-indigo-200 mb-2">Traffic Management Plan</div>
+                                    <div class="text-xs text-indigo-100 space-y-1">
+                                        <div>Restricted zones: {{ data_get($calculatedRoute, 'traffic_plan.network_context.restricted_zones', 0) }}</div>
+                                        <div>Safe zones: {{ data_get($calculatedRoute, 'traffic_plan.network_context.safe_zones', 0) }}</div>
+                                        <div>Speed limits (km/h): haul {{ data_get($calculatedRoute, 'traffic_plan.speed_limits.haul_road', 'N/A') }}, loading {{ data_get($calculatedRoute, 'traffic_plan.speed_limits.loading_zone', 'N/A') }}, shared {{ data_get($calculatedRoute, 'traffic_plan.speed_limits.shared_zone', 'N/A') }}</div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Save Button -->
@@ -337,6 +387,12 @@
                                         <span class="text-white font-medium">{{ number_format($route['estimated_fuel'], 1) }} L</span>
                                     </div>
                                 </div>
+
+                                @if(data_get($route, 'metadata.traffic_plan.enabled'))
+                                    <div class="mb-3 text-[11px] inline-flex items-center px-2 py-1 rounded bg-indigo-900/40 border border-indigo-700 text-indigo-200">
+                                        TMP Enabled
+                                    </div>
+                                @endif
 
                                 <div class="flex gap-2">
                                     <button wire:click="viewRoute({{ $route['id'] }})" 

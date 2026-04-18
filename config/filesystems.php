@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'feed_attachment_disk' => env('FEED_ATTACHMENT_DISK', 's3'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

@@ -24,6 +24,13 @@
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
+                <a href="{{ route('fleet.market') }}"
+                    class="px-4 py-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium hover:scale-105 transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <span>Fleet Market</span>
+                </a>
                 <a href="{{ route('fleet.route-planning') }}" 
                     class="px-4 py-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium hover:scale-105 transform">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,8 +46,10 @@
                     </svg>
                     <span>Movement Replay</span>
                 </a>
-                <button wire:click="openCreateModal" 
-                    class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium shadow-lg hover:shadow-xl hover:scale-105 transform">
+                @php $fleetFull = $fleetUsage['max'] && $fleetUsage['current'] >= $fleetUsage['max']; @endphp
+                <button wire:click="openCreateModal"
+                    @if($fleetFull) disabled title="Fleet slot limit reached — upgrade your plan to add more machines" @endif
+                    class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium shadow-lg hover:shadow-xl hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
@@ -48,7 +57,27 @@
                 </button>
             </div>
         </div>
-    </div>
+
+        {{-- Fleet slot usage bar --}}
+        @if ($fleetUsage['max'])
+            @php
+                $pct = min(100, round($fleetUsage['current'] / $fleetUsage['max'] * 100));
+                $barColor = $pct >= 100 ? 'bg-red-500' : ($pct >= 80 ? 'bg-amber-400' : 'bg-green-400');
+            @endphp
+            <div class="mt-4 pt-4 border-t border-white/20">
+                <div class="flex items-center justify-between text-xs text-blue-100 mb-1">
+                    <span>Fleet Slots Used</span>
+                    <span class="{{ $pct >= 100 ? 'text-red-300 font-bold' : '' }}">
+                        {{ $fleetUsage['current'] }} / {{ $fleetUsage['max'] }} machines
+                        @if ($pct >= 100) — <span class="font-bold">Limit reached</span> @endif
+                    </span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-2">
+                    <div class="{{ $barColor }} h-2 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
+                </div>
+            </div>
+        @endif
+    </div><!-- end header gradient -->
 
     <!-- Status Statistics with animation -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -455,6 +484,26 @@
                                 @endif
                                 <span class="ml-auto text-xs text-gray-400 dark:text-gray-500">{{ $machine->capacity ? number_format($machine->capacity) . ' tons' : 'N/A' }}</span>
                             </div>
+                            {{-- Timing fields --}}
+                            @if ($machine->cycle_time_minutes || $machine->queue_time_minutes || $machine->loading_time_minutes)
+                            <div class="flex flex-wrap gap-1 mb-2">
+                                @if ($machine->cycle_time_minutes)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700" title="Cycle Time">
+                                        &#x1F504; {{ $machine->cycle_time_minutes }}m
+                                    </span>
+                                @endif
+                                @if ($machine->queue_time_minutes)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-700" title="Queue Time">
+                                        &#x23F3; {{ $machine->queue_time_minutes }}m
+                                    </span>
+                                @endif
+                                @if ($machine->loading_time_minutes)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700" title="Loading Time">
+                                        &#x1F4E6; {{ $machine->loading_time_minutes }}m
+                                    </span>
+                                @endif
+                            </div>
+                            @endif
                             <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                 @if ($machine->excavator)
                                     <span class="font-medium">Excavator:</span> {{ $machine->excavator->name }}
@@ -677,6 +726,45 @@
                                 class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500"
                             />
                             @error('capacity') <span class="text-red-400 text-xs mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Cycle Time -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Cycle Time (minutes)</label>
+                            <input
+                                type="number"
+                                wire:model="cycleTimeMinutes"
+                                min="0" max="9999"
+                                placeholder="e.g., 25"
+                                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500"
+                            />
+                            @error('cycleTimeMinutes') <span class="text-red-400 text-xs mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Queue Time -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Queue Time (minutes)</label>
+                            <input
+                                type="number"
+                                wire:model="queueTimeMinutes"
+                                min="0" max="9999"
+                                placeholder="e.g., 5"
+                                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500"
+                            />
+                            @error('queueTimeMinutes') <span class="text-red-400 text-xs mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Loading Time -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Loading Time (minutes)</label>
+                            <input
+                                type="number"
+                                wire:model="loadingTimeMinutes"
+                                min="0" max="9999"
+                                placeholder="e.g., 8"
+                                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500"
+                            />
+                            @error('loadingTimeMinutes') <span class="text-red-400 text-xs mt-1">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Latitude -->
