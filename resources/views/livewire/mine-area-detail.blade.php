@@ -420,6 +420,176 @@
                     </div>
                 @endif
 
+                <!-- System vs Operator Comparison -->
+                <div class="bg-gray-800 rounded-lg border border-gray-700">
+                    <div class="p-4 border-b border-gray-700 flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                            <h3 class="font-semibold text-white">System vs Operator Comparison</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Compare telemetry-recorded quantities against operator-reported values</p>
+                        </div>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <select wire:model.live="comparisonMachineId" class="px-3 py-1.5 text-sm border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">All machines</option>
+                                @foreach($comparisonData['machines'] as $m)
+                                    <option value="{{ $m['id'] }}">{{ $m['name'] }}</option>
+                                @endforeach
+                            </select>
+                            <select wire:model.live="comparisonPeriod" class="px-3 py-1.5 text-sm border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="7">Last 7 days</option>
+                                <option value="14">Last 14 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @php
+                        $rows        = $comparisonData['rows'] ?? [];
+                        $hasSystem   = $comparisonData['has_system_data'] ?? false;
+                        $totalOp     = collect($rows)->sum('operator');
+                        $totalSys    = collect($rows)->filter(fn($r) => $r['has_system'])->sum('system');
+                        $overallVar  = ($totalSys > 0) ? round(($totalOp - $totalSys) / $totalSys * 100, 1) : null;
+                    @endphp
+
+                    @if($hasSystem)
+                        {{-- Summary Stat Cards --}}
+                        <div class="grid grid-cols-3 divide-x divide-gray-700 border-b border-gray-700">
+                            <div class="p-4 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Operator Total</p>
+                                <p class="text-xl font-bold text-white">{{ number_format($totalOp, 1) }}</p>
+                            </div>
+                            <div class="p-4 text-center">
+                                <p class="text-xs text-gray-400 mb-1">System Total</p>
+                                <p class="text-xl font-bold text-blue-400">{{ number_format($totalSys, 1) }}</p>
+                            </div>
+                            <div class="p-4 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Overall Variance</p>
+                                @if($overallVar !== null)
+                                    <p class="text-xl font-bold {{ abs($overallVar) <= 5 ? 'text-green-400' : (abs($overallVar) <= 15 ? 'text-amber-400' : 'text-red-400') }}">
+                                        {{ $overallVar > 0 ? '+' : '' }}{{ $overallVar }}%
+                                    </p>
+                                @else
+                                    <p class="text-xl font-bold text-gray-500">—</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Chart --}}
+                        <div class="p-4" wire:ignore>
+                            <div
+                                x-data="{
+                                    chart: null,
+                                    rows: {{ Js::from($rows) }},
+                                    init() {
+                                        this.$nextTick(() => this.draw());
+                                        this.$watch('rows', () => { if(this.chart) { this.chart.destroy(); this.chart = null; } this.draw(); });
+                                    },
+                                    draw() {
+                                        const canvas = this.$refs.comparisonChart;
+                                        if (!canvas || !window.Chart) return;
+                                        const labels   = this.rows.map(r => r.label);
+                                        const opData   = this.rows.map(r => r.operator ?? 0);
+                                        const sysData  = this.rows.map(r => r.has_system ? (r.system ?? 0) : null);
+                                        this.chart = new Chart(canvas, {
+                                            type: 'bar',
+                                            data: {
+                                                labels,
+                                                datasets: [
+                                                    {
+                                                        label: 'Operator-reported',
+                                                        data: opData,
+                                                        backgroundColor: 'rgba(34,197,94,0.7)',
+                                                        borderColor: 'rgba(34,197,94,1)',
+                                                        borderWidth: 1,
+                                                        borderRadius: 3,
+                                                    },
+                                                    {
+                                                        label: 'System-recorded',
+                                                        data: sysData,
+                                                        backgroundColor: 'rgba(59,130,246,0.7)',
+                                                        borderColor: 'rgba(59,130,246,1)',
+                                                        borderWidth: 1,
+                                                        borderRadius: 3,
+                                                    }
+                                                ]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                maintainAspectRatio: false,
+                                                interaction: { mode: 'index', intersect: false },
+                                                plugins: {
+                                                    legend: { labels: { color: '#d1d5db', font: { size: 12 } } },
+                                                    tooltip: {
+                                                        callbacks: {
+                                                            label(ctx) {
+                                                                if (ctx.parsed.y === null) return null;
+                                                                return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1);
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                scales: {
+                                                    x: { ticks: { color: '#9ca3af', maxRotation: 45 }, grid: { color: '#374151' } },
+                                                    y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' }, beginAtZero: true }
+                                                }
+                                            }
+                                        });
+                                    }
+                                }"
+                                x-init="init()"
+                            >
+                                <canvas x-ref="comparisonChart" style="height:260px;"></canvas>
+                            </div>
+                        </div>
+
+                        {{-- Variance Table --}}
+                        <div class="overflow-x-auto border-t border-gray-700">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-700">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-gray-300">Date</th>
+                                        <th class="px-4 py-2 text-right text-gray-300">Operator</th>
+                                        <th class="px-4 py-2 text-right text-gray-300">System</th>
+                                        <th class="px-4 py-2 text-right text-gray-300">Variance</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700">
+                                    @foreach($rows as $row)
+                                        <tr class="hover:bg-gray-700/40">
+                                            <td class="px-4 py-2 text-gray-300">{{ $row['label'] }}</td>
+                                            <td class="px-4 py-2 text-right text-white font-medium">{{ number_format($row['operator'], 1) }}</td>
+                                            <td class="px-4 py-2 text-right text-blue-300">
+                                                {{ $row['has_system'] ? number_format($row['system'], 1) : '—' }}
+                                            </td>
+                                            <td class="px-4 py-2 text-right">
+                                                @if($row['has_system'] && $row['variance_pct'] !== null)
+                                                    @php $vp = $row['variance_pct']; @endphp
+                                                    <span class="px-1.5 py-0.5 rounded text-xs font-medium
+                                                        {{ abs($vp) <= 5 ? 'bg-green-900 text-green-200' : (abs($vp) <= 15 ? 'bg-amber-900 text-amber-200' : 'bg-red-900 text-red-200') }}">
+                                                        {{ $vp > 0 ? '+' : '' }}{{ $vp }}%
+                                                    </span>
+                                                @else
+                                                    <span class="text-gray-500">—</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="p-8 text-center">
+                            <div class="w-12 h-12 rounded-full bg-blue-900/40 flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-300 font-medium">No system quantities recorded</p>
+                            <p class="text-gray-500 text-sm mt-1">System quantities come from machine telemetry or automated integrations.<br>You can also enter them manually via <strong class="text-gray-400">Add Record → System Qty</strong>.</p>
+                        </div>
+                    @endif
+                </div>
+
                 <!-- Production Records Table -->
                 <div class="bg-gray-800 rounded-lg border border-gray-700">
                     <div class="p-4 border-b border-gray-700">
@@ -769,12 +939,19 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-1">Produced <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Operator Qty <span class="text-red-500">*</span></label>
                             <input type="number" step="0.01" wire:model="quantityProduced" placeholder="0.00" class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-green-500 outline-none">
                             @error('quantityProduced') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">System Qty <span class="text-xs text-gray-500">(optional)</span></label>
+                            <input type="number" step="0.01" wire:model="systemQuantity" placeholder="0.00" class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <p class="text-xs text-gray-500 mt-0.5">Telemetry / automated</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">Target</label>
                             <input type="number" step="0.01" wire:model="targetQuantity" placeholder="0.00" class="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-green-500 outline-none">

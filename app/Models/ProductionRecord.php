@@ -46,6 +46,7 @@ class ProductionRecord extends Model
         'record_date',
         'shift',
         'quantity_produced',
+        'system_quantity',
         'unit',
         'target_quantity',
         'notes',
@@ -55,10 +56,28 @@ class ProductionRecord extends Model
 
     protected $casts = [
         'quantity_produced' => 'decimal:2',
-        'target_quantity' => 'decimal:2',
-        'record_date' => 'date',
-        'metadata' => 'array',
+        'system_quantity'   => 'decimal:2',
+        'target_quantity'   => 'decimal:2',
+        'record_date'       => 'date',
+        'metadata'          => 'array',
     ];
+
+    /**
+     * Variance between system-recorded and operator-reported quantities.
+     * Returns signed percentage: positive = system > operator, negative = system < operator.
+     * Returns null when system_quantity is not set.
+     */
+    public function getSystemVariancePercentageAttribute(): ?float
+    {
+        if ($this->system_quantity === null || $this->system_quantity == 0) {
+            return null;
+        }
+
+        return round(
+            (((float) $this->quantity_produced - (float) $this->system_quantity) / (float) $this->system_quantity) * 100,
+            1
+        );
+    }
 
     public function team(): BelongsTo
     {

@@ -34,11 +34,16 @@ class MineAreaDetail extends Component
     public string $productionDate = '';
     public string $productionShift = 'day';
     public ?float $quantityProduced = null;
+    public ?float $systemQuantity = null;
     public ?float $targetQuantity = null;
     public string $productionUnit = 'tonnes';
     public ?int $productionMachineId = null;
     public string $productionNotes = '';
     public string $productionPeriod = 'week'; // week, month, quarter
+
+    // Production comparison filters
+    public string $comparisonPeriod = '30'; // days: 7, 14, 30, 90
+    public string $comparisonMachineId = ''; // '' = all machines
 
     // Production Target
     public bool $showTargetModal = false;
@@ -188,6 +193,7 @@ class MineAreaDetail extends Component
         $this->showProductionModal = true;
         $this->productionDate = now()->toDateString();
         $this->quantityProduced = null;
+        $this->systemQuantity = null;
         $this->targetQuantity = null;
         $this->productionNotes = '';
         $this->productionMachineId = null;
@@ -215,6 +221,7 @@ class MineAreaDetail extends Component
             'record_date' => $this->productionDate,
             'shift' => $this->productionShift,
             'quantity_produced' => $this->quantityProduced,
+            'system_quantity' => $this->systemQuantity ?: null,
             'target_quantity' => $this->targetQuantity,
             'unit' => $this->productionUnit,
             'notes' => $this->productionNotes ?: null,
@@ -560,6 +567,7 @@ class MineAreaDetail extends Component
             'activeAlertCount' => $activeAlertCount,
             'linkedGeofences' => $linkedGeofences,
             'availableGeofences' => $availableGeofences,
+            'comparisonData' => $this->buildComparisonData($team->id),
         ]);
     }
 
@@ -601,6 +609,76 @@ class MineAreaDetail extends Component
             'target' => $targetValue,
             'target_progress' => min($targetProgress, 100),
             'target_unit' => $monthTarget->unit ?? 'tonnes',
+        ];
+    }
+
+    /**
+     * Build comparison data: system-recorded vs operator-reported quantities.
+     * Grouped by date within the selected period, optionally filtered by machine.
+     *
+     * @return array{has_system_data: bool, days: array, machines: array}
+     */
+    private function buildComparisonData(int $teamId): array
+    {
+        $days = (int) ($this->comparisonPeriod ?: 30);
+        $start = now()->subDays($days - 1)->startOfDay();
+
+        $query = ProductionRecord::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $teamId)
+            ->where('record_date', '>=', $start->toDateString())
+            ->orderBy('record_date');
+
+        if ($this->comparisonMachineId !== '') {
+            $query->where('machine_id', (int) $this->comparisonMachineId);
+        }
+
+        $records = $query->get(['record_date', 'machine_id', 'quantity_produced', 'system_quantity', 'unit']);
+
+        // Group by date
+        $byDate = $records->groupBy(fn ($r) => $r->record_date->toDateString());
+
+        $rows = [];
+        for ($d = $start->copy(); $d->lte(now()); $d->addDay()) {
+            $key = $d->toDateString();
+            $group = $byDate->get($key, collect());
+
+            $operator = (float) $group->sum('quantity_produced');
+            $systemSum = $group->whereNotNull('system_quantity')->sum('system_quantity');
+            $hasSystem = $group->whereNotNull('system_quantity')->count() > 0;
+
+            $variance = null;
+            if ($hasSystem && $systemSum > 0) {
+                $variance = round((($operator - $systemSum) / $systemSum) * 100, 1);
+            }
+
+            $rows[] = [
+                'date'          => $key,
+                'label'         => $d->format('d M'),
+                'operator'      => round($operator, 2),
+                'system'        => $hasSystem ? round((float) $systemSum, 2) : null,
+                'variance_pct'  => $variance,  // positive = operator over-reports, negative = under-reports
+                'has_system'    => $hasSystem,
+            ];
+        }
+
+        $hasSystemData = collect($rows)->contains('has_system', true);
+
+        // Machines with records in the period (for filter dropdown)
+        $machines = ProductionRecord::where('mine_area_id', $this->mineArea->id)
+            ->where('team_id', $teamId)
+            ->where('record_date', '>=', $start->toDateString())
+            ->where('machine_id', '!=', null)
+            ->with('machine:id,name')
+            ->get(['machine_id'])
+            ->pluck('machine')
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        return [
+            'has_system_data' => $hasSystemData,
+            'rows'            => $rows,
+            'machines'        => $machines,
         ];
     }
 }
