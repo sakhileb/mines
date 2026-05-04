@@ -481,6 +481,48 @@ use WithPagination;
      * @param  int    $teamId
      * @return array<int, array{today_hours: float, is_running: bool}>
      */
+    /**
+     * Build timing analytics for all fleet machines.
+     * Returns fleet-wide averages plus a per-machine array suitable for chart/table rendering.
+     *
+     * @return array{avg_cycle: float|null, avg_queue: float|null, avg_loading: float|null, machines: array}
+     */
+    private function buildTimingAnalytics(int $teamId): array
+    {
+        $machines = Machine::where('team_id', $teamId)
+            ->where(function ($q) {
+                $q->whereNotNull('cycle_time_minutes')
+                  ->orWhereNotNull('queue_time_minutes')
+                  ->orWhereNotNull('loading_time_minutes');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'machine_type', 'cycle_time_minutes', 'queue_time_minutes', 'loading_time_minutes']);
+
+        if ($machines->isEmpty()) {
+            return ['avg_cycle' => null, 'avg_queue' => null, 'avg_loading' => null, 'machines' => []];
+        }
+
+        $rows = $machines->map(fn ($m) => [
+            'name'    => $m->name,
+            'type'    => $m->machine_type ?? '',
+            'cycle'   => $m->cycle_time_minutes ?? 0,
+            'queue'   => $m->queue_time_minutes ?? 0,
+            'loading' => $m->loading_time_minutes ?? 0,
+            'total'   => ($m->cycle_time_minutes ?? 0) + ($m->queue_time_minutes ?? 0) + ($m->loading_time_minutes ?? 0),
+        ])->values()->toArray();
+
+        $avgCycle   = $machines->whereNotNull('cycle_time_minutes')->avg('cycle_time_minutes');
+        $avgQueue   = $machines->whereNotNull('queue_time_minutes')->avg('queue_time_minutes');
+        $avgLoading = $machines->whereNotNull('loading_time_minutes')->avg('loading_time_minutes');
+
+        return [
+            'avg_cycle'   => $avgCycle   !== null ? round($avgCycle, 1)   : null,
+            'avg_queue'   => $avgQueue   !== null ? round($avgQueue, 1)   : null,
+            'avg_loading' => $avgLoading !== null ? round($avgLoading, 1) : null,
+            'machines'    => $rows,
+        ];
+    }
+
     private function buildEngineHoursMap(array $machineIds, int $teamId): array
     {
         if (empty($machineIds)) {
@@ -600,6 +642,9 @@ use WithPagination;
             $team->id
         );
 
+        // Timing analytics across all fleet machines (not just current page)
+        $timingAnalytics = $this->buildTimingAnalytics($team->id);
+
         return view('livewire.fleet', [
             'machines'          => $machinesQuery,
             'excavators'        => $excavators,
@@ -614,6 +659,7 @@ use WithPagination;
             'isLoading'         => $this->isLoading,
             'fleetUsage'        => $fleetUsage,
             'engineHoursMap'    => $engineHoursMap,
+            'timingAnalytics'   => $timingAnalytics,
         ]);
     }
 

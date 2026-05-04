@@ -502,24 +502,48 @@
                                 @endif
                                 <span class="ml-auto text-xs text-gray-400 dark:text-gray-500">{{ $machine->capacity ? number_format($machine->capacity) . ' tons' : 'N/A' }}</span>
                             </div>
-                            {{-- Timing fields --}}
+                            {{-- Timing breakdown widget --}}
                             @if ($machine->cycle_time_minutes || $machine->queue_time_minutes || $machine->loading_time_minutes)
-                            <div class="flex flex-wrap gap-1 mb-2">
-                                @if ($machine->cycle_time_minutes)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700" title="Cycle Time">
-                                        &#x1F504; {{ $machine->cycle_time_minutes }}m
-                                    </span>
-                                @endif
-                                @if ($machine->queue_time_minutes)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-700" title="Queue Time">
-                                        &#x23F3; {{ $machine->queue_time_minutes }}m
-                                    </span>
-                                @endif
-                                @if ($machine->loading_time_minutes)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700" title="Loading Time">
-                                        &#x1F4E6; {{ $machine->loading_time_minutes }}m
-                                    </span>
-                                @endif
+                            @php
+                                $ct  = $machine->cycle_time_minutes   ?? 0;
+                                $qt  = $machine->queue_time_minutes   ?? 0;
+                                $lt  = $machine->loading_time_minutes ?? 0;
+                                $tt  = $ct + $qt + $lt;
+                                $pct_c = $tt ? round(($ct / $tt) * 100) : 0;
+                                $pct_q = $tt ? round(($qt / $tt) * 100) : 0;
+                                $pct_l = $tt ? max(0, 100 - $pct_c - $pct_q) : 0;
+                            @endphp
+                            <div class="mb-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Cycle Breakdown</p>
+                                <div class="space-y-0.5 mb-2">
+                                    @if ($ct)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-amber-600 dark:text-amber-400">↻ Cycle</span>
+                                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $ct }}m</span>
+                                    </div>
+                                    @endif
+                                    @if ($qt)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-sky-600 dark:text-sky-400">⏳ Queue</span>
+                                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $qt }}m</span>
+                                    </div>
+                                    @endif
+                                    @if ($lt)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-emerald-600 dark:text-emerald-400">↧ Loading</span>
+                                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $lt }}m</span>
+                                    </div>
+                                    @endif
+                                </div>
+                                {{-- Stacked proportional bar --}}
+                                <div class="flex w-full h-1.5 rounded-full overflow-hidden gap-px" title="Cycle / Queue / Loading">
+                                    @if ($pct_c) <div class="bg-amber-400 h-full" style="width:{{ $pct_c }}%"></div> @endif
+                                    @if ($pct_q) <div class="bg-sky-400 h-full" style="width:{{ $pct_q }}%"></div> @endif
+                                    @if ($pct_l) <div class="bg-emerald-400 h-full" style="width:{{ $pct_l }}%"></div> @endif
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                    <span>Total {{ $tt }}m</span>
+                                </div>
                             </div>
                             @endif
                             {{-- ── Engine Hours ──────────────────────────────── --}}
@@ -645,6 +669,187 @@
             </div>
         @endif
     </div>
+
+    {{-- ── Timing Analytics ─────────────────────────────────────────────── --}}
+    @if (!empty($timingAnalytics['machines']))
+    <div class="mt-8">
+        {{-- Section header --}}
+        <div class="flex items-center gap-3 mb-5">
+            <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Timing Analytics</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Cycle, queue &amp; loading time across all fleet machines</p>
+            </div>
+        </div>
+
+        {{-- Fleet-average stat cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-800/40 p-5 shadow-sm">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Avg Cycle Time</p>
+                <p class="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                    {{ $timingAnalytics['avg_cycle'] !== null ? $timingAnalytics['avg_cycle'] . ' min' : 'N/A' }}
+                </p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Full haul cycle</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-sky-200 dark:border-sky-800/40 p-5 shadow-sm">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Avg Queue Time</p>
+                <p class="text-3xl font-bold text-sky-600 dark:text-sky-400">
+                    {{ $timingAnalytics['avg_queue'] !== null ? $timingAnalytics['avg_queue'] . ' min' : 'N/A' }}
+                </p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Wait &amp; queue</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-800/40 p-5 shadow-sm">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Avg Loading Time</p>
+                <p class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ $timingAnalytics['avg_loading'] !== null ? $timingAnalytics['avg_loading'] . ' min' : 'N/A' }}
+                </p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Load cycle</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {{-- Grouped bar chart --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Per-Machine Timing Breakdown</h3>
+                <div wire:ignore
+                    x-data="{
+                        chart: null,
+                        init() {
+                            this.$nextTick(() => this.draw());
+                        },
+                        draw() {
+                            const ctx = this.$refs.timingChart;
+                            if (!ctx) return;
+                            if (this.chart) { this.chart.destroy(); }
+                            const rows = {{ Js::from($timingAnalytics['machines']) }};
+                            this.chart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: rows.map(r => r.name),
+                                    datasets: [
+                                        {
+                                            label: 'Cycle (min)',
+                                            data: rows.map(r => r.cycle),
+                                            backgroundColor: 'rgba(245,158,11,0.85)',
+                                            borderRadius: 3,
+                                            borderSkipped: false,
+                                        },
+                                        {
+                                            label: 'Queue (min)',
+                                            data: rows.map(r => r.queue),
+                                            backgroundColor: 'rgba(14,165,233,0.85)',
+                                            borderRadius: 3,
+                                            borderSkipped: false,
+                                        },
+                                        {
+                                            label: 'Loading (min)',
+                                            data: rows.map(r => r.loading),
+                                            backgroundColor: 'rgba(16,185,129,0.85)',
+                                            borderRadius: 3,
+                                            borderSkipped: false,
+                                        },
+                                    ],
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom',
+                                            labels: { boxWidth: 12, padding: 16 },
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: c => c.dataset.label + ': ' + c.raw + ' min',
+                                            },
+                                        },
+                                    },
+                                    scales: {
+                                        x: { grid: { display: false } },
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: { callback: v => v + 'm' },
+                                        },
+                                    },
+                                },
+                            });
+                        },
+                    }"
+                >
+                    <canvas x-ref="timingChart" style="height:280px"></canvas>
+                </div>
+            </div>
+
+            {{-- Summary table --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Fleet Timing Summary</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 dark:bg-gray-700/50">
+                            <tr>
+                                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Machine</th>
+                                <th class="px-4 py-2.5 text-right text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">Cycle</th>
+                                <th class="px-4 py-2.5 text-right text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wide">Queue</th>
+                                <th class="px-4 py-2.5 text-right text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Loading</th>
+                                <th class="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            @foreach ($timingAnalytics['machines'] as $tRow)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                <td class="px-4 py-2.5">
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ $tRow['name'] }}</p>
+                                    <p class="text-xs text-gray-400 capitalize">{{ str_replace('_', ' ', $tRow['type']) }}</p>
+                                </td>
+                                <td class="px-4 py-2.5 text-right font-medium text-amber-600 dark:text-amber-400">
+                                    {{ $tRow['cycle'] ? $tRow['cycle'] . 'm' : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right font-medium text-sky-600 dark:text-sky-400">
+                                    {{ $tRow['queue'] ? $tRow['queue'] . 'm' : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right font-medium text-emerald-600 dark:text-emerald-400">
+                                    {{ $tRow['loading'] ? $tRow['loading'] . 'm' : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right font-semibold text-gray-700 dark:text-gray-200">
+                                    {{ $tRow['total'] ? $tRow['total'] . 'm' : '—' }}
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600">
+                            <tr>
+                                <td class="px-4 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Fleet Avg</td>
+                                <td class="px-4 py-2.5 text-right text-xs font-bold text-amber-600 dark:text-amber-400">
+                                    {{ $timingAnalytics['avg_cycle'] !== null ? $timingAnalytics['avg_cycle'] . 'm' : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right text-xs font-bold text-sky-600 dark:text-sky-400">
+                                    {{ $timingAnalytics['avg_queue'] !== null ? $timingAnalytics['avg_queue'] . 'm' : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                    {{ $timingAnalytics['avg_loading'] !== null ? $timingAnalytics['avg_loading'] . 'm' : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right text-xs font-bold text-gray-700 dark:text-gray-200">
+                                    @php
+                                        $avgTot = ($timingAnalytics['avg_cycle'] ?? 0)
+                                                + ($timingAnalytics['avg_queue'] ?? 0)
+                                                + ($timingAnalytics['avg_loading'] ?? 0);
+                                    @endphp
+                                    {{ $avgTot > 0 ? round($avgTot, 1) . 'm' : '—' }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Create/Edit Modal -->
     @if ($showCreateModal)
