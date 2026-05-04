@@ -42,6 +42,14 @@
                                         Routes {{ $showRoutes ? '(On)' : '(Off)' }}
                                     </span>
                                 </button>
+                                <button wire:click="toggleTMP" class="px-4 py-2 min-w-[9rem] rounded-lg transition-colors {{ $showTMP ? 'bg-orange-500 hover:bg-orange-600 ring-2 ring-orange-300' : 'bg-gray-700 hover:bg-gray-600' }} text-white text-sm">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                        </svg>
+                                        TMP {{ $showTMP ? '(On)' : '(Off)' }}
+                                    </span>
+                                </button>
                         </div>
                     </div>
                     <div class="flex flex-col md:flex-row gap-4 mb-4">
@@ -171,6 +179,11 @@
             let routesData = @json($routes ?? []);
             let showRoutesData = @js($showRoutes);
             let routeLayers = {}; // keyed by route id
+        // TMP layer state
+        let showTMPData = @js($showTMP);
+        let tmpRoutesData = @json($tmpRoutes ?? []);
+        let tmpGeofencesData = @json($geofences); // reuse geofences (now include geofence_type)
+        let tmpLayerGroup = null;
         // Keep a copy of the original machines list for client-side filtering
         let originalMachinesData = Array.isArray(machinesData) ? JSON.parse(JSON.stringify(machinesData)) : [];
         let mapStyleData = @js($mapStyle);
@@ -293,10 +306,25 @@
                     debugLog('Adding routes');
                     addRoutes();
 
+                // TMP layer — render on mount if toggled on
+                if (showTMPData) {
+                    addTMPLayer(tmpRoutesData, tmpGeofencesData);
+                }
+
                 // Listen for Livewire events
                 window.addEventListener('map-updated', (event) => {
                     debugLog('Livewire map-updated event received', event.detail);
                     updateMap(event.detail[0] || event.detail);
+                });
+
+                // TMP layer toggle event
+                window.addEventListener('tmp-layer-toggle', (event) => {
+                    const payload = event.detail?.[0] ?? event.detail ?? {};
+                    showTMPData = !!payload.show;
+                    if (payload.routes)    tmpRoutesData    = payload.routes;
+                    if (payload.geofences) tmpGeofencesData = payload.geofences;
+                    clearTMPLayer();
+                    if (showTMPData) addTMPLayer(tmpRoutesData, tmpGeofencesData);
                 });
 
                 debugLog('Map initialization complete');
@@ -609,6 +637,145 @@
             });
             routeLayers = {};
         }
+
+        // ─── Traffic Management Plan layer ───────────────────────────────────────
+
+        // Calculate compass bearing between two lat/lng points (degrees, 0=N, clockwise)
+        function calcBearing(lat1, lng1, lat2, lng2) {
+            const toRad = d => d * Math.PI / 180;
+            const dLng = toRad(lng2 - lng1);
+            const y = Math.sin(dLng) * Math.cos(toRad(lat2));
+            const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2))
+                    - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLng);
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+
+        function addDirectionalArrows(coords, layerGroup, color) {
+            if (!coords || coords.length < 2) return;
+            // Place one arrow roughly every 8 coordinate steps (or at midpoint if short)
+            const step = Math.max(1, Math.floor(coords.length / Math.max(1, Math.floor(coords.length / 6))));
+            for (let i = step; i < coords.length - 1; i += step) {
+                const [lat1, lng1] = Array.isArray(coords[i - 1]) ? coords[i - 1] : [coords[i-1].lat, coords[i-1].lng];
+                const [lat2, lng2] = Array.isArray(coords[i])     ? coords[i]     : [coords[i].lat,   coords[i].lng];
+                if (!isFinite(lat1) || !isFinite(lng1) || !isFinite(lat2) || !isFinite(lng2)) continue;
+                const bearing = calcBearing(lat1, lng1, lat2, lng2);
+                const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" width="12" height="18"
+                    style="transform:rotate(${bearing}deg);display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))">
+                    <polygon points="6,0 12,18 6,13 0,18" fill="${color}" opacity="0.95"/>
+                </svg>`;
+                L.marker([lat2, lng2], {
+                    icon: L.divIcon({ html: arrowSvg, className: '', iconSize: [12, 18], iconAnchor: [6, 9] }),
+                    zIndexOffset: 300,
+                    interactive: false
+                }).addTo(layerGroup);
+            }
+        }
+
+        function addTMPLayer(routes, geofences) {
+            if (!map) return;
+            clearTMPLayer();
+            tmpLayerGroup = L.layerGroup().addTo(map);
+
+            // 1. Restricted / Safe / Warning zones (color-coded)
+            const zoneTypeConfig = {
+                restricted : { color: '#ef4444', fill: '#ef4444', fillOpacity: 0.18, dashArray: '6 4', label: '🚫 Restricted' },
+                safe       : { color: '#22c55e', fill: '#22c55e', fillOpacity: 0.12, dashArray: null,  label: '✅ Safe Zone'  },
+                warning    : { color: '#f59e0b', fill: '#f59e0b', fillOpacity: 0.14, dashArray: '4 4', label: '⚠️ Warning'    },
+            };
+
+            (geofences || []).forEach(gf => {
+                try {
+                    if (!gf.coordinates || gf.coordinates.length < 3) return;
+                    const latlngs = gf.coordinates.map(c => {
+                        const lat = parseFloat(c.lat !== undefined ? c.lat : c[0]);
+                        const lng = parseFloat(c.lng !== undefined ? c.lng : c[1]);
+                        return [lat, lng];
+                    }).filter(c => isFinite(c[0]) && isFinite(c[1]));
+                    if (latlngs.length < 3) return;
+                    const type = gf.geofence_type || 'warning';
+                    const cfg  = zoneTypeConfig[type] ?? zoneTypeConfig.warning;
+                    const polygon = L.polygon(latlngs, {
+                        color: cfg.color, weight: 2.5, opacity: 0.9,
+                        fillColor: cfg.fill, fillOpacity: cfg.fillOpacity,
+                        dashArray: cfg.dashArray
+                    }).bindPopup(
+                        `<div class="p-2"><strong>${cfg.label}</strong><br><span class="text-sm">${gf.name}</span></div>`
+                    );
+                    polygon.addTo(tmpLayerGroup);
+                } catch(e) { console.warn('TMP zone render error:', gf.name, e); }
+            });
+
+            // 2. Defined routes with directional flow arrows
+            (routes || []).forEach(route => {
+                try {
+                    const waypoints = (route.waypoints || []).slice().sort((a, b) => a.sequence_order - b.sequence_order);
+                    let coords = [];
+                    if (route.route_geometry && route.route_geometry.length > 1) {
+                        coords = route.route_geometry;
+                    } else {
+                        coords.push([route.start_latitude,  route.start_longitude]);
+                        waypoints.forEach(wp => coords.push([wp.latitude, wp.longitude]));
+                        coords.push([route.end_latitude, route.end_longitude]);
+                    }
+                    if (coords.length < 2) return;
+
+                    // Route polyline (orange for TMP, distinct from regular violet routes)
+                    const polyline = L.polyline(coords, {
+                        color: '#f97316', weight: 5, opacity: 0.88,
+                        lineJoin: 'round', lineCap: 'round'
+                    });
+                    const speedInfo = route.speed_limit ? ` • Max ${route.speed_limit} km/h` : '';
+                    const dist = route.total_distance ? ` ${parseFloat(route.total_distance).toFixed(1)} km` : '';
+                    polyline.bindPopup(
+                        `<div class="p-2"><strong>🛣️ ${route.name}</strong><br>` +
+                        `<span class="text-xs text-gray-600">TMP Route${dist}${speedInfo}</span></div>`
+                    );
+                    polyline.addTo(tmpLayerGroup);
+
+                    // Directional flow arrows
+                    addDirectionalArrows(coords, tmpLayerGroup, '#f97316');
+
+                    // Speed limit badge at route midpoint
+                    if (route.speed_limit) {
+                        const midIdx = Math.floor(coords.length / 2);
+                        const [mLat, mLng] = Array.isArray(coords[midIdx]) ? coords[midIdx] : [coords[midIdx].lat, coords[midIdx].lng];
+                        if (isFinite(mLat) && isFinite(mLng)) {
+                            const badge = `<div style="background:#1d4ed8;color:#fff;font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;border:1.5px solid #fff;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.4)">${route.speed_limit} km/h</div>`;
+                            L.marker([mLat, mLng], {
+                                icon: L.divIcon({ html: badge, className: '', iconAnchor: [22, 10] }),
+                                zIndexOffset: 500, interactive: false
+                            }).addTo(tmpLayerGroup);
+                        }
+                    }
+
+                    // Start (S) and Finish (F) markers
+                    [
+                        { lat: route.start_latitude, lng: route.start_longitude, label: 'S', bg: '#22c55e', title: `Start — ${route.name}` },
+                        { lat: route.end_latitude,   lng: route.end_longitude,   label: 'F', bg: '#ef4444', title: `Finish — ${route.name}` },
+                    ].forEach(pt => {
+                        if (!isFinite(pt.lat) || !isFinite(pt.lng)) return;
+                        L.marker([pt.lat, pt.lng], {
+                            icon: L.divIcon({
+                                html: `<div style="width:22px;height:22px;background:${pt.bg};border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.5)">${pt.label}</div>`,
+                                className: '', iconSize: [22, 22], iconAnchor: [11, 11]
+                            }),
+                            zIndexOffset: 800
+                        }).bindPopup(`<strong>${pt.title}</strong>`).addTo(tmpLayerGroup);
+                    });
+                } catch(e) { console.warn('TMP route render error:', route.name, e); }
+            });
+
+            debugLog('TMP layer rendered — zones:', (geofences||[]).length, 'routes:', (routes||[]).length);
+        }
+
+        function clearTMPLayer() {
+            if (tmpLayerGroup && map && map.hasLayer(tmpLayerGroup)) {
+                map.removeLayer(tmpLayerGroup);
+            }
+            tmpLayerGroup = null;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
 
         function centerToMineArea(areaId) {
             debugLog('centerToMineArea called with', areaId);

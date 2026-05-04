@@ -22,6 +22,7 @@ class LiveMap extends Component
     public bool $showGeofences = true;
     public bool $showMachines = true;
     public bool $showRoutes = false;
+    public bool $showTMP = false;
     public string $selectedStatus = '';
     public ?int $selectedMineAreaId = null;
 
@@ -101,6 +102,16 @@ class LiveMap extends Component
         ]);
     }
 
+    public function toggleTMP(): void
+    {
+        $this->showTMP = !$this->showTMP;
+        $this->dispatch('tmp-layer-toggle', [
+            'show'       => $this->showTMP,
+            'routes'     => $this->getRoutes(),
+            'geofences'  => $this->getGeofencesWithType(),
+        ]);
+    }
+
     public function changeMapStyle(string $style): void
     {
         $this->mapStyle = $style;
@@ -171,6 +182,7 @@ class LiveMap extends Component
                 return [
                     'id'               => $geofence->id,
                     'name'             => $geofence->name,
+                    'geofence_type'    => $geofence->geofence_type ?? 'warning',
                     'center_latitude'  => (float) $geofence->center_latitude,
                     'center_longitude' => (float) $geofence->center_longitude,
                     'coordinates'      => is_string($geofence->coordinates)
@@ -178,6 +190,11 @@ class LiveMap extends Component
                         : $geofence->coordinates ?? [],
                 ];
             });
+    }
+
+    public function getGeofencesWithType(): array
+    {
+        return $this->getGeofences()->toArray();
     }
 
     public function getRoutes(): array
@@ -269,6 +286,8 @@ class LiveMap extends Component
             'geofences'       => $geofences,
             'routes'          => $routes,
             'showRoutes'      => $this->showRoutes,
+            'showTMP'         => $this->showTMP,
+            'tmpRoutes'       => $this->getRoutes(),
             'trafficPlanData' => $this->getTrafficPlanData(),
             'machineStatuses' => $machineStatuses,
             'mineAreas'       => $this->getMineAreas(),

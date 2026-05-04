@@ -112,10 +112,36 @@ class RoutePlanning extends Component
             })
             ->toArray();
 
+        // All active routes for the TMP overlay layer (client-side toggle, no Livewire roundtrip)
+        $tmpActiveRoutes = Route::where('team_id', $team->id)
+            ->where('status', 'active')
+            ->with(['waypoints' => fn($q) => $q->orderBy('sequence_order')])
+            ->get()
+            ->map(fn($route) => [
+                'id'              => $route->id,
+                'name'            => $route->name,
+                'start_latitude'  => (float) $route->start_latitude,
+                'start_longitude' => (float) $route->start_longitude,
+                'end_latitude'    => (float) $route->end_latitude,
+                'end_longitude'   => (float) $route->end_longitude,
+                'total_distance'  => (float) $route->total_distance,
+                'speed_limit'     => $route->speed_limit ? (float) $route->speed_limit : null,
+                'route_geometry'  => $route->route_geometry,
+                'waypoints'       => $route->waypoints->map(fn($w) => [
+                    'sequence_order' => $w->sequence_order,
+                    'latitude'       => (float) $w->latitude,
+                    'longitude'      => (float) $w->longitude,
+                    'waypoint_type'  => $w->waypoint_type,
+                    'name'           => $w->name,
+                ])->toArray(),
+            ])
+            ->toArray();
+
         return view('livewire.route-planning', [
-            'machines' => $machines,
-            'mineAreas' => $mineAreas,
-            'geofences' => $geofences,
+            'machines'        => $machines,
+            'mineAreas'       => $mineAreas,
+            'geofences'       => $geofences,
+            'tmpActiveRoutes' => $tmpActiveRoutes,
         ]);
     }
     

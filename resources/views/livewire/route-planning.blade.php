@@ -426,6 +426,17 @@
                     <p class="text-gray-300 text-sm">Loading map...</p>
                 </div>
             </div>
+
+            <!-- TMP Layer toggle button (floating, top-right of map) -->
+            <div class="absolute top-3 right-3 z-[1000]" wire:ignore>
+                <button id="tmp-layer-btn" onclick="window.toggleTMPLayer()"
+                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg shadow-lg transition-all bg-gray-800/90 border border-gray-600 text-gray-300 hover:bg-orange-600 hover:text-white hover:border-orange-400">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                    </svg>
+                    <span id="tmp-layer-label">TMP Layer: Off</span>
+                </button>
+            </div>
             
             <div id="route-planning-map" class="w-full h-[300px] md:h-full" style="min-height: 400px;"></div>
                 </div>
@@ -470,6 +481,14 @@
         let geofenceLayerGroup;
         let initRetryCount = 0;
         const MAX_INIT_RETRIES = 50;
+
+        // TMP layer state (client-side toggle, no Livewire roundtrip)
+        let tmpActiveRoutes = [];
+        let tmpLayerGroup = null;
+        let tmpLayerVisible = false;
+        try {
+            tmpActiveRoutes = @json($tmpActiveRoutes ?? []);
+        } catch(e) { tmpActiveRoutes = []; }
         
         // Load geofences data - using inline script to avoid DOMContentLoaded race condition
         try {
@@ -773,6 +792,146 @@
                 }
             });
         }
+
+        // ─── Traffic Management Plan layer (route-planning page) ─────────────────
+
+        function tmpCalcBearing(lat1, lng1, lat2, lng2) {
+            const r = d => d * Math.PI / 180;
+            const dL = r(lng2 - lng1);
+            const y = Math.sin(dL) * Math.cos(r(lat2));
+            const x = Math.cos(r(lat1)) * Math.sin(r(lat2)) - Math.sin(r(lat1)) * Math.cos(r(lat2)) * Math.cos(dL);
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+
+        function renderTMPLayer() {
+            if (!map) return;
+            clearTMPLayer();
+            tmpLayerGroup = L.layerGroup().addTo(map);
+
+            // 1. Zone overlays (restricted / safe / warning)
+            const zoneCfg = {
+                restricted: { color: '#ef4444', fill: '#ef4444', fillOpacity: 0.18, dashArray: '6 4', icon: '🚫' },
+                safe:       { color: '#22c55e', fill: '#22c55e', fillOpacity: 0.12, dashArray: null,  icon: '✅' },
+                warning:    { color: '#f59e0b', fill: '#f59e0b', fillOpacity: 0.14, dashArray: '4 4', icon: '⚠️' },
+            };
+            geofences.forEach(gf => {
+                try {
+                    let coords = typeof gf.coordinates === 'string' ? JSON.parse(gf.coordinates) : gf.coordinates;
+                    if (!coords || coords.length < 3) return;
+                    const latlngs = coords.map(c => [parseFloat(c.lat ?? c[0]), parseFloat(c.lng ?? c[1])])
+                                         .filter(c => isFinite(c[0]) && isFinite(c[1]));
+                    if (latlngs.length < 3) return;
+                    const type = gf.geofence_type || 'warning';
+                    const cfg  = zoneCfg[type] ?? zoneCfg.warning;
+                    L.polygon(latlngs, {
+                        color: cfg.color, weight: 2.5, opacity: 0.9,
+                        fillColor: cfg.fill, fillOpacity: cfg.fillOpacity,
+                        dashArray: cfg.dashArray
+                    }).bindPopup(`<div class="p-2"><strong>${cfg.icon} ${gf.name}</strong><br><span style="font-size:11px">${type}</span></div>`)
+                      .addTo(tmpLayerGroup);
+                } catch(e) { console.warn('TMP zone error:', gf.name, e); }
+            });
+
+            // 2. Active routes with directional arrows
+            tmpActiveRoutes.forEach(route => {
+                try {
+                    const wps = (route.waypoints || []).slice().sort((a, b) => a.sequence_order - b.sequence_order);
+                    let coords = [];
+                    if (route.route_geometry && route.route_geometry.length > 1) {
+                        coords = route.route_geometry;
+                    } else {
+                        coords.push([route.start_latitude,  route.start_longitude]);
+                        wps.forEach(w => coords.push([w.latitude, w.longitude]));
+                        coords.push([route.end_latitude, route.end_longitude]);
+                    }
+                    if (coords.length < 2) return;
+
+                    // Route polyline (orange = TMP)
+                    const polyline = L.polyline(coords, {
+                        color: '#f97316', weight: 5, opacity: 0.88,
+                        lineJoin: 'round', lineCap: 'round'
+                    });
+                    const dist      = route.total_distance ? ` ${parseFloat(route.total_distance).toFixed(1)} km` : '';
+                    const speedInfo = route.speed_limit    ? ` · Max ${route.speed_limit} km/h` : '';
+                    polyline.bindPopup(`<div class="p-2"><strong>🛣️ ${route.name}</strong><br><span style="font-size:11px">TMP Route${dist}${speedInfo}</span></div>`);
+                    polyline.addTo(tmpLayerGroup);
+
+                    // Directional arrows along route
+                    const step = Math.max(1, Math.floor(coords.length / Math.max(1, Math.floor(coords.length / 6))));
+                    for (let i = step; i < coords.length - 1; i += step) {
+                        const [lat1, lng1] = Array.isArray(coords[i-1]) ? coords[i-1] : [coords[i-1].lat, coords[i-1].lng];
+                        const [lat2, lng2] = Array.isArray(coords[i])   ? coords[i]   : [coords[i].lat,   coords[i].lng];
+                        if (!isFinite(lat1) || !isFinite(lng1) || !isFinite(lat2) || !isFinite(lng2)) continue;
+                        const bearing = tmpCalcBearing(lat1, lng1, lat2, lng2);
+                        const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" width="12" height="18"
+                            style="transform:rotate(${bearing}deg);display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))">
+                            <polygon points="6,0 12,18 6,13 0,18" fill="#f97316" opacity="0.95"/></svg>`;
+                        L.marker([lat2, lng2], {
+                            icon: L.divIcon({ html: arrowSvg, className: '', iconSize: [12, 18], iconAnchor: [6, 9] }),
+                            zIndexOffset: 300, interactive: false
+                        }).addTo(tmpLayerGroup);
+                    }
+
+                    // Speed limit badge at midpoint
+                    if (route.speed_limit) {
+                        const midIdx = Math.floor(coords.length / 2);
+                        const [mLat, mLng] = Array.isArray(coords[midIdx]) ? coords[midIdx] : [coords[midIdx].lat, coords[midIdx].lng];
+                        if (isFinite(mLat) && isFinite(mLng)) {
+                            const badge = `<div style="background:#1d4ed8;color:#fff;font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;border:1.5px solid #fff;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.4)">${route.speed_limit} km/h</div>`;
+                            L.marker([mLat, mLng], {
+                                icon: L.divIcon({ html: badge, className: '', iconAnchor: [22, 10] }),
+                                zIndexOffset: 500, interactive: false
+                            }).addTo(tmpLayerGroup);
+                        }
+                    }
+
+                    // S / F endpoint markers
+                    [
+                        { lat: route.start_latitude, lng: route.start_longitude, label: 'S', bg: '#22c55e', title: `Start — ${route.name}` },
+                        { lat: route.end_latitude,   lng: route.end_longitude,   label: 'F', bg: '#ef4444', title: `Finish — ${route.name}` },
+                    ].forEach(pt => {
+                        if (!isFinite(pt.lat) || !isFinite(pt.lng)) return;
+                        L.marker([pt.lat, pt.lng], {
+                            icon: L.divIcon({
+                                html: `<div style="width:22px;height:22px;background:${pt.bg};border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.5)">${pt.label}</div>`,
+                                className: '', iconSize: [22, 22], iconAnchor: [11, 11]
+                            }), zIndexOffset: 800
+                        }).bindPopup(`<strong>${pt.title}</strong>`).addTo(tmpLayerGroup);
+                    });
+                } catch(e) { console.warn('TMP route error:', route.name, e); }
+            });
+
+            console.log('TMP layer rendered — zones:', geofences.length, 'routes:', tmpActiveRoutes.length);
+        }
+
+        function clearTMPLayer() {
+            if (tmpLayerGroup && map) {
+                try { if (map.hasLayer(tmpLayerGroup)) map.removeLayer(tmpLayerGroup); } catch(e) {}
+            }
+            tmpLayerGroup = null;
+        }
+
+        window.toggleTMPLayer = function() {
+            tmpLayerVisible = !tmpLayerVisible;
+            if (tmpLayerVisible) {
+                renderTMPLayer();
+            } else {
+                clearTMPLayer();
+            }
+            const btn   = document.getElementById('tmp-layer-btn');
+            const label = document.getElementById('tmp-layer-label');
+            if (label) label.textContent = tmpLayerVisible ? 'TMP Layer: On' : 'TMP Layer: Off';
+            if (btn) {
+                btn.classList.toggle('bg-orange-500',   tmpLayerVisible);
+                btn.classList.toggle('text-white',      tmpLayerVisible);
+                btn.classList.toggle('border-orange-400', tmpLayerVisible);
+                btn.classList.toggle('bg-gray-800/90',  !tmpLayerVisible);
+                btn.classList.toggle('text-gray-300',   !tmpLayerVisible);
+                btn.classList.toggle('border-gray-600', !tmpLayerVisible);
+            }
+        };
+
+        // ─────────────────────────────────────────────────────────────────────────
 
         function renderCalculatedRoute(routeData) {
             console.log('Rendering calculated route:', routeData);
