@@ -95,13 +95,82 @@
                     </svg>
                     Export
                 </button>
-                <button wire:click="showRoutes" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all font-medium flex items-center justify-center gap-2">
+                <button wire:click="showRoutes"
+                    class="px-4 py-2 rounded-lg transition-all font-medium flex items-center justify-center gap-2
+                           {{ $showRoutesPanel ? 'bg-purple-500 ring-2 ring-purple-300 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                     </svg>
                     Routes
                 </button>
             </div>
+
+            <!-- Route Paths Panel -->
+            @if($showRoutesPanel)
+                <div class="bg-gray-800/80 border border-purple-700/60 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-purple-300 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                            </svg>
+                            Route Paths
+                        </h4>
+                        <button wire:click="showRoutes" class="text-xs text-gray-400 hover:text-white" title="Close panel">✕</button>
+                    </div>
+
+                    @if(count($routes ?? []) > 0)
+                        <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                            @foreach($routes as $ri => $route)
+                                <div class="bg-gray-700/60 rounded-lg p-3 border border-gray-600 hover:border-purple-600 transition-colors">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-amber-400 truncate pr-2">{{ $route['name'] }}</span>
+                                        <button onclick="focusRoute({{ $ri }})"
+                                            class="shrink-0 text-xs px-2 py-0.5 bg-purple-700 hover:bg-purple-600 text-white rounded transition-colors">
+                                            Focus
+                                        </button>
+                                    </div>
+                                    <div class="text-xs text-gray-400 space-y-1.5">
+                                        <!-- Start -->
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-5 h-5 shrink-0 bg-green-500 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">S</span>
+                                            <span class="truncate">{{ $route['start_location'] ?? '–' }}</span>
+                                        </div>
+                                        <!-- Intermediate count -->
+                                        @php $wpCount = count($route['waypoints'] ?? []); @endphp
+                                        @if($wpCount > 2)
+                                            <div class="flex items-center gap-2 text-gray-500">
+                                                <span class="w-5 h-5 shrink-0 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">·</span>
+                                                <span>{{ $wpCount - 2 }} intermediate {{ Str::plural('waypoint', $wpCount - 2) }}</span>
+                                            </div>
+                                        @endif
+                                        <!-- Finish -->
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-5 h-5 shrink-0 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">F</span>
+                                            <span class="truncate">{{ $route['end_location'] ?? '–' }}</span>
+                                        </div>
+                                    </div>
+                                    @if(isset($route['total_distance']) && $route['total_distance'])
+                                        <div class="mt-2 text-xs text-gray-500">
+                                            Distance: {{ number_format($route['total_distance'] / 1000, 1) }} km
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            <span class="text-green-400 font-medium">S</span> = start &nbsp;
+                            <span class="text-amber-400 font-medium">#</span> = waypoint &nbsp;
+                            <span class="text-red-400 font-medium">F</span> = finish
+                        </p>
+                    @else
+                        <div class="text-center py-4">
+                            <p class="text-sm text-gray-400 mb-1">No routes defined</p>
+                            <p class="text-xs text-gray-500">Load replay data to auto-calculate a route, or define routes in
+                                <a href="{{ route('fleet.route-planning') }}" class="text-purple-400 hover:text-purple-300">Route Planning</a>.</p>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
             <!-- Recent Activities (for selected machine / date range) -->
             @if($showActivities)
@@ -370,6 +439,7 @@
         window.pathPolyline = null;
         window.geofencePolygons = [];
         window.routePolylines = [];
+        window.routeWaypointMarkers = [];
         window.trailPolyline = null;
         window.machineType = '';
         window._replayHasInvalidLayer = false;
@@ -852,11 +922,73 @@
                 });
                 
                 console.log('Rendered', window.routePolylines.length, 'routes on map');
+
+                // ── Waypoint markers: Start (S), Finish (F), numbered intermediates ──
+                window.routeWaypointMarkers.forEach(m => { try { window.replayMap.removeLayer(m); } catch(e){} });
+                window.routeWaypointMarkers = [];
+
+                const addWaypointMarkers = () => {
+                    window.routes.forEach(route => {
+                        const wps = route.waypoints;
+                        if (!wps || wps.length === 0) return;
+                        const maxIdx = wps.length - 1;
+                        wps.forEach((wp, wpIdx) => {
+                            const nn = normalizeCoord(wp);
+                            if (!nn || !isFinite(nn.lat) || !isFinite(nn.lng)) return;
+                            const isStart  = wpIdx === 0;
+                            const isFinish = wpIdx === maxIdx;
+                            // Skip dense intermediate waypoints to avoid marker spam
+                            if (!isStart && !isFinish && wps.length > 25) return;
+                            let iconHtml, sz;
+                            if (isStart) {
+                                iconHtml = `<div style="width:26px;height:26px;background:#22c55e;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.6)">S</div>`;
+                                sz = 26;
+                            } else if (isFinish) {
+                                iconHtml = `<div style="width:26px;height:26px;background:#ef4444;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.6)">F</div>`;
+                                sz = 26;
+                            } else {
+                                iconHtml = `<div style="width:18px;height:18px;background:#f59e0b;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">${wpIdx}</div>`;
+                                sz = 18;
+                            }
+                            const popupLabel = isStart  ? `🟢 Start — ${route.name}` :
+                                               isFinish ? `🔴 Finish — ${route.name}` :
+                                                          `🟡 Waypoint ${wpIdx} — ${route.name}`;
+                            const marker = L.marker([Number(nn.lat), Number(nn.lng)], {
+                                icon: L.divIcon({ html: iconHtml, className: '', iconSize: [sz, sz], iconAnchor: [sz/2, sz/2] }),
+                                zIndexOffset: isStart || isFinish ? 1100 : 200
+                            }).bindPopup(`<b>${popupLabel}</b><br>Lat: ${Number(nn.lat).toFixed(5)}, Lng: ${Number(nn.lng).toFixed(5)}`);
+                            marker.addTo(window.replayMap);
+                            window.routeWaypointMarkers.push(marker);
+                        });
+                    });
+                    console.log('Added', window.routeWaypointMarkers.length, 'route waypoint markers');
+                };
+
+                if (window.replayMap && typeof window.replayMap.whenReady === 'function') {
+                    window.replayMap.whenReady(addWaypointMarkers);
+                } else {
+                    addWaypointMarkers();
+                }
             } catch (err) {
                 console.error('Error rendering routes on map:', err);
             }
         }
         
+        // Focus the map view on a single route by index
+        function focusRoute(routeIdx) {
+            if (!window.replayMap || !Array.isArray(window.routes) || routeIdx < 0 || routeIdx >= window.routes.length) return;
+            const route = window.routes[routeIdx];
+            const wps = (route.waypoints || []).map(wp => normalizeCoord(wp)).filter(Boolean);
+            if (wps.length === 0) return;
+            try {
+                const bounds = L.latLngBounds(wps.map(c => [c.lat, c.lng]));
+                if (bounds.isValid()) {
+                    window.replayMap.fitBounds(bounds, { padding: [50, 50], animate: false });
+                }
+            } catch(e) { console.warn('focusRoute error:', e); }
+        }
+        window.focusRoute = focusRoute; // exposed for blade onclick
+
         // Calculate distance between two coordinates (in meters)
         function calculateDistance(lat1, lng1, lat2, lng2) {
             const R = 6371000; // Earth's radius in meters
@@ -1365,7 +1497,18 @@
                             loadDataFromAttributes();
                             if (Array.isArray(window.routes) && window.routes.length > 0) {
                                 renderRoutesOnMap();
-                                zoomToRouteArea();
+                                // Fit map to encompass all route waypoints
+                                try {
+                                    const allCoords = window.routes
+                                        .flatMap(r => (r.waypoints || []).map(wp => normalizeCoord(wp)).filter(Boolean))
+                                        .map(c => [c.lat, c.lng]);
+                                    if (allCoords.length > 0) {
+                                        const bounds = L.latLngBounds(allCoords);
+                                        if (bounds.isValid()) {
+                                            window.replayMap.fitBounds(bounds, { padding: [60, 60], animate: false });
+                                        }
+                                    }
+                                } catch(e) { zoomToRouteArea(); }
                                 hideMapOverlay();
                             } else {
                                 console.log('No routes available to show');

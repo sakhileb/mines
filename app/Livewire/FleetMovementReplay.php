@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Machine;
-use App\Models\MachineLocationHistory;
 use Carbon\Carbon;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +34,9 @@ class FleetMovementReplay extends Component
     public float $centerLat = -26.2041;
     public float $centerLng = 28.0473;
     public int $zoomLevel = 10;
+
+    // Route panel
+    public bool $showRoutesPanel = false;
     
     protected $listeners = [
         'playback-stopped' => 'handlePlaybackStopped',
@@ -108,8 +110,9 @@ class FleetMovementReplay extends Component
 
     public function showRoutes()
     {
-        // Trigger frontend to highlight routes and center
-        $this->dispatch('show-routes');
+        $this->showRoutesPanel = ! $this->showRoutesPanel;
+        // Trigger frontend to highlight routes, draw waypoint markers, and center
+        $this->dispatch('show-routes', open: $this->showRoutesPanel);
     }
 
     public function render()
