@@ -5,6 +5,11 @@ namespace App\Livewire;
 use App\Models\AIRecommendation;
 use App\Models\AIInsight;
 use App\Models\AIPredictiveAlert;
+use App\Models\Machine;
+use App\Models\MachineMetric;
+use App\Models\MaintenanceRecord;
+use App\Models\FuelTransaction;
+use App\Models\ProductionRecord;
 use App\Services\AI\AIOptimizationService;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -150,6 +155,77 @@ class AIOptimizationDashboard extends Component
         $this->pendingRecommendationAction = null;
     }
 
+    public function acknowledgeAlert($alertId)
+    {
+        $team = auth()->user()->currentTeam;
+        $alert = \App\Models\AIPredictiveAlert::where('team_id', $team->id)->findOrFail($alertId);
+
+        $alert->update([
+            'is_acknowledged'  => true,
+            'acknowledged_by'  => auth()->id(),
+            'acknowledged_at'  => now(),
+        ]);
+
+        $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Alert acknowledged.']);
+    }
+
+    public function getOverviewDataProperty(): array
+    {
+        $team = auth()->user()->currentTeam;
+
+        $allRecs     = \App\Models\AIRecommendation::where('team_id', $team->id)->get();
+        $pending     = $allRecs->where('status', 'pending');
+        $implemented = $allRecs->where('status', 'implemented');
+        $total       = $allRecs->count();
+
+        $implementationRate = $total > 0
+            ? round(($implemented->count() / $total) * 100, 1)
+            : 0;
+
+        $categories = ['fleet', 'fuel', 'maintenance', 'production', 'route', 'cost'];
+        $byCategory = [];
+        foreach ($categories as $cat) {
+            $catRecs = $allRecs->where('category', $cat);
+            $catTotal = $catRecs->count();
+            $catImpl  = $catRecs->where('status', 'implemented')->count();
+            $byCategory[$cat] = [
+                'label'          => ucfirst($cat),
+                'total'          => $catTotal,
+                'pending'        => $catRecs->where('status', 'pending')->count(),
+                'implemented'    => $catImpl,
+                'impl_rate_pct'  => $catTotal > 0 ? round(($catImpl / $catTotal) * 100) : 0,
+                'avg_confidence' => $catRecs->isNotEmpty()
+                    ? round($catRecs->avg('confidence_score') * 100, 0)
+                    : 0,
+                'potential_savings' => round($catRecs->where('status', 'pending')->sum('estimated_savings'), 0),
+            ];
+        }
+
+        $agents = \App\Models\AIAgent::all();
+
+        // Data transparency: record counts from real system tables
+        $teamId = $team->id;
+        $dataPoints = [
+            'production_records' => \App\Models\ProductionRecord::where('team_id', $teamId)->count(),
+            'machines'           => \App\Models\Machine::where('team_id', $teamId)->count(),
+            'maintenance_records' => \App\Models\MaintenanceRecord::where('team_id', $teamId)->count(),
+            'fuel_transactions'  => \App\Models\FuelTransaction::where('team_id', $teamId)->count(),
+            'machine_metrics'    => \App\Models\MachineMetric::where('team_id', $teamId)->count(),
+        ];
+
+        return [
+            'implementation_rate'  => $implementationRate,
+            'realized_savings'     => round($implemented->sum('estimated_savings'), 0),
+            'potential_savings'    => round($pending->sum('estimated_savings'), 0),
+            'critical_pending'     => $pending->where('priority', 'critical')->count(),
+            'avg_confidence'       => $total > 0 ? round($allRecs->avg('confidence_score') * 100, 0) : 0,
+            'by_category'          => $byCategory,
+            'agents'               => $agents,
+            'top_opportunity'      => $pending->sortByDesc('estimated_savings')->first(),
+            'data_points'          => $dataPoints,
+        ];
+    }
+
     // (Possibly missing function for alert acknowledgement should be implemented here if needed)
 
     public function markInsightAsRead($insightId)
@@ -207,10 +283,11 @@ class AIOptimizationDashboard extends Component
             ->get();
 
         return view('livewire.ai-optimization-dashboard', [
-            'stats' => $dashboardData['stats'],
-            'insights' => $dashboardData['insights'],
-            'recommendations' => $recommendations,
+            'stats'            => $dashboardData['stats'],
+            'insights'         => $dashboardData['insights'],
+            'recommendations'  => $recommendations,
             'predictiveAlerts' => $predictiveAlerts,
+            'overviewData'     => $this->overviewData,
         ]);
     }
 }

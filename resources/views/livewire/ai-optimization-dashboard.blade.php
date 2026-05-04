@@ -144,16 +144,20 @@
         <!-- Content Tabs -->
         <div class="mb-6">
             <div class="border-b border-gray-200 dark:border-gray-700">
-                <nav class="-mb-px flex space-x-8">
-                    <button wire:click="$set('activeTab', 'recommendations')" 
-                        class="@if($activeTab === 'recommendations') border-blue-500 text-blue-600 dark:text-blue-400 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200">
-                        📋 Recommendations ({{ $recommendations->count() }})
+                <nav class="-mb-px flex space-x-8 overflow-x-auto">
+                    <button wire:click="$set('activeTab', 'overview')"
+                        class="@if($activeTab === 'overview') border-blue-500 text-blue-600 dark:text-blue-400 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200">
+                        🏠 Overview
                     </button>
-                    <button wire:click="$set('activeTab', 'insights')" 
+                    <button wire:click="$set('activeTab', 'recommendations')"
+                        class="@if($activeTab === 'recommendations') border-blue-500 text-blue-600 dark:text-blue-400 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200">
+                        📋 Recommendations ({{ $recommendations->total() }})
+                    </button>
+                    <button wire:click="$set('activeTab', 'insights')"
                         class="@if($activeTab === 'insights') border-blue-500 text-blue-600 dark:text-blue-400 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200">
                         💡 Insights ({{ $insights->count() }})
                     </button>
-                    <button wire:click="$set('activeTab', 'alerts')" 
+                    <button wire:click="$set('activeTab', 'alerts')"
                         class="@if($activeTab === 'alerts') border-blue-500 text-blue-600 dark:text-blue-400 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200">
                         🚨 Alerts ({{ $predictiveAlerts->count() }})
                     </button>
@@ -161,7 +165,205 @@
             </div>
         </div>
 
-        <!-- Recommendations Tab -->
+        {{-- ================================================================= --}}
+        {{-- OVERVIEW TAB                                                        --}}
+        {{-- ================================================================= --}}
+        @if($activeTab === 'overview')
+        <div class="space-y-6 animate-fade-in">
+
+            {{-- KPI row --}}
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {{-- Implementation Rate --}}
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 border border-gray-200 dark:border-gray-700">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Implementation Rate</p>
+                    <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ $overviewData['implementation_rate'] }}%</p>
+                    <p class="text-xs text-gray-400 mt-1">of all generated recommendations</p>
+                </div>
+                {{-- Potential Savings --}}
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 border border-gray-200 dark:border-gray-700">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Potential Savings</p>
+                    <p class="text-3xl font-bold text-green-600 dark:text-green-400">R{{ number_format($overviewData['potential_savings'], 0) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">from pending recommendations</p>
+                </div>
+                {{-- Critical Pending --}}
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 border border-gray-200 dark:border-gray-700">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Critical Actions</p>
+                    <p class="text-3xl font-bold @if($overviewData['critical_pending'] > 0) text-red-600 dark:text-red-400 @else text-gray-400 @endif">{{ $overviewData['critical_pending'] }}</p>
+                    <p class="text-xs text-gray-400 mt-1">unresolved critical priority items</p>
+                </div>
+                {{-- Avg Confidence --}}
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 border border-gray-200 dark:border-gray-700">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Avg Confidence</p>
+                    <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">{{ $overviewData['avg_confidence'] }}%</p>
+                    <p class="text-xs text-gray-400 mt-1">across all AI recommendations</p>
+                </div>
+            </div>
+
+            {{-- Category breakdown + Agent grid --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                {{-- Category breakdown --}}
+                <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Efficiency Improvements by Category
+                    </h3>
+                    @php
+                        $categoryIcons = [
+                            'fleet'       => '🚛',
+                            'fuel'        => '⛽',
+                            'maintenance' => '🔧',
+                            'production'  => '⛏️',
+                            'route'       => '🗺️',
+                            'cost'        => '💰',
+                        ];
+                        $categoryColors = [
+                            'fleet'       => 'bg-blue-500',
+                            'fuel'        => 'bg-amber-500',
+                            'maintenance' => 'bg-orange-500',
+                            'production'  => 'bg-green-500',
+                            'route'       => 'bg-purple-500',
+                            'cost'        => 'bg-pink-500',
+                        ];
+                    @endphp
+                    <div class="space-y-3">
+                        @foreach($overviewData['by_category'] as $key => $cat)
+                            @if($cat['total'] > 0)
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ $categoryIcons[$key] ?? '📊' }} {{ $cat['label'] }}
+                                    </span>
+                                    <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                        <span class="text-yellow-600 dark:text-yellow-400">{{ $cat['pending'] }} pending</span>
+                                        <span class="text-green-600 dark:text-green-400">{{ $cat['implemented'] }} done</span>
+                                        <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $cat['impl_rate_pct'] }}%</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="h-2 rounded-full transition-all duration-500 {{ $categoryColors[$key] ?? 'bg-blue-500' }}"
+                                         style="width: {{ $cat['impl_rate_pct'] }}%"></div>
+                                </div>
+                                @if($cat['potential_savings'] > 0)
+                                    <p class="text-xs text-gray-400 mt-0.5">R{{ number_format($cat['potential_savings'], 0) }} potential savings remaining</p>
+                                @endif
+                            </div>
+                            @endif
+                        @endforeach
+                        @if(collect($overviewData['by_category'])->sum('total') === 0)
+                            <p class="text-sm text-gray-400 text-center py-6">No recommendations yet — click <strong>Run AI Analysis</strong> to generate insights.</p>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Agent status grid --}}
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
+                        </svg>
+                        AI Agents Status
+                    </h3>
+                    @php
+                        $agentIcons = [
+                            'fleet_optimizer'       => '🚛',
+                            'route_advisor'         => '🗺️',
+                            'fuel_predictor'        => '⛽',
+                            'maintenance_predictor' => '🔧',
+                            'production_optimizer'  => '⛏️',
+                            'cost_analyzer'         => '💰',
+                            'anomaly_detector'      => '🔍',
+                        ];
+                    @endphp
+                    <div class="space-y-2">
+                        @forelse($overviewData['agents'] as $agent)
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">{{ $agentIcons[$agent->type] ?? '🤖' }}</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ $agent->name }}</p>
+                                        <p class="text-xs text-gray-400">{{ round($agent->accuracy_score * 100, 0) }}% accuracy</p>
+                                    </div>
+                                </div>
+                                <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full
+                                    @if($agent->status === 'active') bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400
+                                    @else bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 @endif">
+                                    <span class="w-1.5 h-1.5 rounded-full @if($agent->status === 'active') bg-green-500 @else bg-gray-400 @endif"></span>
+                                    {{ ucfirst($agent->status) }}
+                                </span>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-400">No agents registered yet.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            {{-- Top opportunity --}}
+            @if($overviewData['top_opportunity'])
+            @php $opp = $overviewData['top_opportunity']; @endphp
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="text-xs font-semibold uppercase tracking-widest opacity-80 mb-1">Top Savings Opportunity</p>
+                        <h3 class="text-xl font-bold mb-1">{{ $opp->title }}</h3>
+                        <p class="text-sm opacity-90 mb-3">{{ $opp->description }}</p>
+                        <div class="flex flex-wrap gap-3 text-sm">
+                            <span class="bg-white/20 rounded-full px-3 py-0.5">{{ ucfirst($opp->category) }}</span>
+                            <span class="bg-white/20 rounded-full px-3 py-0.5">{{ round($opp->confidence_score * 100) }}% confidence</span>
+                            <span class="bg-white/20 rounded-full px-3 py-0.5">{{ ucfirst($opp->priority) }} priority</span>
+                        </div>
+                    </div>
+                    @if($opp->estimated_savings > 0)
+                    <div class="text-right shrink-0">
+                        <p class="text-xs opacity-80 mb-0.5">Estimated Savings</p>
+                        <p class="text-3xl font-black">R{{ number_format($opp->estimated_savings, 0) }}</p>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            {{-- Data transparency panel --}}
+            <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                            Data Integrity — Internal System Data Only
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                            All insights and recommendations are derived exclusively from your team's operational records. No external data feeds, no fabricated assumptions.
+                        </p>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            @php
+                                $dp = $overviewData['data_points'];
+                                $dpLabels = [
+                                    'production_records' => ['icon' => '⛏️', 'label' => 'Production Records'],
+                                    'machines'           => ['icon' => '🚛', 'label' => 'Machines'],
+                                    'maintenance_records' => ['icon' => '🔧', 'label' => 'Maintenance Records'],
+                                    'fuel_transactions'  => ['icon' => '⛽', 'label' => 'Fuel Transactions'],
+                                    'machine_metrics'    => ['icon' => '📡', 'label' => 'Sensor Readings'],
+                                ];
+                            @endphp
+                            @foreach($dpLabels as $dpKey => $dpMeta)
+                                <div class="text-center">
+                                    <p class="text-lg">{{ $dpMeta['icon'] }}</p>
+                                    <p class="text-lg font-bold text-gray-800 dark:text-gray-200">{{ number_format($dp[$dpKey]) }}</p>
+                                    <p class="text-xs text-gray-400">{{ $dpMeta['label'] }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        @endif
         @if($activeTab === 'recommendations')
             <div class="space-y-4 animate-fade-in">
                 @forelse($recommendations as $recommendation)
@@ -237,11 +439,11 @@
                             @endif
                         </div>
                         
-                        @if($recommendation->actionable_steps)
+                        @if(!empty($recommendation->impact_analysis['recommended_actions']))
                             <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Action Steps:</h4>
+                                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Recommended Actions:</h4>
                                 <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                    @foreach($recommendation->actionable_steps as $step)
+                                    @foreach($recommendation->impact_analysis['recommended_actions'] as $step)
                                         <li>{{ $step }}</li>
                                     @endforeach
                                 </ul>
@@ -348,7 +550,7 @@
                                     @endif
                                 </div>
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ $alert->title }}</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ $alert->message }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ $alert->description }}</p>
                                 <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                     <span>{{ round($alert->probability * 100) }}% probability</span>
                                     <span>{{ $alert->created_at->diffForHumans() }}</span>
