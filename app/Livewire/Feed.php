@@ -11,7 +11,6 @@ use App\Events\FeedPostLiked;
 use App\Events\FeedPostStatusChanged;
 use App\Models\FeedAcknowledgement;
 use App\Models\FeedApproval;
-use App\Models\FeedAttachment;
 use App\Models\FeedAuditLog;
 use App\Models\FeedComment;
 use App\Models\FeedLike;
@@ -23,7 +22,6 @@ use App\Services\MentionParser;
 use App\Traits\RealtimeUpdates;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -207,18 +205,17 @@ class Feed extends Component
                 'status'      => 'pending',
             ]);
 
-            // Handle file attachments
+            // Handle file attachments — stored in DB, not AWS
+            $attachmentService = app(\App\Services\FeedAttachmentService::class);
             foreach ($this->composeAttachments as $file) {
-                $disk = config('filesystems.feed_attachment_disk', 's3');
-                $path = $file->store('feed/attachments', $disk);
-                FeedAttachment::create([
-                    'post_id'     => $post->id,
-                    'file_url'    => Storage::disk($disk)->url($path),
-                    'file_type'   => $file->getMimeType(),
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_at' => now(),
-                ]);
+                try {
+                    $attachmentService->store($file, $post, $user);
+                } catch (\InvalidArgumentException $e) {
+                    // Surface validation errors back to the UI without rolling back the post
+                    $this->addError('composeAttachments', $e->getMessage());
+                } catch (\RuntimeException $e) {
+                    $this->addError('composeAttachments', 'One or more files could not be saved. Please try again.');
+                }
             }
 
             return $post;

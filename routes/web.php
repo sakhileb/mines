@@ -141,6 +141,11 @@ Route::middleware([
     Route::get('/feed', App\Livewire\Feed::class)
         ->name('feed');
 
+    // Feed attachment file serving — streams binary blobs stored in the DB.
+    // Must come before /feed/admin to avoid route collision.
+    Route::get('/feed/attachments/{attachment}', [App\Http\Controllers\FeedAttachmentController::class, 'serve'])
+        ->name('feed.attachment.serve');
+
     // Feed admin panel (admins only)
     Route::get('/feed/admin', App\Livewire\FeedAdminPanel::class)
         ->name('feed.admin');

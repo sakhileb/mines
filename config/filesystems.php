@@ -15,7 +15,18 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
-    'feed_attachment_disk' => env('FEED_ATTACHMENT_DISK', 's3'),
+    /**
+     * Feed attachment storage backend.
+     *
+     * Since the platform now stores feed attachments directly in the database
+     * (binary BLOB), this setting is kept only for backward compatibility with
+     * legacy S3-linked records.  New uploads are always stored in the DB and
+     * this config key is no longer consulted by the upload flow.
+     *
+     * Set to 's3' if you still have old records pointing to AWS and need the
+     * redirect flow in FeedAttachmentController to function.
+     */
+    'feed_attachment_disk' => env('FEED_ATTACHMENT_DISK', 'db'),
 
     /*
     |--------------------------------------------------------------------------

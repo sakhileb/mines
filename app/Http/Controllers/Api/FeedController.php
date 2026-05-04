@@ -15,7 +15,6 @@ use App\Services\MentionParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -228,6 +227,9 @@ class FeedController extends Controller
 
     /**
      * POST /api/feed/{post}/attachments
+     *
+     * Stores the uploaded file directly in the database (no AWS dependency).
+     * MIME type is verified server-side from file content.
      */
     public function storeAttachment(Request $request, FeedPost $post): JsonResponse
     {
@@ -238,19 +240,21 @@ class FeedController extends Controller
         ]);
 
         $file = $request->file('file');
-        $disk = config('filesystems.feed_attachment_disk', 's3');
-        $path = $file->store('feed/attachments', $disk);
 
-        $attachment = FeedAttachment::create([
-            'post_id'     => $post->id,
-            'file_url'    => Storage::disk($disk)->url($path),
-            'file_type'   => $file->getMimeType(),
-            'file_name'   => $file->getClientOriginalName(),
-            'file_size'   => $file->getSize(),
-            'uploaded_at' => now(),
-        ]);
+        try {
+            $attachment = app(\App\Services\FeedAttachmentService::class)
+                ->store($file, $post, $request->user());
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
 
-        return response()->json(['data' => $attachment], 201);
+        // Return the attachment without file_data (hidden on model)
+        // Include the routable url via the accessor
+        return response()->json([
+            'data' => array_merge($attachment->toArray(), ['url' => $attachment->url]),
+        ], 201);
     }
 
     // ── Likes ─────────────────────────────────────────────────────────────────

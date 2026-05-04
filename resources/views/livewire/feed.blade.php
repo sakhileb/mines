@@ -287,16 +287,19 @@
                         <div class="flex flex-wrap gap-2 mb-3">
                             @foreach ($post->attachments as $att)
                                 @if (str_starts_with($att->file_type, 'image/'))
-                                    <a href="{{ $att->file_url }}" target="_blank" class="block w-24 h-24 rounded-lg overflow-hidden border border-slate-600 hover:border-blue-400 transition-colors">
-                                        <img src="{{ $att->file_url }}" alt="{{ $att->file_name }}" class="w-full h-full object-cover">
+                                    <a href="{{ $att->url }}" target="_blank" class="block w-24 h-24 rounded-lg overflow-hidden border border-slate-600 hover:border-blue-400 transition-colors">
+                                        <img src="{{ $att->url }}" alt="{{ $att->file_name }}" class="w-full h-full object-cover">
                                     </a>
                                 @else
-                                    <a href="{{ $att->file_url }}" target="_blank"
+                                    <a href="{{ $att->url }}" target="_blank"
                                         class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                                         </svg>
                                         {{ $att->file_name ?? 'Attachment' }}
+                                        @if($att->file_size)
+                                            <span class="opacity-60">({{ $att->formattedSize() }})</span>
+                                        @endif
                                     </a>
                                 @endif
                             @endforeach
