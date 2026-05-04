@@ -45,7 +45,6 @@
   - [Route Planning](#route-planning)
   - [IoT Sensor Integration](#iot-sensor-integration)
   - [OEM Integrations](#oem-integrations)
-  - [Fleet Market](#fleet-market)
   - [Shift & Team Management](#shift--team-management)
   - [Compliance & Reporting](#compliance--reporting)
   - [Billing & Subscriptions](#billing--subscriptions)
@@ -231,13 +230,6 @@ Native API integrations with **20+ OEM manufacturers** via their telemetry APIs:
 - Extensible base manufacturer service for adding new integrations
 - Integration Manager in application settings
 
-### Fleet Market
-
-- Fleet brands can list equipment for sale to mines
-- Mines can browse and filter listings by type, manufacturer, and condition
-- Contact sellers directly through the platform
-- Subscription-gated listing creation
-
 ### Shift & Team Management
 
 - **Configurable shift templates** per mine: A / B / C shifts
@@ -419,10 +411,6 @@ php artisan key:generate
 - Native API integrations for 20+ manufacturers: Caterpillar, Komatsu, Volvo, Sandvik, Epiroc, Liebherr, Hitachi, Hyundai, John Deere, Doosan, JCB, Bobcat, Kawasaki, Kobelco, Yanmar, Kubota, XCMG, CASE, New Holland, Atlas Copco, Bell, Sany, Takeuchi, Roundebult, and CTrack
 - Webhook-based real-time telemetry ingestion
 - Extensible base manufacturer service for adding new integrations
-
-### Fleet Market
-- Fleet brands can list equipment for sale to mines
-- Subscription-gated listing access
 
 ### Shift & Team Management
 - Configurable shift templates per mine (A/B/C)
@@ -629,13 +617,6 @@ Navigate to the **Live Map** to view real-time fleet locations:
 3. Use interactive charts with tooltips, zoom, and filtering
 4. Filter by machine, section, shift, or date range
 5. Compare actuals against targets; track week-on-week and month-on-month trends
-
-### Fleet Market
-
-1. Navigate to **Fleet Market**
-2. Browse equipment listings from OEM brands and other mines
-3. Contact sellers directly through the platform
-4. List your own equipment (subject to subscription tier)
 
 ### Route Planning
 
