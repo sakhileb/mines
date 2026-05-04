@@ -173,6 +173,22 @@ class Machine extends Model
     }
 
     /**
+     * Get all engine hour sessions for this machine
+     */
+    public function engineHourSessions(): HasMany
+    {
+        return $this->hasMany(EngineHourSession::class);
+    }
+
+    /**
+     * Get the currently running engine session (if any)
+     */
+    public function activeEngineSession(): HasOne
+    {
+        return $this->hasOne(EngineHourSession::class)->whereNull('ignition_off_at')->latestOfMany('ignition_on_at');
+    }
+
+    /**
      * Get the excavator this machine is assigned to
      */
     public function excavator(): BelongsTo

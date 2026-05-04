@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\EngineHourSession;
 use App\Models\Machine;
 use App\Models\MineArea;
 use App\Models\Subscription;
@@ -480,6 +481,56 @@ use WithPagination;
         return $performanceData;
     }
 
+    /**
+     * Build a map of today's engine hours keyed by machine ID.
+     *
+     * Each entry: ['today_hours' => float, 'is_running' => bool]
+     *
+     * Engine hours are calculated from ignition ON → OFF events stored in
+     * engine_hour_sessions. For sessions that are still open (engine running)
+     * the elapsed time since ignition_on_at is included in the total.
+     *
+     * @param  int[]  $machineIds  IDs of machines currently visible on the page
+     * @param  int    $teamId
+     * @return array<int, array{today_hours: float, is_running: bool}>
+     */
+    private function buildEngineHoursMap(array $machineIds, int $teamId): array
+    {
+        if (empty($machineIds)) {
+            return [];
+        }
+
+        $map = array_fill_keys($machineIds, ['today_seconds' => 0, 'is_running' => false]);
+
+        EngineHourSession::where('team_id', $teamId)
+            ->whereIn('machine_id', $machineIds)
+            ->where('ignition_on_at', '>=', now()->startOfDay())
+            ->get()
+            ->each(function (EngineHourSession $session) use (&$map): void {
+                $id = $session->machine_id;
+                if (! isset($map[$id])) {
+                    return;
+                }
+
+                if ($session->ignition_off_at === null) {
+                    // Engine is currently running — include live elapsed time
+                    $map[$id]['is_running']    = true;
+                    $map[$id]['today_seconds'] += (int) $session->ignition_on_at->diffInSeconds(now());
+                } else {
+                    $map[$id]['today_seconds'] += $session->duration_seconds
+                        ?? (int) $session->ignition_on_at->diffInSeconds($session->ignition_off_at);
+                }
+            });
+
+        // Convert seconds → hours and remove the intermediate accumulator
+        foreach ($map as $id => &$data) {
+            $data['today_hours'] = round($data['today_seconds'] / 3600, 1);
+            unset($data['today_seconds']);
+        }
+
+        return $map;
+    }
+
     public function render()
     {
         $this->isLoading = true;
@@ -556,19 +607,26 @@ use WithPagination;
 
         $fleetUsage = $this->fleetUsage();
 
+        // Engine hours per machine for the current page (today's sessions)
+        $engineHoursMap = $this->buildEngineHoursMap(
+            $machinesQuery->pluck('id')->toArray(),
+            $team->id
+        );
+
         return view('livewire.fleet', [
-            'machines' => $machinesQuery,
-            'excavators' => $excavators,
-            'adts' => $adts,
-            'mineAreas' => $mineAreas,
-            'statusStats' => $statusStats,
-            'topPerformers' => $topPerformers,
-            'worstPerformers' => $worstPerformers,
+            'machines'          => $machinesQuery,
+            'excavators'        => $excavators,
+            'adts'              => $adts,
+            'mineAreas'         => $mineAreas,
+            'statusStats'       => $statusStats,
+            'topPerformers'     => $topPerformers,
+            'worstPerformers'   => $worstPerformers,
             'aiRecommendations' => $aiRecommendations,
-            'aiInsights' => $aiInsights,
-            'activityFeed' => $this->activityFeed,
-            'isLoading' => $this->isLoading,
-            'fleetUsage' => $fleetUsage,
+            'aiInsights'        => $aiInsights,
+            'activityFeed'      => $this->activityFeed,
+            'isLoading'         => $this->isLoading,
+            'fleetUsage'        => $fleetUsage,
+            'engineHoursMap'    => $engineHoursMap,
         ]);
     }
 

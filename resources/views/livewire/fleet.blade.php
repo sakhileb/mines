@@ -438,7 +438,7 @@
     </div>
 
     <!-- Machines Cards/Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700" wire:poll.60s>
         @if ($machines->count() > 0)
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
                 @foreach ($machines as $machine)
@@ -497,6 +497,42 @@
                                 @endif
                             </div>
                             @endif
+                            {{-- ── Engine Hours ──────────────────────────────── --}}
+                            @php
+                                $eng       = $engineHoursMap[$machine->id] ?? ['today_hours' => 0.0, 'is_running' => false];
+                                $engPct    = min(100, $eng['today_hours'] > 0 ? round(($eng['today_hours'] / 12) * 100) : 0);
+                                $engColor  = $engPct >= 90 ? 'bg-red-500' : ($engPct >= 70 ? 'bg-amber-400' : 'bg-green-500');
+                            @endphp
+                            <div class="mb-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
+                                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                                    <span class="flex items-center gap-1 font-medium">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Engine Hrs (Today)
+                                    </span>
+                                    <span class="font-bold text-gray-700 dark:text-gray-200 flex items-center gap-1">
+                                        {{ number_format($eng['today_hours'], 1) }}h
+                                        @if($eng['is_running'])
+                                            <span class="inline-block w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" title="Engine running"></span>
+                                        @endif
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                    <div class="{{ $engColor }} h-1.5 rounded-full transition-all duration-500" style="width: {{ $engPct }}%"></div>
+                                </div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">
+                                        @if($eng['is_running'])
+                                            <span class="text-green-600 dark:text-green-400 font-medium">● Running</span>
+                                        @else
+                                            Off
+                                        @endif
+                                    </span>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">of 12h shift</span>
+                                </div>
+                            </div>
+                            {{-- ── End Engine Hours ──────────────────────────── --}}
                             <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                 @if ($machine->excavator)
                                     <span class="font-medium">Excavator:</span> {{ $machine->excavator->name }}
