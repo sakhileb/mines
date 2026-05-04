@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Machine;
+use App\Services\AuditService;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -113,6 +115,13 @@ class MachineController extends Controller
 
         $machine = Machine::create($validated);
 
+        AuditService::log(
+            AuditLog::MACHINE_CREATED,
+            "Created machine: {$machine->name} ({$machine->machine_type})",
+            $machine,
+            ['registration_number' => $machine->registration_number, 'machine_type' => $machine->machine_type]
+        );
+
         return response()->json([
             'data' => $machine,
             'message' => 'Machine created successfully',
@@ -137,7 +146,15 @@ class MachineController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $previousValues = array_intersect_key($machine->toArray(), $validated);
         $machine->update($validated);
+
+        AuditService::log(
+            AuditLog::MACHINE_UPDATED,
+            "Updated machine: {$machine->name}",
+            $machine,
+            ['previous' => $previousValues, 'updated' => $validated]
+        );
 
         return response()->json([
             'data' => $machine,
@@ -153,6 +170,13 @@ class MachineController extends Controller
     public function destroy(Machine $machine)
     {
         $this->authorize('delete', $machine);
+
+        AuditService::log(
+            AuditLog::MACHINE_DELETED,
+            "Deleted machine: {$machine->name} (#{$machine->id})",
+            $machine,
+            ['name' => $machine->name, 'registration_number' => $machine->registration_number]
+        );
 
         $machine->delete();
 

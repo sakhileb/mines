@@ -98,7 +98,14 @@ class FeedPost extends Model
 
     public function attachments(): HasMany
     {
-        return $this->hasMany(FeedAttachment::class, 'post_id');
+        // Exclude file_data (BLOB) from eager-loaded listings.
+        // Binary content is fetched on-demand in FeedAttachmentController::serve()
+        // to prevent loading megabytes of blobs during feed pagination.
+        return $this->hasMany(FeedAttachment::class, 'post_id')
+            ->select([
+                'id', 'post_id', 'uploader_id', 'storage_type', 'file_url',
+                'file_type', 'file_name', 'file_size', 'uploaded_at',
+            ]);
     }
 
     public function comments(): HasMany

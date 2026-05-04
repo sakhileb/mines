@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\StripeService;
+use App\Services\AuditService;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -44,17 +46,39 @@ class WebhookController extends Controller
 
         // Handle different event types
         try {
+            $stripeObject = $event['data']['object'] ?? [];
+            $stripeId     = $stripeObject['id'] ?? 'unknown';
+            $customer     = $stripeObject['customer'] ?? null;
+
             switch ($event['type']) {
                 case 'customer.subscription.created':
                     $stripeService->handleSubscriptionCreated($event);
+                    AuditService::log(
+                        AuditLog::SUBSCRIPTION_CREATED,
+                        "Stripe subscription created: {$stripeId}",
+                        null,
+                        ['stripe_subscription_id' => $stripeId, 'customer' => $customer]
+                    );
                     break;
 
                 case 'customer.subscription.updated':
                     $stripeService->handleSubscriptionUpdated($event);
+                    AuditService::log(
+                        AuditLog::SUBSCRIPTION_UPDATED,
+                        "Stripe subscription updated: {$stripeId}",
+                        null,
+                        ['stripe_subscription_id' => $stripeId, 'customer' => $customer, 'status' => $stripeObject['status'] ?? null]
+                    );
                     break;
 
                 case 'customer.subscription.deleted':
                     $stripeService->handleSubscriptionUpdated($event);
+                    AuditService::log(
+                        AuditLog::SUBSCRIPTION_CANCELLED,
+                        "Stripe subscription cancelled: {$stripeId}",
+                        null,
+                        ['stripe_subscription_id' => $stripeId, 'customer' => $customer]
+                    );
                     break;
 
                 case 'payment_intent.succeeded':

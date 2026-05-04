@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\FeedAttachment;
 use App\Models\FeedPost;
 use App\Models\User;
@@ -98,7 +99,7 @@ class FeedAttachmentService
 
         // ── 5. Persist to database ───────────────────────────────────────────
         try {
-            return FeedAttachment::create([
+            $attachment = FeedAttachment::create([
                 'post_id'      => $post->id,
                 'uploader_id'  => $uploader->id,
                 'file_name'    => $originalName,
@@ -123,6 +124,23 @@ class FeedAttachmentService
                 previous: $e
             );
         }
+
+        // ── 6. Audit trail ───────────────────────────────────────────────────
+        AuditService::log(
+            AuditLog::FEED_ATTACHMENT_UPLOAD,
+            "Uploaded '{$originalName}' ({$this->formatBytes($size)}) to feed post #{$post->id}",
+            $attachment,
+            [
+                'post_id'   => $post->id,
+                'file_name' => $originalName,
+                'file_size' => $size,
+                'file_type' => $mime,
+            ],
+            $uploader->id,
+            $uploader->current_team_id
+        );
+
+        return $attachment;
     }
 
     /**
@@ -155,5 +173,17 @@ class FeedAttachmentService
 
         // Fallback if the name is now empty
         return $name !== '' ? $name : 'attachment';
+    }
+
+    /** Human-readable file size for audit log messages. */
+    private function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $i     = 0;
+        while ($bytes >= 1024 && $i < count($units) - 1) {
+            $bytes /= 1024;
+            $i++;
+        }
+        return round($bytes, 1) . ' ' . $units[$i];
     }
 }

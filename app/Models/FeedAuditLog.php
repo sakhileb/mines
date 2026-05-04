@@ -13,10 +13,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int    $id
  * @property int    $team_id
  * @property int    $actor_id
- * @property string $action         pin|unpin|admin_delete|override_approval|invite_sent|go_live_set
+ * @property string $action         pin|unpin|admin_delete|override_approval|invite_sent|go_live_set|bulk_approve|bulk_reject|export|settings_changed
  * @property string $subject_type
  * @property int    $subject_id
  * @property array|null $meta
+ * @property string|null $ip_address
  * @property \Carbon\Carbon $created_at
  */
 class FeedAuditLog extends Model
@@ -30,6 +31,10 @@ class FeedAuditLog extends Model
         'override_approval' => 'Overrode approval',
         'invite_sent'       => 'Sent onboarding invite',
         'go_live_set'       => 'Set go-live date',
+        'bulk_approve'      => 'Bulk approved posts',
+        'bulk_reject'       => 'Bulk rejected posts',
+        'export'            => 'Exported feed data',
+        'settings_changed'  => 'Changed feed settings',
     ];
 
     protected $fillable = [
@@ -39,6 +44,7 @@ class FeedAuditLog extends Model
         'subject_type',
         'subject_id',
         'meta',
+        'ip_address',
     ];
 
     protected $casts = [
@@ -58,6 +64,15 @@ class FeedAuditLog extends Model
 
     public static function record(string $action, Model $subject, ?array $meta = null): static
     {
+        $ip = null;
+        if (! app()->runningInConsole()) {
+            try {
+                $ip = request()->ip();
+            } catch (\Throwable) {
+                //
+            }
+        }
+
         return static::create([
             'team_id'      => auth()->user()->current_team_id,
             'actor_id'     => auth()->id(),
@@ -65,6 +80,7 @@ class FeedAuditLog extends Model
             'subject_type' => get_class($subject),
             'subject_id'   => $subject->getKey(),
             'meta'         => $meta,
+            'ip_address'   => $ip,
         ]);
     }
 }

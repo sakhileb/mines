@@ -19,8 +19,11 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Validation\Rules\Password;
 use App\Mail\WelcomeMail;
 use App\Console\Commands\ScanBladeUnescaped;
+use App\Services\AuditService;
+use App\Models\AuditLog;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
                 ScanBladeUnescaped::class,
             ]);
         }
+
+        // Enforce enterprise password policy (min 12 chars, mixed case, numbers, symbols)
+        $this->configurePasswordPolicy();
 
         // Configure rate limiting
         $this->configureRateLimiting();
@@ -78,6 +84,41 @@ class AppServiceProvider extends ServiceProvider
             } catch (\Throwable $e) {
                 Log::error('Failed to notify on job failure', ['error' => $e->getMessage()]);
             }
+        });
+
+        // ── Auth audit events ──────────────────────────────────────────────
+        Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
+            AuditService::log(
+                AuditLog::LOGIN_SUCCESS,
+                'Successful login',
+                $event->user,
+                ['guard' => $event->guard],
+                $event->user->id,
+                $event->user->current_team_id
+            );
+        });
+
+        Event::listen(\Illuminate\Auth\Events\Failed::class, function ($event) {
+            AuditService::log(
+                AuditLog::LOGIN_FAILED,
+                'Failed login attempt for: ' . ($event->credentials['email'] ?? 'unknown'),
+                null,
+                ['email' => $event->credentials['email'] ?? 'unknown', 'guard' => $event->guard],
+                $event->user?->id,
+                $event->user?->current_team_id
+            );
+        });
+
+        Event::listen(\Illuminate\Auth\Events\Lockout::class, function ($event) {
+            AuditService::log(
+                AuditLog::LOGIN_LOCKOUT,
+                'Account locked out due to too many failed login attempts',
+                null,
+                ['email' => $event->request->input('email', 'unknown')],
+                null,
+                null,
+                $event->request->ip()
+            );
         });
 
         // Configure Sentry release/environment if present
@@ -164,6 +205,50 @@ class AppServiceProvider extends ServiceProvider
                         'retry_after' => 60
                     ], 429);
                 });
+        });
+
+        // File uploads — prevent upload flooding (10 per minute per user)
+        RateLimiter::for('uploads', function (Request $request) {
+            return Limit::perMinute(10)
+                ->by($request->user()?->id ?: $request->ip())
+                ->response(function () {
+                    return response()->json([
+                        'message'     => 'Upload rate limit exceeded. Please wait before uploading again.',
+                        'retry_after' => 60,
+                    ], 429);
+                });
+        });
+
+        // Feed posting — prevent post spam (20 per minute per user)
+        RateLimiter::for('feed-post', function (Request $request) {
+            return Limit::perMinute(20)
+                ->by($request->user()?->id ?: $request->ip())
+                ->response(function () {
+                    return response()->json([
+                        'message'     => 'Post rate limit exceeded. Please slow down.',
+                        'retry_after' => 60,
+                    ], 429);
+                });
+        });
+    }
+
+    /**
+     * Enforce enterprise-grade password strength requirements.
+     *
+     * Applied to both registration and password changes via PasswordValidationRules trait.
+     * In production, passwords are also checked against known data-breach lists.
+     */
+    protected function configurePasswordPolicy(): void
+    {
+        Password::defaults(function () {
+            $rule = Password::min(12)
+                ->letters()
+                ->mixedCase()
+                ->numbers()
+                ->symbols();
+
+            // In production: reject passwords from known breach dumps (HIBP API)
+            return app()->environment('production') ? $rule->uncompromised() : $rule;
         });
     }
 }

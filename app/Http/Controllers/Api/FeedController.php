@@ -11,6 +11,8 @@ use App\Models\FeedApproval;
 use App\Models\FeedAttachment;
 use App\Models\FeedLike;
 use App\Models\FeedPost;
+use App\Services\AuditService;
+use App\Models\AuditLog;
 use App\Services\MentionParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -157,6 +159,13 @@ class FeedController extends Controller
 
         FeedPostCreated::dispatch($post);
 
+        AuditService::log(
+            AuditLog::FEED_POST_CREATED,
+            "Created feed post #{$post->id} (category: {$post->category}, priority: {$post->priority})",
+            $post,
+            ['category' => $post->category, 'priority' => $post->priority, 'mine_area_id' => $post->mine_area_id]
+        );
+
         return response()->json(['data' => $post], 201);
     }
 
@@ -168,6 +177,13 @@ class FeedController extends Controller
     public function destroy(FeedPost $post): JsonResponse
     {
         $this->authorize('delete', $post);
+
+        AuditService::log(
+            AuditLog::FEED_POST_DELETED,
+            "Deleted feed post #{$post->id} (category: {$post->category})",
+            $post,
+            ['category' => $post->category, 'author_id' => $post->author_id]
+        );
 
         $post->delete();
 
@@ -330,6 +346,13 @@ class FeedController extends Controller
         $approval->refresh();
         FeedPostStatusChanged::dispatch($post, $approval);
 
+        AuditService::log(
+            AuditLog::FEED_POST_APPROVED,
+            "Approved feed post #{$post->id}",
+            $post,
+            ['approver_id' => auth()->id()]
+        );
+
         return response()->json(['data' => $approval]);
     }
 
@@ -359,6 +382,13 @@ class FeedController extends Controller
 
         $approval->refresh();
         FeedPostStatusChanged::dispatch($post, $approval);
+
+        AuditService::log(
+            AuditLog::FEED_POST_REJECTED,
+            "Rejected feed post #{$post->id}",
+            $post,
+            ['approver_id' => auth()->id(), 'reason' => $validated['reason']]
+        );
 
         return response()->json(['data' => $approval]);
     }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MaintenanceRecord;
 use App\Models\Machine;
+use App\Services\AuditService;
+use App\Models\AuditLog;
 use App\Services\MaintenanceHealthService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -83,6 +85,13 @@ class MaintenanceRecordController extends Controller
 
         $record = $this->maintenanceService->createMaintenanceRecord($validated);
 
+        AuditService::log(
+            AuditLog::MAINTENANCE_CREATED,
+            "Created maintenance work order: {$record->title} for machine #{$record->machine_id}",
+            $record,
+            ['machine_id' => $record->machine_id, 'type' => $record->maintenance_type, 'priority' => $record->priority]
+        );
+
         return response()->json([
             'message' => 'Work order created successfully',
             'data' => $record->load(['machine', 'assignedTo']),
@@ -156,6 +165,18 @@ class MaintenanceRecordController extends Controller
 
         $completedRecord = $this->maintenanceService->completeMaintenanceRecord($record, $validated);
 
+        AuditService::log(
+            AuditLog::MAINTENANCE_COMPLETED,
+            "Completed maintenance work order: {$completedRecord->title} (machine #{$completedRecord->machine_id})",
+            $completedRecord,
+            [
+                'machine_id'    => $completedRecord->machine_id,
+                'labor_hours'   => $validated['labor_hours'],
+                'total_cost'    => $validated['total_cost'],
+                'completed_by'  => $validated['completed_by'],
+            ]
+        );
+
         return response()->json([
             'message' => 'Work order completed successfully',
             'data' => $completedRecord->load(['machine', 'completedBy']),
@@ -168,6 +189,13 @@ class MaintenanceRecordController extends Controller
     public function destroy(MaintenanceRecord $record): JsonResponse
     {
         $this->authorize('delete', $record);
+
+        AuditService::log(
+            AuditLog::MAINTENANCE_DELETED,
+            "Deleted maintenance work order: {$record->title} (machine #{$record->machine_id})",
+            $record,
+            ['machine_id' => $record->machine_id, 'title' => $record->title]
+        );
 
         $record->delete();
 

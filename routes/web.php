@@ -144,6 +144,7 @@ Route::middleware([
     // Feed attachment file serving — streams binary blobs stored in the DB.
     // Must come before /feed/admin to avoid route collision.
     Route::get('/feed/attachments/{attachment}', [App\Http\Controllers\FeedAttachmentController::class, 'serve'])
+        ->middleware('throttle:downloads')
         ->name('feed.attachment.serve');
 
     // Feed admin panel (admins only)

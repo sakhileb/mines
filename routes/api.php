@@ -42,8 +42,19 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
     });
 
     Route::post('/user/team/{team_id}', function (Request $request, $team_id) {
-        $request->user()->update(['current_team_id' => $team_id]);
-        return response()->json(['message' => 'Team switched successfully']);
+        // Explicit team membership check (defence-in-depth on top of EnsureTeamContext)
+        $team = \App\Models\Team::findOrFail((int) $team_id);
+        abort_unless($request->user()->belongsToTeam($team), 403, 'You do not belong to this team.');
+
+        $request->user()->update(['current_team_id' => $team->id]);
+
+        \App\Services\AuditService::log(
+            \App\Models\AuditLog::TEAM_SWITCH,
+            "Switched active team to: {$team->name}",
+            $team
+        );
+
+        return response()->json(['message' => 'Team switched successfully.']);
     });
 
     /**
@@ -218,11 +229,11 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
      */
     Route::prefix('feed')->group(function () {
         Route::get('/', [FeedController::class, 'index']);                          // List posts
-        Route::post('/', [FeedController::class, 'store']);                         // Create post
+        Route::post('/', [FeedController::class, 'store'])->middleware('throttle:feed-post');       // Create post
         Route::delete('/{post}', [FeedController::class, 'destroy']);               // Soft-delete post
         Route::post('/{post}/acknowledge', [FeedController::class, 'acknowledge']); // Acknowledge post
         Route::get('/{post}/acknowledgements', [FeedController::class, 'acknowledgements']); // List acks
-        Route::post('/{post}/attachments', [FeedController::class, 'storeAttachment']); // Upload attachment
+        Route::post('/{post}/attachments', [FeedController::class, 'storeAttachment'])->middleware('throttle:uploads'); // Upload attachment
         Route::post('/{post}/like', [FeedController::class, 'like']);               // Toggle like
         Route::get('/{post}/likes', [FeedController::class, 'likes']);              // List likes
         Route::post('/{post}/approve', [FeedController::class, 'approve']);         // Approve post
@@ -230,7 +241,7 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
 
         // Comments
         Route::get('/{post}/comments', [FeedCommentController::class, 'index']);    // List comments
-        Route::post('/{post}/comments', [FeedCommentController::class, 'store']);   // Add comment
+        Route::post('/{post}/comments', [FeedCommentController::class, 'store'])->middleware('throttle:feed-post');   // Add comment
     });
 
     // Comment-level routes (no post prefix needed for edit/delete)
