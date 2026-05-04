@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Machine;
+use App\Models\Subscription;
 use App\Models\User;
 
 class MachinePolicy
@@ -26,10 +27,19 @@ class MachinePolicy
 
     /**
      * Determine whether the user can create models.
+     * Enforces both RBAC permission and subscription fleet slot limit.
      */
     public function create(User $user): bool
     {
-        return $user->hasPermission('create_machines');
+        if (! $user->hasPermission('create_machines')) {
+            return false;
+        }
+
+        if ($user->current_team_id && Subscription::teamHasReachedMachineLimit($user->current_team_id)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

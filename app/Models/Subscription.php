@@ -212,4 +212,27 @@ class Subscription extends Model
         return $query->where('status', 'trial')
                     ->where('trial_ends_at', '>', now());
     }
+
+    /**
+     * Check whether a team has reached its subscribed machine slot limit.
+     * Covers both active and trial subscriptions.
+     */
+    public static function teamHasReachedMachineLimit(int $teamId): bool
+    {
+        $subscription = static::with('plan')
+            ->active()
+            ->where('team_id', $teamId)
+            ->first();
+
+        if (! $subscription || ! $subscription->plan) {
+            return false; // no active/trial plan → no hard limit
+        }
+
+        $max = $subscription->plan->max_machines;
+        if (! $max) {
+            return false; // unlimited plan
+        }
+
+        return \App\Models\Machine::where('team_id', $teamId)->count() >= $max;
+    }
 }

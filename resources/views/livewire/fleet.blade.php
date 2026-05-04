@@ -72,6 +72,31 @@
         @endif
     </div><!-- end header gradient -->
 
+    {{-- Upgrade prompt: shown when fleet slot limit is reached --}}
+    @if ($fleetFull)
+        <div class="mb-6 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-900/20 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="flex-shrink-0 p-2 rounded-lg bg-amber-100 dark:bg-amber-800/40">
+                <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">Fleet slot limit reached</p>
+                <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                    You have used all {{ $fleetUsage['current'] }} / {{ $fleetUsage['max'] }} machine slots on your current plan.
+                    Upgrade your subscription to add more machines to your fleet.
+                </p>
+            </div>
+            <a href="{{ route('billing.index') }}"
+               class="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium transition-colors shadow">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                </svg>
+                Upgrade Plan
+            </a>
+        </div>
+    @endif
+
     <!-- Status Statistics with animation -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scale-in">

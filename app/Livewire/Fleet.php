@@ -90,25 +90,12 @@ use WithPagination;
 
     /**
      * Returns true when the team has reached its subscribed machine limit.
+     * Covers both active and trial subscriptions.
      */
     private function isFleetFull(): bool
     {
         $team = Auth::user()->currentTeam;
-        $subscription = Subscription::with('plan')
-            ->where('team_id', $team->id)
-            ->where('status', 'active')
-            ->first();
-
-        if (! $subscription || ! $subscription->plan) {
-            return false; // no active plan → no hard limit
-        }
-
-        $maxMachines = $subscription->plan->max_machines;
-        if (! $maxMachines) {
-            return false; // unlimited
-        }
-
-        return Machine::where('team_id', $team->id)->count() >= $maxMachines;
+        return Subscription::teamHasReachedMachineLimit($team->id);
     }
 
     /**
@@ -120,8 +107,8 @@ use WithPagination;
         $current = Machine::where('team_id', $team->id)->count();
 
         $subscription = Subscription::with('plan')
+            ->active()
             ->where('team_id', $team->id)
-            ->where('status', 'active')
             ->first();
 
         $max = $subscription?->plan?->max_machines ?? null;
