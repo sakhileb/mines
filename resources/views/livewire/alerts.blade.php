@@ -560,176 +560,384 @@
     @endif
         @elseif($activeTab === 'incidents')
         <!-- ── Incident Reports Tab ───────────────────────────────────── -->
-
-        <!-- Incident Stats -->
         @php
-            $incidentCritical  = $incidentReports->getCollection()->where('priority', 'critical')->count();
-            $incidentBreakdown = $incidentReports->getCollection()->where('category', 'breakdown')->count();
-            $incidentSafety    = $incidentReports->getCollection()->where('category', 'safety_alert')->count();
+            $totalInc    = $incidentReports->total();
+            $openInc     = $incidentReports->getCollection()->where('status', 'open')->count();
+            $criticalInc = $incidentReports->getCollection()->where('severity', 'critical')->count();
+            $resolvedInc = $incidentReports->getCollection()->whereIn('status', ['resolved', 'closed'])->count();
         @endphp
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-rose-900/30 border border-rose-700 rounded-lg p-4">
-                <div class="text-rose-400 text-sm font-medium">Total Incidents</div>
-                <div class="text-3xl font-bold text-rose-300 mt-2">{{ $incidentReports->total() }}</div>
-            </div>
-            <div class="bg-red-900/30 border border-red-700 rounded-lg p-4">
-                <div class="text-red-400 text-sm font-medium">Critical</div>
-                <div class="text-3xl font-bold text-red-300 mt-2">{{ $incidentCritical }}</div>
-            </div>
-            <div class="bg-orange-900/30 border border-orange-700 rounded-lg p-4">
-                <div class="text-orange-400 text-sm font-medium">Breakdowns</div>
-                <div class="text-3xl font-bold text-orange-300 mt-2">{{ $incidentBreakdown }}</div>
-            </div>
-            <div class="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4">
-                <div class="text-yellow-400 text-sm font-medium">Safety Alerts</div>
-                <div class="text-3xl font-bold text-yellow-300 mt-2">{{ $incidentSafety }}</div>
-            </div>
-        </div>
 
-        <!-- Incident Filters -->
-        <div class="bg-slate-800 rounded-lg p-4 mb-6 border border-slate-700">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="space-y-6">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                    <label class="block text-sm text-slate-400 mb-2">Search Incidents</label>
-                    <input type="text" wire:model.live="incidentSearch"
-                        placeholder="Search by description..."
-                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none">
+                    <h2 class="text-2xl font-bold text-white">Incident Reports</h2>
+                    <p class="text-slate-400 text-sm mt-0.5">Log and track safety, mechanical, environmental and operational incidents</p>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-400 mb-2">Category</label>
-                    <select wire:model.live="incidentCategoryFilter"
-                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none">
-                        <option value="all">All Categories</option>
-                        <option value="breakdown">Breakdown</option>
-                        <option value="safety_alert">Safety Alert</option>
-                    </select>
+                <button wire:click="openLogIncidentModal()"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Log Incident
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-rose-900/30 border border-rose-700 rounded-lg p-4">
+                    <p class="text-rose-400 text-sm font-medium">Total</p>
+                    <p class="text-3xl font-bold text-rose-300 mt-1">{{ $totalInc }}</p>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-400 mb-2">Priority</label>
-                    <select wire:model.live="incidentPriorityFilter"
-                        class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none">
-                        <option value="all">All Priorities</option>
-                        <option value="critical">Critical</option>
-                        <option value="high">High</option>
-                        <option value="normal">Normal</option>
-                    </select>
+                <div class="bg-amber-900/30 border border-amber-700 rounded-lg p-4">
+                    <p class="text-amber-400 text-sm font-medium">Open</p>
+                    <p class="text-3xl font-bold text-amber-300 mt-1">{{ $openInc }}</p>
+                </div>
+                <div class="bg-red-900/30 border border-red-700 rounded-lg p-4">
+                    <p class="text-red-400 text-sm font-medium">Critical</p>
+                    <p class="text-3xl font-bold text-red-300 mt-1">{{ $criticalInc }}</p>
+                </div>
+                <div class="bg-green-900/30 border border-green-700 rounded-lg p-4">
+                    <p class="text-green-400 text-sm font-medium">Resolved</p>
+                    <p class="text-3xl font-bold text-green-300 mt-1">{{ $resolvedInc }}</p>
                 </div>
             </div>
-        </div>
 
-        <!-- Incident List -->
-        @if($incidentReports->count() > 0)
-            <div class="space-y-4">
-                @foreach($incidentReports as $post)
-                    @php
-                        $catColor = $post->category === 'safety_alert'
-                            ? 'border-yellow-700 bg-yellow-900/10'
-                            : 'border-orange-700 bg-orange-900/10';
-                        $catLabel = $post->category === 'safety_alert' ? 'Safety Alert' : 'Breakdown';
-                        $catBadge = $post->category === 'safety_alert'
-                            ? 'bg-yellow-900 text-yellow-300'
-                            : 'bg-orange-900 text-orange-300';
-                        $priBadge = match($post->priority) {
-                            'critical' => 'bg-red-900 text-red-300',
-                            'high'     => 'bg-orange-900 text-orange-300',
-                            default    => 'bg-slate-700 text-slate-300',
-                        };
-                        $machineName = $post->meta['machine_name'] ?? ($post->meta['machine_id'] ?? null);
-                    @endphp
-                    <div class="bg-slate-800 rounded-xl border {{ $catColor }} p-5 hover:border-rose-600 transition">
-                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                            <div class="flex-1 min-w-0">
-                                <!-- Badges -->
-                                <div class="flex flex-wrap items-center gap-2 mb-3">
-                                    <span class="px-2 py-0.5 text-xs font-semibold rounded {{ $catBadge }}">{{ $catLabel }}</span>
-                                    <span class="px-2 py-0.5 text-xs font-semibold rounded {{ $priBadge }}">{{ ucfirst($post->priority) }}</span>
-                                    @if($post->is_pinned)
-                                        <span class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-900 text-blue-300">&#128204; Pinned</span>
-                                    @endif
-                                    @if($post->shift)
-                                        <span class="px-2 py-0.5 text-xs font-medium rounded bg-slate-700 text-slate-300">Shift {{ $post->shift }}</span>
-                                    @endif
-                                </div>
+            <!-- Filters -->
+            <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1.5">Search</label>
+                        <input type="text" wire:model.live="incidentSearch" placeholder="Title or description…"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 text-sm focus:border-rose-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1.5">Category</label>
+                        <select wire:model.live="incidentCategoryFilter"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 text-sm focus:border-rose-500 focus:outline-none">
+                            <option value="all">All Categories</option>
+                            @foreach($incidentCategories as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1.5">Severity</label>
+                        <select wire:model.live="incidentSeverityFilter"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 text-sm focus:border-rose-500 focus:outline-none">
+                            <option value="all">All Severities</option>
+                            @foreach($incidentSeverities as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1.5">Status</label>
+                        <select wire:model.live="incidentStatusFilter"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 text-sm focus:border-rose-500 focus:outline-none">
+                            <option value="all">All Statuses</option>
+                            @foreach($incidentStatuses as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-                                <!-- Body -->
-                                <p class="text-slate-200 text-sm leading-relaxed mb-3 line-clamp-3">{{ $post->body }}</p>
+            <!-- Incident List -->
+            @if($incidentReports->count() > 0)
+                <div class="space-y-3">
+                    @foreach($incidentReports as $incident)
+                        @php
+                            $sevBorder = match($incident->severity) {
+                                'critical' => 'border-red-700 bg-red-900/10',
+                                'high'     => 'border-orange-700 bg-orange-900/10',
+                                'medium'   => 'border-amber-700 bg-amber-900/10',
+                                default    => 'border-slate-700',
+                            };
+                            $sevBadge = match($incident->severity) {
+                                'critical' => 'bg-red-900 text-red-300',
+                                'high'     => 'bg-orange-900 text-orange-300',
+                                'medium'   => 'bg-amber-900 text-amber-300',
+                                default    => 'bg-slate-700 text-slate-300',
+                            };
+                            $catBadgeColor = match($incident->category) {
+                                'safety'           => 'bg-yellow-900 text-yellow-300',
+                                'mechanical'       => 'bg-blue-900 text-blue-300',
+                                'delay'            => 'bg-purple-900 text-purple-300',
+                                'environmental'    => 'bg-teal-900 text-teal-300',
+                                'equipment_damage' => 'bg-orange-900 text-orange-300',
+                                'near_miss'        => 'bg-pink-900 text-pink-300',
+                                default            => 'bg-slate-700 text-slate-400',
+                            };
+                            $statusBadge = match($incident->status) {
+                                'open'          => 'bg-rose-900 text-rose-300',
+                                'investigating' => 'bg-blue-900 text-blue-300',
+                                'resolved'      => 'bg-green-900 text-green-300',
+                                'closed'        => 'bg-slate-700 text-slate-400',
+                                default         => 'bg-slate-700 text-slate-400',
+                            };
+                        @endphp
+                        <div class="bg-slate-800 rounded-xl border {{ $sevBorder }} p-5 hover:border-rose-600 transition">
+                            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <!-- Badges row -->
+                                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                                        <span class="px-2 py-0.5 text-xs font-semibold rounded {{ $catBadgeColor }}">
+                                            {{ $incidentCategories[$incident->category] ?? ucfirst($incident->category) }}
+                                        </span>
+                                        <span class="px-2 py-0.5 text-xs font-semibold rounded {{ $sevBadge }}">
+                                            {{ ucfirst($incident->severity) }}
+                                        </span>
+                                        <span class="px-2 py-0.5 text-xs font-semibold rounded {{ $statusBadge }}">
+                                            {{ $incidentStatuses[$incident->status] ?? ucfirst($incident->status) }}
+                                        </span>
+                                    </div>
 
-                                <!-- Meta details -->
-                                <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
-                                    <span class="flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
-                                        {{ $post->author?->name ?? 'Unknown' }}
-                                    </span>
-                                    @if($post->mineArea)
+                                    <h3 class="text-base font-semibold text-white mb-1.5">{{ $incident->title }}</h3>
+                                    <p class="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-3">{{ $incident->description }}</p>
+
+                                    <!-- Meta -->
+                                    <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
+                                        <!-- Timestamp: when it happened -->
+                                        <span class="flex items-center gap-1" title="When the incident occurred">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            {{ $incident->occurred_at->format('d M Y, H:i') }}
+                                        </span>
+                                        <!-- Reported by -->
                                         <span class="flex items-center gap-1">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                             </svg>
-                                            {{ $post->mineArea->name }}
+                                            {{ $incident->reportedBy?->name ?? 'Unknown' }}
                                         </span>
+                                        @if($incident->machine)
+                                            <span class="flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
+                                                </svg>
+                                                <a href="{{ route('fleet.show', $incident->machine->id) }}" class="text-blue-400 hover:text-blue-300">
+                                                    {{ $incident->machine->name }}
+                                                </a>
+                                            </span>
+                                        @endif
+                                        @if($incident->mineArea)
+                                            <span class="flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6 3m-6-3v-13m6 3l5.553-2.776A1 1 0 0121 5.618v10.764a1 1 0 01-1.447.894L15 20m0-13v13"/>
+                                                </svg>
+                                                {{ $incident->mineArea->name }}
+                                            </span>
+                                        @endif
+                                        @if($incident->resolved_at)
+                                            <span class="flex items-center gap-1 text-green-400">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                Resolved {{ $incident->resolved_at->diffForHumans() }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    @if($incident->resolution_notes)
+                                        <div class="mt-2 px-3 py-2 bg-green-900/20 border border-green-800 rounded text-xs text-green-300">
+                                            <span class="font-medium">Resolution: </span>{{ $incident->resolution_notes }}
+                                        </div>
                                     @endif
-                                    @if($machineName)
-                                        <span class="flex items-center gap-1">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
-                                            </svg>
-                                            {{ $machineName }}
-                                        </span>
-                                    @endif
-                                    @if(isset($post->meta['failure_type']) && $post->meta['failure_type'])
-                                        <span class="flex items-center gap-1">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/>
-                                            </svg>
-                                            {{ ucwords(str_replace('_', ' ', $post->meta['failure_type'])) }}
-                                        </span>
-                                    @endif
-                                    <span class="flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        {{ $post->created_at->diffForHumans() }}
-                                    </span>
                                 </div>
-                            </div>
 
-                            <!-- Right side counters -->
-                            <div class="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-2 text-xs text-slate-400 shrink-0">
-                                <div class="flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    <span>{{ $post->acknowledgements_count }} ack</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                                    </svg>
-                                    <span>{{ $post->comment_count }} comments</span>
-                                </div>
-                                <div class="text-slate-500 text-xs">
-                                    {{ $post->created_at->format('d M Y, H:i') }}
+                                <!-- Actions -->
+                                <div class="flex sm:flex-col gap-2 shrink-0">
+                                    <button wire:click="openLogIncidentModal({{ $incident->id }})"
+                                        class="px-3 py-1.5 text-xs bg-slate-700 text-slate-300 hover:bg-slate-600 rounded transition">
+                                        Edit
+                                    </button>
+                                    @if($incident->status === 'open')
+                                        <button wire:click="updateIncidentStatus({{ $incident->id }}, 'investigating')"
+                                            class="px-3 py-1.5 text-xs bg-blue-700 text-blue-100 hover:bg-blue-600 rounded transition">
+                                            Investigate
+                                        </button>
+                                    @endif
+                                    @if(in_array($incident->status, ['open', 'investigating']))
+                                        <button wire:click="openResolveModal({{ $incident->id }})"
+                                            class="px-3 py-1.5 text-xs bg-green-700 text-green-100 hover:bg-green-600 rounded transition">
+                                            Resolve
+                                        </button>
+                                    @endif
+                                    @if($incident->status === 'resolved')
+                                        <button wire:click="updateIncidentStatus({{ $incident->id }}, 'closed')"
+                                            class="px-3 py-1.5 text-xs bg-slate-600 text-slate-300 hover:bg-slate-500 rounded transition">
+                                            Close
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
+                    @endforeach
+                </div>
+                <div class="mt-6">{{ $incidentReports->links() }}</div>
+            @else
+                <div class="flex flex-col items-center justify-center py-20 text-slate-500">
+                    <svg class="w-16 h-16 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <p class="text-base font-medium mb-1">No incidents found</p>
+                    <p class="text-sm text-slate-600 mb-4">Click <strong class="text-slate-400">Log Incident</strong> to record a new one</p>
+                    <button wire:click="openLogIncidentModal()"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm rounded-lg hover:bg-rose-700 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Log Incident
+                    </button>
+                </div>
+            @endif
 
-            <!-- Pagination -->
-            <div class="mt-6">
-                {{ $incidentReports->links() }}
+        </div>{{-- end space-y-6 --}}
+        @endif{{-- end activeTab --}}
+
+    </div>{{-- end max-7xl --}}
+
+    <!-- ── Log / Edit Incident Modal ─────────────────────────────────── -->
+    @if($showIncidentModal)
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4" wire:click.self="closeIncidentModal">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-white">
+                        {{ $editingIncidentId ? 'Edit Incident' : 'Log New Incident' }}
+                    </h2>
+                    <button wire:click="closeIncidentModal" class="text-slate-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <form wire:submit="saveIncident" class="p-6 space-y-5">
+
+                    <!-- Title -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Title <span class="text-rose-500">*</span></label>
+                        <input type="text" wire:model="incidentTitle" placeholder="Brief incident title"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none text-sm">
+                        @error('incidentTitle') <p class="text-rose-400 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Category + Severity -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Category <span class="text-rose-500">*</span></label>
+                            <select wire:model="incidentCategory"
+                                class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none text-sm">
+                                @foreach($incidentCategories as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('incidentCategory') <p class="text-rose-400 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Severity <span class="text-rose-500">*</span></label>
+                            <select wire:model="incidentSeverity"
+                                class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none text-sm">
+                                @foreach($incidentSeverities as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Occurred At -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Date &amp; Time of Incident <span class="text-rose-500">*</span></label>
+                        <input type="datetime-local" wire:model="incidentOccurredAt"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none text-sm">
+                        @error('incidentOccurredAt') <p class="text-rose-400 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Machine + Mine Area -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Machine</label>
+                            <select wire:model="incidentMachineId"
+                                class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none text-sm">
+                                <option value="">— None —</option>
+                                @foreach($formMachines as $m)
+                                    <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->machine_type }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Mine Area</label>
+                            <select wire:model="incidentMineAreaId"
+                                class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none text-sm">
+                                <option value="">— None —</option>
+                                @foreach($formMineAreas as $area)
+                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Description <span class="text-rose-500">*</span></label>
+                        <textarea wire:model="incidentDescription" rows="4"
+                            placeholder="Describe what happened, contributing factors, any immediate actions taken…"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-rose-500 focus:outline-none text-sm resize-none"></textarea>
+                        @error('incidentDescription') <p class="text-rose-400 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="flex gap-3 pt-2 border-t border-slate-700">
+                        <button type="button" wire:click="closeIncidentModal"
+                            class="flex-1 px-4 py-2 bg-slate-700 text-white text-sm rounded-lg hover:bg-slate-600 transition">Cancel</button>
+                        <button type="submit"
+                            class="flex-1 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition"
+                            wire:loading.attr="disabled">
+                            <span wire:loading.remove>{{ $editingIncidentId ? 'Update Incident' : 'Log Incident' }}</span>
+                            <span wire:loading class="flex items-center justify-center gap-2">
+                                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                </svg>
+                                Saving…
+                            </span>
+                        </button>
+                    </div>
+                </form>
             </div>
-        @else
-            <div class="flex flex-col items-center justify-center py-20 text-slate-500">
-                <svg class="w-16 h-16 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                <p class="text-sm">No incident reports found</p>
-                <p class="text-xs mt-2 text-slate-600">Breakdowns and safety alerts posted from the Feed will appear here</p>
+        </div>
+    @endif
+
+    <!-- ── Resolve Incident Modal ─────────────────────────────────────── -->
+    @if($showResolveModal)
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4" wire:click.self="closeResolveModal">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl w-full max-w-lg">
+                <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-white">Resolve Incident</h2>
+                    <button wire:click="closeResolveModal" class="text-slate-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Resolution Notes <span class="text-slate-500 font-normal">(optional)</span></label>
+                        <textarea wire:model="incidentResolutionNotes" rows="3"
+                            placeholder="Describe corrective actions taken, root cause, follow-up required…"
+                            class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-green-500 focus:outline-none text-sm resize-none"></textarea>
+                    </div>
+                    <div class="flex gap-3 pt-2 border-t border-slate-700">
+                        <button wire:click="closeResolveModal"
+                            class="flex-1 px-4 py-2 bg-slate-700 text-white text-sm rounded-lg hover:bg-slate-600 transition">Cancel</button>
+                        <button wire:click="resolveIncident"
+                            class="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition">
+                            Mark Resolved
+                        </button>
+                    </div>
+                </div>
             </div>
-        @endif
-        @endif
-</div>
+        </div>
+    @endif
+
+</div>{{-- end min-h-screen --}}
+

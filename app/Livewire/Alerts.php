@@ -5,11 +5,15 @@ namespace App\Livewire;
 use App\Models\Alert;
 use App\Models\FeedPost;
 use App\Models\Geofence;
+use App\Models\Incident;
+use App\Models\Machine;
+use App\Models\MineArea;
 use App\Traits\RealtimeUpdates;
 use Livewire\Component;
 use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class Alerts extends Component
 {
@@ -33,8 +37,25 @@ class Alerts extends Component
 
     // Incident report filters
     public string $incidentSearch = '';
-    public string $incidentCategoryFilter = 'all'; // all | breakdown | safety_alert
-    public string $incidentPriorityFilter = 'all'; // all | normal | high | critical
+    public string $incidentCategoryFilter = 'all';
+    public string $incidentSeverityFilter = 'all';
+    public string $incidentStatusFilter = 'all';
+
+    // Log / Edit Incident modal
+    public bool   $showIncidentModal   = false;
+    public ?int   $editingIncidentId   = null;
+    public string $incidentTitle       = '';
+    public string $incidentCategory    = 'safety';
+    public string $incidentSeverity    = 'medium';
+    public string $incidentMachineId   = '';
+    public string $incidentMineAreaId  = '';
+    public string $incidentDescription = '';
+    public string $incidentOccurredAt  = '';
+
+    // Resolve modal
+    public bool   $showResolveModal        = false;
+    public ?int   $resolvingIncidentId     = null;
+    public string $incidentResolutionNotes = '';
 
     protected $alertPriorities = [
         'critical' => 'Critical',
@@ -273,12 +294,17 @@ class Alerts extends Component
         $selected = $this->getSelectedAlert();
 
         return view('livewire.alerts', [
-            'alerts' => $this->getAlerts(),
-            'incidentReports' => $this->getIncidentReports(),
-            'alertPriorities' => $this->alertPriorities,
-            'alertTypes' => $this->alertTypes,
-            'selectedAlert' => $selected,
-            'mineAreaManagers' => $this->getMineAreaManagersForAlert($selected),
+            'alerts'            => $this->getAlerts(),
+            'incidentReports'   => $this->getIncidentReports(),
+            'incidentCategories'=> Incident::CATEGORIES,
+            'incidentSeverities'=> Incident::SEVERITIES,
+            'incidentStatuses'  => Incident::STATUSES,
+            'formMachines'      => $this->showIncidentModal ? $this->getMachinesForIncidentForm() : collect(),
+            'formMineAreas'     => $this->showIncidentModal ? $this->getMineAreasForIncidentForm() : collect(),
+            'alertPriorities'   => $this->alertPriorities,
+            'alertTypes'        => $this->alertTypes,
+            'selectedAlert'     => $selected,
+            'mineAreaManagers'  => $this->getMineAreaManagersForAlert($selected),
         ]);
     }
 
@@ -286,20 +312,161 @@ class Alerts extends Component
     {
         $team = Auth::user()->currentTeam;
 
-        return FeedPost::where('team_id', $team->id)
-            ->whereIn('category', ['breakdown', 'safety_alert'])
+        return Incident::where('team_id', $team->id)
             ->when($this->incidentSearch, function ($query) {
-                $query->where('body', 'like', "%{$this->incidentSearch}%");
+                $query->where(function ($q) {
+                    $q->where('title', 'like', "%{$this->incidentSearch}%")
+                      ->orWhere('description', 'like', "%{$this->incidentSearch}%");
+                });
             })
-            ->when($this->incidentCategoryFilter !== 'all', function ($query) {
-                $query->where('category', $this->incidentCategoryFilter);
-            })
-            ->when($this->incidentPriorityFilter !== 'all', function ($query) {
-                $query->where('priority', $this->incidentPriorityFilter);
-            })
-            ->with(['author:id,name', 'mineArea:id,name'])
-            ->withCount('acknowledgements')
-            ->orderByDesc('created_at')
+            ->when($this->incidentCategoryFilter !== 'all', fn($q) => $q->where('category', $this->incidentCategoryFilter))
+            ->when($this->incidentSeverityFilter !== 'all',  fn($q) => $q->where('severity',  $this->incidentSeverityFilter))
+            ->when($this->incidentStatusFilter !== 'all',    fn($q) => $q->where('status',    $this->incidentStatusFilter))
+            ->with(['machine:id,name', 'mineArea:id,name', 'reportedBy:id,name'])
+            ->orderByDesc('occurred_at')
             ->paginate(15, ['*'], 'incidentPage');
+    }
+
+    // ── Incident CRUD ─────────────────────────────────────────────────────────
+
+    public function openLogIncidentModal(?int $incidentId = null): void
+    {
+        $this->resetIncidentForm();
+        if ($incidentId) {
+            $team     = Auth::user()->currentTeam;
+            $incident = Incident::where('team_id', $team->id)->findOrFail($incidentId);
+            $this->editingIncidentId   = $incident->id;
+            $this->incidentTitle       = $incident->title;
+            $this->incidentCategory    = $incident->category;
+            $this->incidentSeverity    = $incident->severity;
+            $this->incidentMachineId   = (string) ($incident->machine_id ?? '');
+            $this->incidentMineAreaId  = (string) ($incident->mine_area_id ?? '');
+            $this->incidentDescription = $incident->description;
+            $this->incidentOccurredAt  = $incident->occurred_at->format('Y-m-d\TH:i');
+        } else {
+            $this->incidentOccurredAt = now()->format('Y-m-d\TH:i');
+        }
+        $this->showIncidentModal = true;
+    }
+
+    public function closeIncidentModal(): void
+    {
+        $this->showIncidentModal = false;
+        $this->resetIncidentForm();
+    }
+
+    public function saveIncident(): void
+    {
+        $data = $this->validate([
+            'incidentTitle'       => 'required|string|max:255',
+            'incidentCategory'    => 'required|in:' . implode(',', array_keys(Incident::CATEGORIES)),
+            'incidentSeverity'    => 'required|in:' . implode(',', array_keys(Incident::SEVERITIES)),
+            'incidentDescription' => 'required|string|max:5000',
+            'incidentOccurredAt'  => 'required|date',
+            'incidentMachineId'   => 'nullable|integer',
+            'incidentMineAreaId'  => 'nullable|integer',
+        ]);
+
+        $team = Auth::user()->currentTeam;
+
+        $payload = [
+            'team_id'      => $team->id,
+            'reported_by'  => Auth::id(),
+            'title'        => $data['incidentTitle'],
+            'category'     => $data['incidentCategory'],
+            'severity'     => $data['incidentSeverity'],
+            'description'  => $data['incidentDescription'],
+            'occurred_at'  => $data['incidentOccurredAt'],
+            'machine_id'   => $data['incidentMachineId'] ?: null,
+            'mine_area_id' => $data['incidentMineAreaId'] ?: null,
+        ];
+
+        if ($this->editingIncidentId) {
+            $incident = Incident::where('team_id', $team->id)->findOrFail($this->editingIncidentId);
+            $incident->update($payload);
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Incident updated']);
+        } else {
+            $payload['status'] = 'open';
+            Incident::create($payload);
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Incident logged']);
+        }
+
+        $this->closeIncidentModal();
+        $this->resetPage('incidentPage');
+    }
+
+    public function openResolveModal(int $incidentId): void
+    {
+        $this->resolvingIncidentId     = $incidentId;
+        $this->incidentResolutionNotes = '';
+        $this->showResolveModal        = true;
+    }
+
+    public function closeResolveModal(): void
+    {
+        $this->showResolveModal    = false;
+        $this->resolvingIncidentId = null;
+    }
+
+    public function resolveIncident(): void
+    {
+        $team     = Auth::user()->currentTeam;
+        $incident = Incident::where('team_id', $team->id)->find($this->resolvingIncidentId);
+        if ($incident) {
+            $incident->update([
+                'status'           => 'resolved',
+                'resolved_by'      => Auth::id(),
+                'resolved_at'      => now(),
+                'resolution_notes' => $this->incidentResolutionNotes ?: null,
+            ]);
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Incident marked resolved']);
+        }
+        $this->closeResolveModal();
+    }
+
+    public function updateIncidentStatus(int $incidentId, string $status): void
+    {
+        if (! in_array($status, array_keys(Incident::STATUSES))) {
+            return;
+        }
+        $team     = Auth::user()->currentTeam;
+        $incident = Incident::where('team_id', $team->id)->find($incidentId);
+        if ($incident) {
+            $update = ['status' => $status];
+            if ($status === 'resolved' && ! $incident->resolved_at) {
+                $update['resolved_by'] = Auth::id();
+                $update['resolved_at'] = now();
+            }
+            $incident->update($update);
+            $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Status updated']);
+        }
+    }
+
+    private function resetIncidentForm(): void
+    {
+        $this->editingIncidentId   = null;
+        $this->incidentTitle       = '';
+        $this->incidentCategory    = 'safety';
+        $this->incidentSeverity    = 'medium';
+        $this->incidentMachineId   = '';
+        $this->incidentMineAreaId  = '';
+        $this->incidentDescription = '';
+        $this->incidentOccurredAt  = '';
+    }
+
+    public function getMachinesForIncidentForm(): \Illuminate\Database\Eloquent\Collection
+    {
+        $team = Auth::user()->currentTeam;
+        return Machine::where('team_id', $team->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'machine_type']);
+    }
+
+    public function getMineAreasForIncidentForm(): \Illuminate\Database\Eloquent\Collection
+    {
+        $team = Auth::user()->currentTeam;
+        return MineArea::where('team_id', $team->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 }
