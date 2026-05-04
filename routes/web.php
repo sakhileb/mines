@@ -38,9 +38,6 @@ Route::middleware([
     Route::get('/fleet/route-planning', App\Livewire\RoutePlanning::class)
         ->name('fleet.route-planning');
 
-    Route::get('/fleet/market', App\Livewire\FleetMarket::class)
-        ->name('fleet.market');
-
     // Parameterized route comes last
     Route::get('/fleet/{machine}', function (Machine $machine) {
         return view('fleet.show', ['machine' => $machine]);
