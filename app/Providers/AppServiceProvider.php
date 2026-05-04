@@ -8,6 +8,8 @@ use App\Events\FeedPostStatusChanged;
 use App\Listeners\SendFeedApprovalNotification;
 use App\Listeners\SendFeedCommentNotification;
 use App\Listeners\SendFeedPostNotification;
+use App\Models\MaintenanceRecord;
+use App\Observers\MaintenanceRecordObserver;
 use App\Services\RealtimeEventScheduler;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -59,6 +61,9 @@ class AppServiceProvider extends ServiceProvider
                 Log::error('Failed to queue welcome email', ['user_id' => $event->user->id, 'error' => $e->getMessage()]);
             }
         });
+
+        // Sync machine status when maintenance records are created/updated
+        MaintenanceRecord::observe(MaintenanceRecordObserver::class);
 
         // Feed notification listeners
         Event::listen(FeedPostCreated::class, SendFeedPostNotification::class);

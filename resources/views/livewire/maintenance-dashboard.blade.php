@@ -1,5 +1,5 @@
 <div>
-<div class="w-full">
+<div class="w-full" wire:poll.30s>
     <div class="p-6">
         <div class="mb-6 flex justify-between items-start">
             <div>
