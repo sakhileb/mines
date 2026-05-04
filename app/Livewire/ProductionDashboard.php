@@ -65,6 +65,17 @@ class ProductionDashboard extends Component
         $this->teamId = $this->team?->id ?? $this->teamId;
     }
 
+    public function updatedDateFilter(string $value): void
+    {
+        match ($value) {
+            'day'   => [$this->startDate, $this->endDate] = [Carbon::today()->format('Y-m-d'), Carbon::today()->format('Y-m-d')],
+            'week'  => [$this->startDate, $this->endDate] = [Carbon::today()->startOfWeek()->format('Y-m-d'), Carbon::today()->endOfWeek()->format('Y-m-d')],
+            'month' => [$this->startDate, $this->endDate] = [Carbon::today()->startOfMonth()->format('Y-m-d'), Carbon::today()->endOfMonth()->format('Y-m-d')],
+            'year'  => [$this->startDate, $this->endDate] = [Carbon::today()->startOfYear()->format('Y-m-d'), Carbon::today()->endOfYear()->format('Y-m-d')],
+            default => null,
+        };
+    }
+
     public function getProductionRecordsProperty()
     {
         $query = ProductionRecord::forTeam($this->teamId);
@@ -83,8 +94,8 @@ class ProductionDashboard extends Component
             $query->where('status', $this->statusFilter);
         }
 
-        if ($this->dateFilter) {
-            $query->where('record_date', $this->dateFilter);
+        if ($this->startDate && $this->endDate) {
+            $query->whereBetween('record_date', [$this->startDate, $this->endDate]);
         }
 
         return $query->orderByDesc('record_date')->paginate(15);
@@ -94,14 +105,15 @@ class ProductionDashboard extends Component
     {
         return $this->productionService->getProductionStatistics(
             $this->teamId,
-            Carbon::now()->subDays(30),
-            Carbon::now()
+            Carbon::parse($this->startDate),
+            Carbon::parse($this->endDate)
         );
     }
 
     public function getTrendProperty()
     {
-        return $this->productionService->getProductionTrend($this->teamId, 30);
+        $days = (int) Carbon::parse($this->startDate)->diffInDays(Carbon::parse($this->endDate)) + 1;
+        return $this->productionService->getProductionTrend($this->teamId, max($days, 1));
     }
 
     public function getTargetsProperty()
