@@ -16,12 +16,16 @@ use App\Models\FeedComment;
 use App\Models\FeedLike;
 use App\Models\FeedPost;
 use App\Models\MineArea;
+use App\Models\Machine;
+use App\Models\MachineMetric;
+use App\Models\ProductionRecord;
 use App\Models\ShiftTemplate;
 use App\Models\UserFeedPreference;
 use App\Services\MentionParser;
 use App\Traits\RealtimeUpdates;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -632,14 +636,84 @@ class Feed extends Component
         $this->resetPage();
     }
 
+    // ── Daily Production Statistics ───────────────────────────────────────────
+
+    public function getDailyProductionStats(): array
+    {
+        /** @var \App\Models\User $user */
+        $user   = Auth::user();
+        $teamId = (int) $user->current_team_id;
+        $today  = Carbon::today();
+
+        // Today's production records for this team
+        $records = ProductionRecord::where('team_id', $teamId)
+            ->where('record_date', $today)
+            ->with('machine:id,name,machine_type')
+            ->get();
+
+        $totalLoads    = $records->count();
+        $totalTonnage  = round((float) $records->sum('quantity_produced'), 2);
+        $totalTarget   = round((float) $records->sum('target_quantity'), 2);
+        $achievement   = $totalTarget > 0 ? round(($totalTonnage / $totalTarget) * 100, 1) : null;
+
+        // Sensor-based cycle count for today
+        $totalCycles = MachineMetric::where('team_id', $teamId)
+            ->whereBetween('recorded_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
+            ->where('load_weight', '>', 0)
+            ->count();
+
+        // Best performing trucks: top 5 machines by tonnage today
+        $bestTrucks = $records
+            ->whereNotNull('machine_id')
+            ->groupBy('machine_id')
+            ->map(function ($machineRecords) {
+                $machine = $machineRecords->first()->machine;
+                return [
+                    'name'    => $machine?->name ?? 'Unknown',
+                    'type'    => $machine?->machine_type ?? '',
+                    'tonnage' => round((float) $machineRecords->sum('quantity_produced'), 2),
+                    'loads'   => $machineRecords->count(),
+                ];
+            })
+            ->sortByDesc('tonnage')
+            ->take(5)
+            ->values()
+            ->toArray();
+
+        // Current shift detection
+        $hour = now()->hour;
+        $currentShift = match(true) {
+            $hour >= 6  && $hour < 18 => 'Day',
+            default                   => 'Night',
+        };
+
+        $shiftRecords  = $records->where('shift', strtolower($currentShift));
+        $shiftTonnage  = round((float) $shiftRecords->sum('quantity_produced'), 2);
+        $shiftLoads    = $shiftRecords->count();
+
+        return [
+            'total_loads'    => $totalLoads,
+            'total_cycles'   => $totalCycles,
+            'total_tonnage'  => $totalTonnage,
+            'total_target'   => $totalTarget,
+            'achievement'    => $achievement,
+            'best_trucks'    => $bestTrucks,
+            'current_shift'  => $currentShift,
+            'shift_tonnage'  => $shiftTonnage,
+            'shift_loads'    => $shiftLoads,
+            'as_of'          => now()->format('H:i'),
+        ];
+    }
+
     // ── Render ────────────────────────────────────────────────────────────────
 
     public function render()
     {
         return view('livewire.feed', [
-            'posts'     => $this->getPosts(),
-            'mineAreas' => $this->getMineAreas(),
-            'canApprove' => $this->canApprove(),
+            'posts'           => $this->getPosts(),
+            'mineAreas'       => $this->getMineAreas(),
+            'canApprove'      => $this->canApprove(),
+            'dailyStats'      => $this->getDailyProductionStats(),
         ]);
     }
 }

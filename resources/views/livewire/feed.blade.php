@@ -5,7 +5,11 @@
             // handled by parent notification component if present
         });
      ">
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
+
+        {{-- ── LEFT: main feed column ─────────────────────────────────── --}}
+        <div class="min-w-0">
 
         {{-- ── Header ──────────────────────────────────────────────────── --}}
         <div class="mb-6 flex items-center justify-between">
@@ -531,7 +535,131 @@
         <div class="mt-6">
             {{ $posts->links() }}
         </div>
-    </div>
+        </div>{{-- end left column --}}
+
+        {{-- ── RIGHT: Daily Production Stats card ───────────────────── --}}
+        <div class="xl:sticky xl:top-6 space-y-4">
+
+            {{-- Stats card --}}
+            <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+                {{-- Card header --}}
+                <div class="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                        <span class="text-white font-semibold text-sm">Daily Production</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        As of {{ $dailyStats['as_of'] }}
+                    </div>
+                </div>
+
+                {{-- Shift badge --}}
+                <div class="px-5 pt-4">
+                    <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
+                        {{ $dailyStats['current_shift'] === 'Day' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' }}">
+                        @if($dailyStats['current_shift'] === 'Day')
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14a6 6 0 110-12 6 6 0 010 12z" clip-rule="evenodd"/><path d="M10 4a1 1 0 011 1v1a1 1 0 11-2 0V5a1 1 0 011-1zM10 15a1 1 0 011 1v.5a1 1 0 11-2 0V16a1 1 0 011-1z"/></svg>
+                        @else
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+                        @endif
+                        {{ $dailyStats['current_shift'] }} Shift
+                    </span>
+                </div>
+
+                {{-- Main metrics grid --}}
+                <div class="p-5 grid grid-cols-2 gap-3">
+                    {{-- Loads --}}
+                    <div class="bg-slate-700/50 rounded-lg p-3">
+                        <p class="text-xs text-slate-400 mb-1">Loads</p>
+                        <p class="text-2xl font-bold text-white">{{ number_format($dailyStats['total_loads']) }}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">{{ $dailyStats['shift_loads'] }} this shift</p>
+                    </div>
+
+                    {{-- Cycles --}}
+                    <div class="bg-slate-700/50 rounded-lg p-3">
+                        <p class="text-xs text-slate-400 mb-1">Cycles</p>
+                        <p class="text-2xl font-bold text-white">{{ number_format($dailyStats['total_cycles']) }}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">sensor tracked</p>
+                    </div>
+
+                    {{-- Tonnage --}}
+                    <div class="bg-slate-700/50 rounded-lg p-3 col-span-2">
+                        <p class="text-xs text-slate-400 mb-1">Total Tonnage</p>
+                        <div class="flex items-end justify-between">
+                            <p class="text-2xl font-bold text-white">{{ number_format($dailyStats['total_tonnage'], 1) }}
+                                <span class="text-sm font-normal text-slate-400">t</span>
+                            </p>
+                            @if($dailyStats['total_target'] > 0)
+                                <span class="text-xs text-slate-400">target {{ number_format($dailyStats['total_target'], 0) }} t</span>
+                            @endif
+                        </div>
+                        @if($dailyStats['total_target'] > 0)
+                            <div class="mt-2 h-1.5 bg-slate-600 rounded-full overflow-hidden">
+                                <div class="h-1.5 rounded-full transition-all duration-700
+                                    {{ ($dailyStats['achievement'] ?? 0) >= 100 ? 'bg-emerald-500' : (($dailyStats['achievement'] ?? 0) >= 75 ? 'bg-amber-500' : 'bg-red-500') }}"
+                                    style="width: <?= min(100, (int) ($dailyStats['achievement'] ?? 0)) ?>%">
+                                </div>
+                            </div>
+                            <p class="text-xs mt-1
+                                {{ ($dailyStats['achievement'] ?? 0) >= 100 ? 'text-emerald-400' : (($dailyStats['achievement'] ?? 0) >= 75 ? 'text-amber-400' : 'text-red-400') }}">
+                                {{ $dailyStats['achievement'] }}% of target
+                            </p>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Shift tonnage --}}
+                @if($dailyStats['shift_tonnage'] > 0)
+                <div class="px-5 pb-3">
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                        <span>{{ $dailyStats['current_shift'] }} shift tonnage</span>
+                        <span class="font-medium text-slate-200">{{ number_format($dailyStats['shift_tonnage'], 1) }} t</span>
+                    </div>
+                </div>
+                @endif
+
+                {{-- Best performing trucks --}}
+                @if(count($dailyStats['best_trucks']) > 0)
+                <div class="border-t border-slate-700 px-5 py-4">
+                    <p class="text-xs font-semibold text-slate-300 uppercase tracking-wide mb-3">Top Trucks Today</p>
+                    <div class="space-y-2">
+                        @foreach($dailyStats['best_trucks'] as $i => $truck)
+                        <div class="flex items-center gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center
+                                {{ $i === 0 ? 'bg-amber-500 text-slate-900' : ($i === 1 ? 'bg-slate-400 text-slate-900' : ($i === 2 ? 'bg-amber-700 text-white' : 'bg-slate-700 text-slate-300')) }}">
+                                {{ $i + 1 }}
+                            </span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-white truncate">{{ $truck['name'] }}</p>
+                                <p class="text-xs text-slate-500">{{ $truck['loads'] }} loads</p>
+                            </div>
+                            <span class="flex-shrink-0 text-xs font-semibold
+                                {{ $i === 0 ? 'text-amber-400' : 'text-slate-300' }}">
+                                {{ number_format($truck['tonnage'], 1) }} t
+                            </span>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                {{-- Footer link --}}
+                <div class="border-t border-slate-700 px-5 py-3">
+                    <a href="{{ route('production') }}" class="flex items-center justify-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium">
+                        View full production dashboard
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+        </div>{{-- end right column --}}
+        </div>{{-- end grid --}}
+    </div>{{-- end max-w-7xl --}}
 
     {{-- ═══════════════════════════════════════════════════════════════════════
          Compose Modal
