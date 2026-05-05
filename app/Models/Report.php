@@ -96,6 +96,18 @@ class Report extends Model
     }
 
     /**
+     * Mark report as processing
+     */
+    public function markProcessing()
+    {
+        $this->update([
+            'status' => 'processing',
+        ]);
+
+        return $this;
+    }
+
+    /**
      * Mark report as completed
      */
     public function markCompleted($filePath, $fileSize = null)
@@ -127,8 +139,15 @@ class Report extends Model
     /**
      * Mark report as failed
      */
-    public function markFailed()
+    public function markFailed(?string $reason = null)
     {
+        if ($reason) {
+            Log::warning('Report generation failed', [
+                'report_id' => $this->id,
+                'reason' => $reason,
+            ]);
+        }
+
         return $this->update([
             'status' => 'failed',
         ]);

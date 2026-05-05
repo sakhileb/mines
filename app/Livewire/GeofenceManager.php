@@ -38,7 +38,7 @@ class GeofenceManager extends Component
 
     public function mount(): void
     {
-        $this->teamId = Auth::user()->currentTeam->id ?? null;
+        $this->teamId = Auth::user()->currentTeam?->id;
     }
 
     public function toggleSort(string $column): void
@@ -66,7 +66,7 @@ class GeofenceManager extends Component
     public function resetForm(): void
     {
         $this->editingGeofenceId = null;
-        $this->teamId = Auth::user()->currentTeam->id ?? null;
+        $this->teamId = Auth::user()->currentTeam?->id;
         $this->mineAreaId = null;
         $this->name = '';
         $this->description = '';
@@ -79,7 +79,7 @@ class GeofenceManager extends Component
     public function editGeofence(Geofence $geofence): void
     {
         $this->editingGeofenceId = $geofence->id;
-        $this->teamId = auth()->user()->current_team_id;
+        $this->teamId = Auth::user()->current_team_id;
         $this->mineAreaId = $geofence->mine_area_id;
         $this->name = $geofence->name;
         $this->description = $geofence->description ?? '';

@@ -30,10 +30,13 @@ class ReportDownloadController
             abort(404);
         }
 
-        if (! Storage::exists($report->file_path)) {
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk(config('reports.disk', 'local'));
+
+        if (! $disk->exists($report->file_path)) {
             abort(404);
         }
 
-        return Storage::download($report->file_path, $report->title . '.' . $report->format);
+        return $disk->download($report->file_path, $report->title . '.' . $report->format);
     }
 }

@@ -69,6 +69,28 @@
 
 **Mines** is a modern, production-ready fleet management platform built specifically for mining operations. It combines real-time GPS tracking, AI-powered optimization, structured operational communications, and deep OEM integrations into a single unified platform — replacing fragmented tools like WhatsApp groups and disconnected spreadsheets.
 
+## 🆕 Latest Updates (May 2026)
+
+### Report Generation Reliability
+
+- Fixed report lifecycle handling so status transitions are explicit: `pending` → `processing` → `completed` / `failed`
+- Added automatic report-list refresh while generation is in progress
+- Added retry action for failed report generation from the reports UI
+- Unified report queue dispatch through shared support utilities
+- Normalized API filter payload handling for array and JSON input formats
+
+### Export Integrity
+
+- Added true XLSX generation support (Excel-compatible binary output)
+- Preserved and validated PDF and CSV export flows
+- Standardized report storage disk configuration across generation and download paths
+
+### Report UI Improvements
+
+- Fixed Generate Report selection controls (`Select All` / `Clear All`) for machines and geofences
+- Improved loading behavior and button state handling during report generation
+- Added focused feature coverage for report exports, API generation, and component interactions
+
 ### Key Capabilities at a Glance
 
 | Capability | Description |

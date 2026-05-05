@@ -131,7 +131,7 @@
                                 <span class="text-white font-medium">{{ $area->name }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-slate-400 text-sm">{{ $area->machines_count }}</td>
+                        <td class="px-6 py-4 text-slate-400 text-sm">{{ $area->machines_count ?? 0 }}</td>
                         <td class="px-6 py-4">
                             @if($area->is_active)
                                 <span class="px-2 py-0.5 bg-green-900 text-green-300 rounded text-xs font-medium">Active</span>

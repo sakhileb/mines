@@ -1,5 +1,4 @@
 <x-app-layout>
-@php use Illuminate\Support\Facades\URL; @endphp
     <div class="space-y-6">
         <div class="flex items-center justify-between">
             <div>

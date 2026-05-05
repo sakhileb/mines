@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Jobs\GenerateReportJob;
 use App\Models\Report;
+use App\Support\Reports\ReportGeneration;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,7 @@ class ReportController extends Controller
         $validated = $request->validate([
             'page' => 'nullable|integer|min:1',
             'per_page' => 'nullable|integer|min:1|max:100',
-            'status' => 'nullable|string|in:pending,completed,failed',
+            'status' => 'nullable|string|in:pending,processing,completed,failed',
             'type' => 'nullable|string',
         ]);
 
@@ -63,6 +64,8 @@ class ReportController extends Controller
      */
     public function show(Report $report)
     {
+        $this->authorize('view', $report);
+
         return response()->json([
             'data' => $report->load('generatedBy'),
         ]);
@@ -79,24 +82,27 @@ class ReportController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|string|in:truck_sensors,tire_condition,load_cycle,fuel,engine_parts,maintenance,custom',
+            'type' => 'required|string|in:' . implode(',', ReportGeneration::supportedTypes()),
             'format' => 'nullable|string|in:pdf,csv,xlsx',
-            'filters' => 'nullable|json',
+            'filters' => 'nullable',
         ]);
+
+        $filters = ReportGeneration::normalizeFilters($request->input('filters'));
 
         $validated['team_id'] = Auth::user()->current_team_id;
         $validated['status'] = 'pending';
         $validated['generated_by'] = Auth::id();
         $validated['format'] = $request->input('format', 'pdf');
+        $validated['filters'] = $filters;
 
         $report = Report::create($validated);
 
-        GenerateReportJob::dispatch($report);
+        ReportGeneration::dispatch($report);
 
         return response()->json([
             'data' => $report,
             'message' => 'Report generation started',
-        ], Response::HTTP_CREATED);
+        ], Response::HTTP_ACCEPTED);
     }
 
     /**
@@ -115,7 +121,7 @@ class ReportController extends Controller
         }
 
         // Use Storage APIs where possible. Normalize and validate the stored path.
-        $disk = config('filesystems.default');
+        $disk = config('reports.disk', 'local');
         $relative = ltrim($report->file_path ?? '', '/');
 
         // Disallow traversal and require a safe prefix
@@ -161,7 +167,7 @@ class ReportController extends Controller
 
         // Delete file if exists
         if ($report->file_path) {
-            $disk = config('filesystems.default');
+            $disk = config('reports.disk', 'local');
             $relative = ltrim($report->file_path, '/');
             if (! (strpos($relative, '..') !== false) && str_starts_with($relative, 'reports/') && Storage::disk($disk)->exists($relative)) {
                 Storage::disk($disk)->delete($relative);

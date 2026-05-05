@@ -124,21 +124,27 @@
                         <div class="space-y-3 mb-4">
                             <div class="flex gap-2">
                                 <button 
+                                    type="button"
                                     wire:click="selectAllMachines"
+                                    wire:loading.attr="disabled"
+                                    wire:target="selectAllMachines"
                                     class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded transition"
                                 >
                                     Select All
                                 </button>
                                 <button 
+                                    type="button"
                                     wire:click="clearMachines"
+                                    wire:loading.attr="disabled"
+                                    wire:target="clearMachines"
                                     class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded transition"
                                 >
-                                    Clear
+                                    Clear All
                                 </button>
                             </div>
                             <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
                                 @foreach($machines as $machine)
-                                    <label class="flex items-center gap-2 p-2 rounded hover:bg-slate-700/50 cursor-pointer">
+                                    <label wire:key="machine-checkbox-{{ $machine->id }}" class="flex items-center gap-2 p-2 rounded hover:bg-slate-700/50 cursor-pointer">
                                         <input 
                                             type="checkbox" 
                                             wire:model="selectedMachines" 
@@ -148,6 +154,47 @@
                                         <span class="text-sm text-slate-300">{{ $machine->name }}</span>
                                     </label>
                                 @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-4">Select Geofences (Optional)</label>
+                        <div class="space-y-3 mb-4">
+                            <div class="flex gap-2">
+                                <button 
+                                    type="button"
+                                    wire:click="selectAllGeofences"
+                                    wire:loading.attr="disabled"
+                                    wire:target="selectAllGeofences"
+                                    class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded transition"
+                                >
+                                    Select All
+                                </button>
+                                <button 
+                                    type="button"
+                                    wire:click="clearGeofences"
+                                    wire:loading.attr="disabled"
+                                    wire:target="clearGeofences"
+                                    class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded transition"
+                                >
+                                    Clear All
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
+                                @forelse($geofences as $geofence)
+                                    <label wire:key="geofence-checkbox-{{ $geofence->id }}" class="flex items-center gap-2 p-2 rounded hover:bg-slate-700/50 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            wire:model="selectedGeofences" 
+                                            value="{{ $geofence->id }}"
+                                            class="rounded bg-slate-600 border-slate-500"
+                                        >
+                                        <span class="text-sm text-slate-300">{{ $geofence->name ?? ('Geofence #' . $geofence->id) }}</span>
+                                    </label>
+                                @empty
+                                    <p class="text-sm text-slate-400">No geofences available for your current team.</p>
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -260,7 +307,8 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        <span class="ml-1">Generate Report</span>
+                        <span class="ml-1" wire:loading.remove wire:target="generateReport">Generate Report</span>
+                        <span class="ml-1" wire:loading wire:target="generateReport">Starting...</span>
                     </button>
                 @endif
             </div>

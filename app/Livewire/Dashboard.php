@@ -30,6 +30,11 @@ class Dashboard extends Component
         $this->isLoading = true;
         $team = Auth::user()->currentTeam;
 
+        if ($team === null) {
+            $this->isLoading = false;
+            return;
+        }
+
         // Use cache service for dashboard statistics
         $stats = QueryCacheService::dashboardStats($team->id, function () use ($team) {
             return [
@@ -101,6 +106,9 @@ class Dashboard extends Component
     public function acknowledgeAlert(int $alertId): void
     {
         $team = Auth::user()->currentTeam;
+        if ($team === null) {
+            return;
+        }
         $alert = Alert::where('team_id', $team->id)->findOrFail($alertId);
 
         $alert->update([

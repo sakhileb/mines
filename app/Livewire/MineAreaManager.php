@@ -7,6 +7,7 @@ use App\Services\MineAreaService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class MineAreaManager extends Component
 {
@@ -282,14 +283,28 @@ class MineAreaManager extends Component
     {
         $team = Auth::user()->currentTeam;
 
-        $query = MineArea::forTeam($team->id)
-            ->withCount(['machines', 'geofences', 'alerts' => function ($q) {
+        $query = MineArea::forTeam($team->id);
+        
+        // Build count relations conditionally based on schema
+        $countRelations = [
+            'geofences',
+            'alerts' => function ($q) {
                 $q->where('status', 'active');
-            }, 'productionRecords' => function ($q) {
+            },
+            'productionRecords' => function ($q) {
                 $q->where('record_date', today());
-            }, 'minePlanUploads' => function ($q) {
+            },
+            'minePlanUploads' => function ($q) {
                 $q->where('status', 'active');
-            }]);
+            },
+        ];
+        
+        // Only count machines if the mine_area_id column exists in machines table
+        if (Schema::hasColumn('machines', 'mine_area_id')) {
+            $countRelations = array_merge(['machines'], $countRelations);
+        }
+        
+        $query->withCount($countRelations);
 
         if ($this->search) {
             $query->where(function ($q) {

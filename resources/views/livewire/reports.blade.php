@@ -36,6 +36,12 @@
 
         <!-- Actions Bar -->
         <div class="bg-slate-800 rounded-lg p-6 mb-6 border border-slate-700">
+            @if (session()->has('message'))
+                <div class="mb-4 rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-sm text-blue-200">
+                    {{ session('message') }}
+                </div>
+            @endif
+
             <div class="flex items-center justify-between gap-4 mb-4">
                 @php
                     $generateRoute = Route::has('report-generator') ? route('report-generator') : (Route::has('reports.generate') ? route('reports.generate') : '#');
@@ -98,27 +104,38 @@
                     <label class="block text-sm text-slate-400 mb-2">Status</label>
                     <select wire:model.live="selectedStatus" class="w-full bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none">
                         <option value="all">All Statuses</option>
+                        <option value="processing">Processing</option>
                         <option value="completed">Completed</option>
                         <option value="pending">Pending</option>
-                        <option value="scheduled">Scheduled</option>
+                        <option value="failed">Failed</option>
                     </select>
                 </div>
             </div>
 
             <div class="mt-4 flex items-center gap-2">
                 <span class="text-sm text-slate-400">Sort by:</span>
-                @foreach(['name' => 'Name', 'created_at' => 'Date', 'type' => 'Type'] as $col => $colLabel)
+                @foreach(['title' => 'Name', 'created_at' => 'Date', 'type' => 'Type'] as $col => $colLabel)
                 <button wire:click="setSortBy('{{ $col }}')"
                     class="px-3 py-1 rounded-lg text-sm {{ $sortBy === $col ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600' }}">
                     {{ $colLabel }}
                 </button>
                 @endforeach
             </div>
+
+            @if($hasInFlightReports)
+                <div class="mt-4 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                    <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    <span>Report generation is in progress. This list refreshes automatically.</span>
+                </div>
+            @endif
         </div>
 
         <!-- Reports Table -->
         @if($reports->count() > 0)
-        <div class="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+        <div class="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden" @if($hasInFlightReports) wire:poll.5s="refreshReports" @endif>
             <table class="w-full">
                 <thead class="bg-slate-700/50 border-b border-slate-700">
                     <tr>
@@ -147,6 +164,8 @@
                         <td class="px-6 py-4">
                             @if($report->status === 'completed')
                                 <span class="px-3 py-1 bg-green-900 text-green-300 rounded-lg text-sm font-medium">Completed</span>
+                            @elseif($report->status === 'processing')
+                                <span class="px-3 py-1 bg-blue-900 text-blue-300 rounded-lg text-sm font-medium">Processing</span>
                             @elseif($report->status === 'pending')
                                 <span class="px-3 py-1 bg-yellow-900 text-yellow-300 rounded-lg text-sm font-medium">Pending</span>
                             @elseif($report->status === 'failed')
@@ -163,12 +182,21 @@
                         <td class="px-6 py-4 text-sm text-slate-400">{{ $report->created_at->format('M d, Y H:i') }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
-                                @if($report->file_path)
+                                @if($report->status === 'completed' && $report->file_path)
                                 <button wire:click="downloadReport({{ $report->id }})"
                                     class="text-blue-400 hover:text-blue-300 text-sm font-medium transition"
                                     wire:loading.attr="disabled" wire:target="downloadReport({{ $report->id }})">
                                     <span wire:loading.remove wire:target="downloadReport({{ $report->id }})">Download</span>
                                     <span wire:loading wire:target="downloadReport({{ $report->id }})">…</span>
+                                </button>
+                                @elseif(in_array($report->status, ['pending', 'processing'], true))
+                                <span class="text-amber-300 text-sm">Preparing…</span>
+                                @elseif($report->status === 'failed')
+                                <button wire:click="retryReport({{ $report->id }})"
+                                    class="text-amber-300 hover:text-amber-200 text-sm font-medium transition"
+                                    wire:loading.attr="disabled" wire:target="retryReport({{ $report->id }})">
+                                    <span wire:loading.remove wire:target="retryReport({{ $report->id }})">Retry</span>
+                                    <span wire:loading wire:target="retryReport({{ $report->id }})">…</span>
                                 </button>
                                 @endif
                                 <a href="{{ route('reports.show', $report->id) }}"

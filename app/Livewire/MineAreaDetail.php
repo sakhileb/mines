@@ -14,6 +14,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -142,8 +143,10 @@ class MineAreaDetail extends Component
         $team = Auth::user()->currentTeam;
         $machine = Machine::where('team_id', $team->id)->findOrFail($this->selectedMachineId);
 
-        // Update machine's mine_area_id
-        $machine->update(['mine_area_id' => $this->mineArea->id]);
+        // Update machine's mine_area_id if column exists
+        if (Schema::hasColumn('machines', 'mine_area_id')) {
+            $machine->update(['mine_area_id' => $this->mineArea->id]);
+        }
 
         // Record assignment history
         MachineAreaAssignment::create([
@@ -177,7 +180,9 @@ class MineAreaDetail extends Component
             ->first();
 
         if ($otherArea) {
-            $machine->update(['mine_area_id' => $otherArea->id]);
+            if (Schema::hasColumn('machines', 'mine_area_id')) {
+                $machine->update(['mine_area_id' => $otherArea->id]);
+            }
             $this->dispatchBrowserEvent('notify', ['message' => "{$machine->name} reassigned to {$otherArea->name} (cannot leave unassigned)", 'type' => 'success']);
         } else {
             // No other active area exists — do not allow unassigning to null to preserve invariant
@@ -481,23 +486,34 @@ class MineAreaDetail extends Component
     {
         $team = Auth::user()->currentTeam;
 
-        // Refresh mine area with counts
-        $this->mineArea->loadCount(['machines', 'geofences', 'minePlanUploads', 'productionRecords']);
+        // Refresh mine area with counts (guard columns that may not exist in all envs)
+        $countRelations = ['geofences', 'minePlanUploads', 'productionRecords'];
+        if (Schema::hasColumn('machines', 'mine_area_id')) {
+            $countRelations[] = 'machines';
+        }
+        $this->mineArea->loadCount($countRelations);
 
         // Assigned machines
-        $assignedMachines = Machine::where('team_id', $team->id)
-            ->where('mine_area_id', $this->mineArea->id)
-            ->orderBy('name')
-            ->get();
+        $hasMineAreaId = Schema::hasColumn('machines', 'mine_area_id');
+        if ($hasMineAreaId) {
+            $assignedMachines = Machine::where('team_id', $team->id)
+                ->where('mine_area_id', $this->mineArea->id)
+                ->orderBy('name')
+                ->get();
 
-        // Available machines (not assigned to this area)
-        $availableMachines = Machine::where('team_id', $team->id)
-            ->where(function ($q) {
-                $q->whereNull('mine_area_id')
-                    ->orWhere('mine_area_id', '!=', $this->mineArea->id);
-            })
-            ->orderBy('name')
-            ->get();
+            // Available machines (not assigned to this area)
+            $availableMachines = Machine::where('team_id', $team->id)
+                ->where(function ($q) {
+                    $q->whereNull('mine_area_id')
+                        ->orWhere('mine_area_id', '!=', $this->mineArea->id);
+                })
+                ->orderBy('name')
+                ->get();
+        } else {
+            // Column missing – show all team machines as available, none as assigned
+            $assignedMachines = collect();
+            $availableMachines = Machine::where('team_id', $team->id)->orderBy('name')->get();
+        }
 
         // Assignment history
         $assignmentHistory = MachineAreaAssignment::where('mine_area_id', $this->mineArea->id)

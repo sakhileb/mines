@@ -21,6 +21,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Shuchkin\SimpleXLSXGen;
 
 class GenerateReportJob implements ShouldQueue
 {
@@ -43,6 +44,12 @@ class GenerateReportJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $this->report->refresh();
+
+            if ($this->report->status !== 'processing') {
+                $this->report->markProcessing();
+            }
+
             $format = $this->report->format ?? 'csv';
             $type   = $this->report->type;
 
@@ -50,11 +57,11 @@ class GenerateReportJob implements ShouldQueue
 
             $filePath = match ($format) {
                 'pdf'  => $this->generatePdf($data, $type),
-                'xlsx' => $this->generateCsv($data, $type, 'xlsx'), // xlsx exported as CSV; no xlsx library
+                'xlsx' => $this->generateXlsx($data, $type),
                 default => $this->generateCsv($data, $type, 'csv'),
             };
 
-            $fullPath  = Storage::disk('local')->path($filePath);
+            $fullPath  = Storage::disk($this->reportDisk())->path($filePath);
             $fileSize  = file_exists($fullPath) ? filesize($fullPath) : 0;
 
             $this->report->markCompleted($filePath, $fileSize);
@@ -74,9 +81,18 @@ class GenerateReportJob implements ShouldQueue
                 'trace'     => $e->getTraceAsString(),
             ]);
 
-            $this->report->markFailed();
+            $this->report->markFailed($e->getMessage());
 
             throw $e;
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        $this->report->refresh();
+
+        if ($this->report->status !== 'failed') {
+            $this->report->markFailed($exception->getMessage());
         }
     }
 
@@ -414,10 +430,10 @@ class GenerateReportJob implements ShouldQueue
     private function generateCsv(array $data, string $type, string $extension = 'csv'): string
     {
         $dir = "reports/{$this->report->team_id}";
-        Storage::disk('local')->makeDirectory($dir);
+        Storage::disk($this->reportDisk())->makeDirectory($dir);
 
         $filename = "{$dir}/{$this->report->id}_{$type}_{$this->report->created_at->format('Ymd_His')}.{$extension}";
-        $fullPath = Storage::disk('local')->path($filename);
+        $fullPath = Storage::disk($this->reportDisk())->path($filename);
 
         $handle = fopen($fullPath, 'w');
 
@@ -452,7 +468,7 @@ class GenerateReportJob implements ShouldQueue
     private function generatePdf(array $data, string $type): string
     {
         $dir = "reports/{$this->report->team_id}";
-        Storage::disk('local')->makeDirectory($dir);
+        Storage::disk($this->reportDisk())->makeDirectory($dir);
 
         $filename = "{$dir}/{$this->report->id}_{$type}_{$this->report->created_at->format('Ymd_His')}.pdf";
 
@@ -466,9 +482,50 @@ class GenerateReportJob implements ShouldQueue
                 'defaultFont'          => 'sans-serif',
             ]);
 
-        Storage::disk('local')->put($filename, $pdf->output());
+        Storage::disk($this->reportDisk())->put($filename, $pdf->output());
 
         return $filename;
+    }
+
+    private function generateXlsx(array $data, string $type): string
+    {
+        $dir = "reports/{$this->report->team_id}";
+        Storage::disk($this->reportDisk())->makeDirectory($dir);
+
+        $filename = "{$dir}/{$this->report->id}_{$type}_{$this->report->created_at->format('Ymd_His')}.xlsx";
+        $fullPath = Storage::disk($this->reportDisk())->path($filename);
+
+        SimpleXLSXGen::fromArray($this->xlsxRows($data, $type))
+            ->setTitle($this->report->title)
+            ->setCompany('Mines')
+            ->saveAs($fullPath);
+
+        return $filename;
+    }
+
+    private function xlsxRows(array $data, string $type): array
+    {
+        $rows = [
+            ["Report: {$this->report->title}"],
+            ['Generated: ' . now()->toDateTimeString()],
+            ["Type: {$type}"],
+            [],
+            $data['headers'],
+        ];
+
+        foreach ($data['rows'] as $row) {
+            $rows[] = array_map(fn ($value) => $value ?? '', $row);
+        }
+
+        $rows[] = [];
+        $rows[] = ['Total Records', count($data['rows'])];
+
+        return $rows;
+    }
+
+    private function reportDisk(): string
+    {
+        return (string) config('reports.disk', 'local');
     }
 
     private function buildReportHtml(array $data, string $type): string

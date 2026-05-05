@@ -128,15 +128,22 @@ class RolePermissionSeeder extends Seeder
                 ]);
             }
 
-            // Create roles for this team
+            // Create roles for this team.
+            // NOTE: roles.name is globally unique in current schema, so a role name
+            // can only be owned by one team.
             foreach ($roles as $roleKey => $roleData) {
                 $role = Role::firstOrCreate([
-                    'team_id' => $team->id,
                     'name' => $roleKey,
                 ], [
+                    'team_id' => $team->id,
                     'display_name' => $roleData['display_name'],
                     'description' => $roleData['description'],
                 ]);
+
+                // If this role name already belongs to another team, skip safely.
+                if ((int) $role->team_id !== (int) $team->id) {
+                    continue;
+                }
 
                 // Attach permissions to role
                 $permissionIds = Permission::where('team_id', $team->id)
@@ -147,7 +154,7 @@ class RolePermissionSeeder extends Seeder
                 $role->permissions()->sync($permissionIds);
             }
 
-            $this->command->info("Roles and permissions created for team: {$team->name}");
+            $this->command->info("Roles and permissions processed for team: {$team->name}");
         }
     }
 }

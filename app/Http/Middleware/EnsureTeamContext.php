@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -23,7 +24,8 @@ class EnsureTeamContext
     public function handle(Request $request, Closure $next): Response
     {
         // Get authenticated user
-        $user = auth()->user();
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
 
         if (!$user) {
             return $next($request);
@@ -37,6 +39,8 @@ class EnsureTeamContext
             $teamId = $user->teams()->first()?->id;
             if ($teamId) {
                 $user->update(['current_team_id' => $teamId]);
+                // Refresh the in-memory model so Auth::user()->currentTeam works downstream
+                Auth::setUser($user->refresh());
             }
         }
 

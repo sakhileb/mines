@@ -94,7 +94,7 @@ class Feed extends Component
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $this->composeShift = $this->detectCurrentShift();
-        $this->composeMineAreaId = $user->currentTeam->mineAreas()->first()?->id;
+        $this->composeMineAreaId = $user->currentTeam?->mineAreas()->first()?->id;
 
         // ── Onboarding: show if the user hasn't seen it yet for this team ─────
         $pref = UserFeedPreference::firstOrCreate(
@@ -507,7 +507,7 @@ class Feed extends Component
         $this->composeCategory   = '';
         $this->composeBody       = '';
         $this->composeShift      = $this->detectCurrentShift();
-        $this->composeMineAreaId = Auth::user()->currentTeam->mineAreas()->first()?->id;
+        $this->composeMineAreaId = Auth::user()->currentTeam?->mineAreas()->first()?->id;
         $this->composePriority   = 'normal';
         $this->composeMeta       = [];
         $this->composeAttachments = [];

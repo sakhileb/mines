@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Jobs\GenerateReportJob;
 use App\Models\Report;
 use App\Models\Machine;
+use App\Support\Reports\ReportGeneration;
 use Livewire\Component;
 use App\Traits\BrowserEventBridge;
 use Illuminate\Support\Facades\Auth;
@@ -180,7 +181,7 @@ class ReportGenerator extends Component
                 'filters' => $filters,
             ]);
             
-            GenerateReportJob::dispatch($report);
+            ReportGeneration::dispatch($report);
 
             Log::info('User generated report', [
                 'user_id' => $user->id,
@@ -206,13 +207,28 @@ class ReportGenerator extends Component
 
     public function selectAllMachines()
     {
-        $machines = $this->getMachines();
-        $this->selectedMachines = $machines->pluck('id')->toArray();
+        $this->selectedMachines = $this->getMachines()
+            ->pluck('id')
+            ->values()
+            ->all();
     }
 
     public function clearMachines()
     {
         $this->selectedMachines = [];
+    }
+
+    public function selectAllGeofences()
+    {
+        $this->selectedGeofences = $this->getGeofences()
+            ->pluck('id')
+            ->values()
+            ->all();
+    }
+
+    public function clearGeofences()
+    {
+        $this->selectedGeofences = [];
     }
 
     public function toggleMachine($machineId)

@@ -13,15 +13,17 @@ use App\Models\MachineMetric;
 use App\Models\MaintenanceRecord;
 use App\Models\MaintenanceSchedule;
 use App\Models\MineArea;
-use App\Models\MineAreaProduction;
+use App\Models\ProductionRecord;
 use App\Models\Route;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Waypoint;
+use App\Models\Role;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class ComprehensiveDataSeeder extends Seeder
 {
@@ -110,69 +112,76 @@ class ComprehensiveDataSeeder extends Seeder
                 'areas' => count($this->mineAreas),
             ];
         }
+
+        // Ensure roles/permissions exist, then assign role mix per team.
+        // This gives seeded users realistic access boundaries for live testing.
+        $this->call([RolePermissionSeeder::class]);
+        $this->assignRolesToTeamUsers();
         
         $this->command->info('');
         $this->command->info('✅ Multi-team data seeding completed successfully!');
         $this->printSummary();
     }
+
+    private function assignRolesToTeamUsers(): void
+    {
+        $this->command->info('Assigning team roles to seeded users...');
+
+        foreach ($this->allTeams as $teamData) {
+            /** @var Team $team */
+            $team = $teamData['team'];
+
+            $teamRoleIds = Role::where('team_id', $team->id)->pluck('id');
+            if ($teamRoleIds->isEmpty()) {
+                continue;
+            }
+
+            /** @var \Illuminate\Database\Eloquent\Collection<int, User> $users */
+            $users = $team->users()->orderBy('users.id')->get();
+            if ($users->isEmpty()) {
+                continue;
+            }
+
+            // First users get broad coverage; remaining users are viewers.
+            $roleSequence = ['admin', 'fleet_manager', 'operator', 'viewer'];
+
+            foreach ($users as $index => $user) {
+                $targetRole = $roleSequence[min($index, count($roleSequence) - 1)];
+
+                // Role checks use current_team_id, so align user context first.
+                if ($user->current_team_id !== $team->id) {
+                    $user->update(['current_team_id' => $team->id]);
+                }
+
+                // Remove existing roles for this team only, then assign one role.
+                $user->roles()->detach($teamRoleIds);
+                $user->assignRole($targetRole);
+            }
+        }
+
+        $this->command->info('✓ Roles assigned for seeded team users');
+    }
     
     private function getTeamConfigurations(): array
     {
+        // Roles are globally unique in this schema, so we seed one rich demo team
+        // with diverse users and equipment for full-platform testing.
         return [
             [
-                'name' => 'Platinum Mining Corporation',
-                'domain' => 'platinummine.com',
-                'base_lat' => -26.19,
-                'base_lon' => 28.05,
+                'name' => 'Mines Demo Operations',
+                'domain' => 'demo.mines.infodot.co.za',
+                'base_lat' => -25.8906,
+                'base_lon' => 28.2341,
                 'users' => [
-                    ['name' => 'John Anderson', 'email' => 'john@platinummine.com'],
-                    ['name' => 'Sarah Williams', 'email' => 'sarah@platinummine.com'],
-                    ['name' => 'Michael Chen', 'email' => 'michael@platinummine.com'],
-                    ['name' => 'Emma Davis', 'email' => 'emma@platinummine.com'],
-                ],
-                'areas' => 5,
-                'machines' => ['excavators' => 4, 'haulers' => 8, 'dozers' => 2, 'graders' => 2, 'support' => 2],
-            ],
-            [
-                'name' => 'Gold Fields Mining Ltd',
-                'domain' => 'goldfields.co.za',
-                'base_lat' => -26.55,
-                'base_lon' => 27.85,
-                'users' => [
-                    ['name' => 'David Thompson', 'email' => 'david@goldfields.co.za'],
-                    ['name' => 'Lisa Martinez', 'email' => 'lisa@goldfields.co.za'],
-                    ['name' => 'James Brown', 'email' => 'james@goldfields.co.za'],
-                ],
-                'areas' => 4,
-                'machines' => ['excavators' => 3, 'haulers' => 6, 'dozers' => 2, 'graders' => 1, 'support' => 1],
-            ],
-            [
-                'name' => 'Diamond Extraction Co',
-                'domain' => 'diamondco.co.za',
-                'base_lat' => -28.75,
-                'base_lon' => 24.75,
-                'users' => [
-                    ['name' => 'Robert Wilson', 'email' => 'robert@diamondco.co.za'],
-                    ['name' => 'Jennifer Taylor', 'email' => 'jennifer@diamondco.co.za'],
-                    ['name' => 'Thomas Moore', 'email' => 'thomas@diamondco.co.za'],
-                    ['name' => 'Patricia Johnson', 'email' => 'patricia@diamondco.co.za'],
-                    ['name' => 'Daniel White', 'email' => 'daniel@diamondco.co.za'],
+                    ['name' => 'Admin User', 'email' => 'admin@mines.infodot.co.za'],
+                    ['name' => 'Fleet Manager', 'email' => 'manager@mines.infodot.co.za'],
+                    ['name' => 'Shift Supervisor', 'email' => 'supervisor@mines.infodot.co.za'],
+                    ['name' => 'Field Operator', 'email' => 'operator@mines.infodot.co.za'],
+                    ['name' => 'Safety Officer', 'email' => 'safety@mines.infodot.co.za'],
+                    ['name' => 'Viewer User', 'email' => 'viewer@mines.infodot.co.za'],
                 ],
                 'areas' => 6,
-                'machines' => ['excavators' => 5, 'haulers' => 10, 'dozers' => 3, 'graders' => 2, 'support' => 2],
-            ],
-            [
-                'name' => 'Coal Mining Solutions',
-                'domain' => 'coalmining.co.za',
-                'base_lat' => -25.85,
-                'base_lon' => 29.15,
-                'users' => [
-                    ['name' => 'Mark Anderson', 'email' => 'mark@coalmining.co.za'],
-                    ['name' => 'Linda Garcia', 'email' => 'linda@coalmining.co.za'],
-                    ['name' => 'Kevin Martinez', 'email' => 'kevin@coalmining.co.za'],
-                ],
-                'areas' => 3,
-                'machines' => ['excavators' => 2, 'haulers' => 5, 'dozers' => 1, 'graders' => 1, 'support' => 1],
+                'machines' => ['excavators' => 5, 'haulers' => 12, 'dozers' => 3, 'graders' => 2, 'support' => 3],
             ],
         ];
     }
@@ -255,27 +264,35 @@ class ComprehensiveDataSeeder extends Seeder
             $centerLat = $baseLat + $latOffset;
             $centerLon = $baseLon + $lonOffset;
             
-            $areaData = [
-                'team_id' => $this->team->id,
-                'name' => $template['name'] . $number,
-                'description' => ucfirst($template['type']) . ' area for ' . ($template['material'] ?? 'operations'),
-                'type' => $template['type'],
-                'status' => 'active',
-                'center_latitude' => $centerLat,
-                'center_longitude' => $centerLon,
-                'coordinates' => $this->generatePolygonCoordinates($centerLat, $centerLon, 0.0008),
-                'area_sqm' => rand(5000, 15000),
+            $areaSqm = rand(5000, 15000);
+            $areaMetadata = [
+                'area_type' => $template['type'],
+                'material_types' => $template['type'] === 'pit' ? [$template['material']] : null,
             ];
-            
+
             if ($template['type'] === 'pit') {
-                $areaData['material_types'] = [$template['material']];
-                $areaData['mining_targets'] = [
+                $areaMetadata['mining_targets'] = [
                     'daily' => rand(3000, 6000),
                     'weekly' => rand(20000, 40000),
                     'monthly' => rand(100000, 180000),
                     'yearly' => rand(1200000, 2000000),
                 ];
             }
+
+            $areaData = [
+                'team_id' => $this->team->id,
+                'name' => $template['name'] . $number,
+                'description' => ucfirst($template['type']) . ' area for ' . ($template['material'] ?? 'operations'),
+                'status' => 'active',
+                'location' => $this->team->name,
+                'center_latitude' => $centerLat,
+                'center_longitude' => $centerLon,
+                'latitude' => $centerLat,
+                'longitude' => $centerLon,
+                'coordinates' => json_encode($this->generatePolygonCoordinates($centerLat, $centerLon, 0.0008)),
+                'area_size_hectares' => round($areaSqm / 10000, 2),
+                'metadata' => $areaMetadata,
+            ];
             
             $area = MineArea::create($areaData);
             $this->mineAreas[] = $area;
@@ -453,36 +470,45 @@ class ComprehensiveDataSeeder extends Seeder
     private function assignMachines(): void
     {
         $this->command->info('Assigning machines to mine areas...');
+
+        $hasMineAreaColumn = Schema::hasColumn('machines', 'mine_area_id');
+        $hasExcavatorColumn = Schema::hasColumn('machines', 'excavator_id');
+        $hasAssignedAtColumn = Schema::hasColumn('machines', 'assigned_to_excavator_at');
         
         // Assign excavators to pits
-        $pits = array_filter($this->mineAreas, fn($area) => $area->type === 'pit');
+        $pits = array_filter($this->mineAreas, fn($area) => $this->getMineAreaType($area) === 'pit');
         
         foreach ($this->excavators as $index => $excavator) {
             $pit = $pits[array_rand($pits)];
-            $excavator->update(['mine_area_id' => $pit->id]);
-            $excavator->mineAreas()->attach($pit->id, [
-                'assigned_at' => now()->subDays(rand(10, 90)),
-                'notes' => 'Primary excavator for this pit'
-            ]);
+            if ($hasMineAreaColumn) {
+                $excavator->update(['mine_area_id' => $pit->id]);
+            }
+
         }
         
         // Assign haulers to excavators and mine areas
         foreach ($this->haulers as $index => $hauler) {
             if ($hauler->status === 'active' && !empty($this->excavators)) {
                 $excavator = $this->excavators[array_rand($this->excavators)];
-                $hauler->update([
-                    'excavator_id' => $excavator->id,
-                    'mine_area_id' => $excavator->mine_area_id,
-                    'assigned_to_excavator_at' => now()->subDays(rand(5, 60)),
-                ]);
-                
-                if ($excavator->mineArea) {
-                    $hauler->mineAreas()->attach($excavator->mine_area_id, [
-                        'assigned_at' => now()->subDays(rand(5, 60)),
-                        'notes' => "Hauling from excavator {$excavator->name}"
-                    ]);
+                $updateData = [];
+                if ($hasExcavatorColumn) {
+                    $updateData['excavator_id'] = $excavator->id;
                 }
+                if ($hasMineAreaColumn) {
+                    $updateData['mine_area_id'] = $excavator->mine_area_id;
+                }
+                if ($hasAssignedAtColumn) {
+                    $updateData['assigned_to_excavator_at'] = now()->subDays(rand(5, 60));
+                }
+                if (!empty($updateData)) {
+                    $hauler->update($updateData);
+                }
+                
             }
+        }
+
+        if (!$hasMineAreaColumn || !$hasExcavatorColumn) {
+            $this->command->warn('⚠ Machines table missing mine_area_id/excavator_id; assignments were partially skipped.');
         }
         
         $this->command->info('✓ Assigned machines to mine areas');
@@ -498,12 +524,12 @@ class ComprehensiveDataSeeder extends Seeder
                 'mine_area_id' => $area->id,
                 'name' => "{$area->name} Boundary",
                 'description' => "Safety boundary for {$area->name}",
-                'type' => $area->type,
+                'type' => $this->getMineAreaType($area),
                 'center_latitude' => $area->center_latitude,
                 'center_longitude' => $area->center_longitude,
                 'coordinates' => $area->coordinates,
-                'area_sqm' => $area->area_sqm,
-                'perimeter_m' => $area->perimeter_m,
+                'area_sqm' => max(1000, ($area->area_size_hectares ?? 1) * 10000),
+                'perimeter_m' => max(100, sqrt(max(1, ($area->area_size_hectares ?? 1) * 10000)) * 4),
                 'status' => 'active',
             ]);
         }
@@ -517,16 +543,16 @@ class ComprehensiveDataSeeder extends Seeder
         
         $routeCount = 0;
         
+        $pits = array_values(array_filter($this->mineAreas, fn($area) => $this->getMineAreaType($area) === 'pit'));
+        $dumps = array_values(array_filter($this->mineAreas, fn($area) => in_array($this->getMineAreaType($area), ['stockpile', 'dump'])));
+
         foreach ($this->haulers as $hauler) {
-            if ($hauler->status !== 'active' || !$hauler->excavator) {
+            if ($hauler->status !== 'active' || empty($pits) || empty($dumps)) {
                 continue;
             }
-            
-            $loadingPoint = $hauler->mineArea;
-            $dumpPoint = array_values(array_filter(
-                $this->mineAreas,
-                fn($area) => in_array($area->type, ['stockpile', 'dump'])
-            ))[0] ?? null;
+
+            $loadingPoint = $pits[array_rand($pits)];
+            $dumpPoint = $dumps[array_rand($dumps)];
             
             if (!$loadingPoint || !$dumpPoint) {
                 continue;
@@ -639,11 +665,13 @@ class ComprehensiveDataSeeder extends Seeder
     private function generateProductionData(): void
     {
         $this->command->info('Generating production data...');
+
+        $hasMineAreaColumn = Schema::hasColumn('machines', 'mine_area_id');
         
         $productionCount = 0;
         
         // Get only pit mine areas
-        $pits = array_filter($this->mineAreas, fn($area) => $area->type === 'pit');
+        $pits = array_filter($this->mineAreas, fn($area) => $this->getMineAreaType($area) === 'pit');
         
         // Generate production for last 30 days
         for ($day = 30; $day >= 0; $day--) {
@@ -651,10 +679,15 @@ class ComprehensiveDataSeeder extends Seeder
             
             foreach ($pits as $pit) {
                 // Get machines assigned to this pit
-                $pitMachines = array_filter(
-                    $this->machines,
-                    fn($m) => $m->mine_area_id === $pit->id && $m->status === 'active'
-                );
+                $pitMachines = $hasMineAreaColumn
+                    ? array_filter(
+                        $this->machines,
+                        fn($m) => $m->mine_area_id === $pit->id && $m->status === 'active'
+                    )
+                    : array_filter(
+                        $this->machines,
+                        fn($m) => in_array($m->machine_type, ['excavator', 'articulated_hauler']) && $m->status === 'active'
+                    );
                 
                 if (empty($pitMachines)) {
                     continue;
@@ -665,7 +698,7 @@ class ComprehensiveDataSeeder extends Seeder
                 $baseTonnage = $machineCount * rand(150, 300); // Per machine per day
                 
                 // Get material types for this pit
-                $materials = $pit->material_types ?? ['Platinum Ore'];
+                $materials = data_get($pit->metadata, 'material_types', ['Platinum Ore']);
                 $material = $materials[array_rand($materials)];
                 
                 $loads = $machineCount * rand(20, 40);
@@ -673,17 +706,25 @@ class ComprehensiveDataSeeder extends Seeder
                 $tonnage = $baseTonnage + rand(-200, 200);
                 $bcm = $tonnage * rand(0.7, 0.9); // BCM typically less than tonnage
                 
-                MineAreaProduction::create([
+                $sampleMachine = array_values($pitMachines)[0] ?? null;
+
+                ProductionRecord::create([
+                    'team_id' => $this->team->id,
                     'mine_area_id' => $pit->id,
-                    'recorded_date' => $date->toDateString(),
-                    'material_type' => $material,
-                    'tonnage' => $tonnage,
-                    'volume_cubic_m' => $bcm * 1.3,
-                    'loads' => $loads,
-                    'cycles' => $cycles,
-                    'bcm' => $bcm,
-                    'machines_used' => array_map(fn($m) => $m->id, $pitMachines),
-                    'status' => 'recorded',
+                    'machine_id' => $sampleMachine?->id,
+                    'record_date' => $date->toDateString(),
+                    'shift' => ['day', 'night'][array_rand(['day', 'night'])],
+                    'quantity_produced' => $tonnage,
+                    'unit' => 'tonnes',
+                    'target_quantity' => max(0, $tonnage + rand(-300, 300)),
+                    'status' => 'completed',
+                    'metadata' => [
+                        'material_type' => $material,
+                        'loads' => $loads,
+                        'cycles' => $cycles,
+                        'bcm' => $bcm,
+                        'machines_used' => array_map(fn($m) => $m->id, $pitMachines),
+                    ],
                     'created_at' => $date,
                     'updated_at' => $date,
                 ]);
@@ -1195,6 +1236,11 @@ class ComprehensiveDataSeeder extends Seeder
         
         return $coordinates;
     }
+
+    private function getMineAreaType(MineArea $area): string
+    {
+        return (string) data_get($area->metadata, 'area_type', 'pit');
+    }
     
     private function printSummary(): void
     {
@@ -1222,7 +1268,7 @@ class ComprehensiveDataSeeder extends Seeder
         $this->command->info('═══════════════════════════════════════════');
         $this->command->info('Total Database Records:');
         $this->command->info("  Machine Metrics: " . MachineMetric::count());
-        $this->command->info("  Production Records: " . MineAreaProduction::count());
+        $this->command->info("  Production Records: " . ProductionRecord::count());
         $this->command->info("  Fuel Transactions: " . FuelTransaction::count());
         $this->command->info("  Activity Logs: " . ActivityLog::count());
         $this->command->info('═══════════════════════════════════════════');

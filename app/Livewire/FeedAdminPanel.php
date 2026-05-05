@@ -6,6 +6,7 @@ use App\Models\FeedAuditLog;
 use App\Models\MineArea;
 use App\Models\Team;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -72,10 +73,14 @@ class FeedAdminPanel extends Component
             ->orderByDesc('created_at')
             ->paginate(25);
 
-        $mineAreas = MineArea::where('team_id', $team->id)
-            ->withCount('machines')
-            ->orderBy('name')
-            ->get();
+        $query = MineArea::where('team_id', $team->id);
+        
+        // Only count machines if the mine_area_id column exists
+        if (Schema::hasColumn('machines', 'mine_area_id')) {
+            $query->withCount('machines');
+        }
+        
+        $mineAreas = $query->orderBy('name')->get();
 
         return view('livewire.feed-admin-panel', [
             'auditLogs' => $auditLogs,

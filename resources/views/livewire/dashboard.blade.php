@@ -22,7 +22,7 @@
                     {{ $greeting }}, {{ auth()->user()->name }}! 👋
                 </h1>
                 <p class="text-blue-100 text-sm">
-                    {{ now()->format('l, F j, Y') }} • {{ auth()->user()->currentTeam->name }}
+                    {{ now()->format('l, F j, Y') }} • {{ auth()->user()->currentTeam?->name ?? 'No Team' }}
                 </p>
             </h2>
             <!-- <div class="flex gap-2 flex-wrap">
@@ -245,7 +245,7 @@
                                         default => 'bg-gray-500',
                                     };
                                 @endphp
-                                <div class="{{ $color }} h-3 rounded-full transition-all duration-1000 ease-out" style="width: {{ $percentage }}%"></div>
+                                <div class="{{ $color }} h-3 rounded-full transition-all duration-1000 ease-out" style="width: <?= (int) $percentage ?>%"></div>
                             </div>
                         </div>
                     @endforeach

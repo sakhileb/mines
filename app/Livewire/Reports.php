@@ -8,6 +8,7 @@ use App\Models\Geofence;
 use App\Models\Machine;
 use App\Models\FeedPost;
 use App\Models\User;
+use App\Support\Reports\ReportGeneration;
 use Livewire\Component;
 use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
@@ -99,17 +100,31 @@ class Reports extends Component
 
         return Report::where('team_id', $team->id)
             ->when($searchTerm, function ($query) use ($searchTerm) {
-                $query->where('title', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('description', 'like', '%' . $searchTerm . '%');
+                $query->where(function ($searchQuery) use ($searchTerm) {
+                    $searchQuery->where('title', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('filters->description', 'like', '%' . $searchTerm . '%');
+                });
             })
             ->when($this->selectedMineAreaId, function ($query) {
                 $query->where('filters->mine_area_id', $this->selectedMineAreaId);
             })
             ->when($this->selectedGeofenceId, function ($query) {
-                $query->where('filters->geofence_id', $this->selectedGeofenceId);
+                $selectedGeofenceId = $this->selectedGeofenceId;
+
+                $query->where(function ($geofenceQuery) use ($selectedGeofenceId) {
+                    $geofenceQuery->where('filters->geofence_id', $selectedGeofenceId)
+                        ->orWhereJsonContains('filters->geofence_ids', $selectedGeofenceId)
+                        ->orWhereJsonContains('filters->geofence_ids', (int) $selectedGeofenceId);
+                });
             })
             ->when($this->selectedMachineId, function ($query) {
-                $query->where('filters->machine_id', $this->selectedMachineId);
+                $selectedMachineId = $this->selectedMachineId;
+
+                $query->where(function ($machineQuery) use ($selectedMachineId) {
+                    $machineQuery->where('filters->machine_id', $selectedMachineId)
+                        ->orWhereJsonContains('filters->machine_ids', $selectedMachineId)
+                        ->orWhereJsonContains('filters->machine_ids', (int) $selectedMachineId);
+                });
             })
             ->when($this->selectedType !== 'all', function ($query) {
                 $query->where('type', $this->selectedType);
@@ -119,6 +134,11 @@ class Reports extends Component
             })
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(10);
+    }
+
+    public function refreshReports(): void
+    {
+        // wire:poll keeps the generated reports table current while background jobs run.
     }
 
     public function setSortBy($column)
@@ -148,8 +168,11 @@ class Reports extends Component
         }
 
         try {
-            if ($report->file_path && Storage::exists($report->file_path)) {
-                Storage::delete($report->file_path);
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+            $disk = Storage::disk(config('reports.disk', 'local'));
+
+            if ($report->file_path && $disk->exists($report->file_path)) {
+                $disk->delete($report->file_path);
             }
 
             $report->delete();
@@ -208,17 +231,60 @@ class Reports extends Component
         }
 
         if ($report->file_path && !str_contains($report->file_path, '..')) {
-            if (Storage::exists($report->file_path)) {
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+            $disk = Storage::disk(config('reports.disk', 'local'));
+
+            if ($disk->exists($report->file_path)) {
                 Log::info('User downloaded report', [
                     'user_id' => Auth::id(),
                     'report_id' => $reportId,
                 ]);
 
-                return Storage::download($report->file_path, $report->title . '.' . $report->format);
+                return $disk->download($report->file_path, $report->title . '.' . $report->format);
             }
         }
 
         $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report file not found']);
+    }
+
+    public function retryReport($reportId)
+    {
+        if (!is_numeric($reportId)) {
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Invalid report ID']);
+            return;
+        }
+
+        $team = Auth::user()->currentTeam;
+        $report = Report::where('team_id', $team->id)->find($reportId);
+
+        if (!$report) {
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'Report not found or access denied']);
+            return;
+        }
+
+        $report->update([
+            'status' => 'pending',
+            'file_path' => null,
+            'file_size' => null,
+            'generated_at' => null,
+        ]);
+
+        ReportGeneration::dispatch($report->fresh());
+
+        $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Report generation restarted']);
+    }
+
+    public function hasInFlightReports(): bool
+    {
+        $team = Auth::user()->currentTeam;
+
+        if (!$team) {
+            return false;
+        }
+
+        return Report::where('team_id', $team->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->exists();
     }
 
     // ── 3.1 Shift Reports ──────────────────────────────────────────────────────
@@ -513,6 +579,7 @@ class Reports extends Component
         return view('livewire.reports', [
             'reports'        => $this->activeTab === 'generated' ? $this->getReports() : collect(),
             'reportTypes'    => $this->reportTypes,
+            'hasInFlightReports' => $this->activeTab === 'generated' ? $this->hasInFlightReports() : false,
             'mineAreas'      => $mineAreas,
             'geofences'      => $geofences,
             'machinesList'   => $this->machinesList,

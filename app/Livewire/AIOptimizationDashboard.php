@@ -11,6 +11,7 @@ use App\Models\MaintenanceRecord;
 use App\Models\FuelTransaction;
 use App\Models\ProductionRecord;
 use App\Services\AI\AIOptimizationService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Traits\BrowserEventBridge;
@@ -42,9 +43,10 @@ class AIOptimizationDashboard extends Component
     public function mount()
     {
         // Auto-run analysis if no recent data
-        $lastRecommendation = AIRecommendation::where('team_id', auth()->user()->currentTeam->id)
+        $teamId = Auth::user()->currentTeam?->id;
+        $lastRecommendation = $teamId ? AIRecommendation::where('team_id', $teamId)
             ->latest()
-            ->first();
+            ->first() : null;
 
         if (!$lastRecommendation || $lastRecommendation->created_at->diffInHours(now()) > 24) {
             $this->runAnalysis();
@@ -57,8 +59,8 @@ class AIOptimizationDashboard extends Component
         
         try {
             $this->aiService->runComprehensiveAnalysis(
-                auth()->user()->currentTeam,
-                auth()->user()
+                Auth::user()->currentTeam,
+                Auth::user()
             );
 
             $this->dispatch('analysis-completed');
@@ -84,12 +86,12 @@ class AIOptimizationDashboard extends Component
 
     public function implementRecommendation($recommendationId)
     {
-        $team = auth()->user()->currentTeam;
+        $team = Auth::user()->currentTeam;
         $recommendation = AIRecommendation::where('team_id', $team->id)->findOrFail($recommendationId);
         try {
             $this->authorize('update', $recommendation);
 
-            $recommendation->markAsImplemented(auth()->user());
+            $recommendation->markAsImplemented(Auth::user());
 
             $this->dispatchBrowserEvent('notify', ['type' => 'success', 'message' => 'Recommendation marked as implemented!']);
             $this->dispatch('recommendation-updated', ['id' => $recommendation->id, 'status' => 'implemented']);
@@ -101,7 +103,7 @@ class AIOptimizationDashboard extends Component
 
     public function rejectRecommendation($recommendationId)
     {
-        $team = auth()->user()->currentTeam;
+        $team = Auth::user()->currentTeam;
         $recommendation = AIRecommendation::where('team_id', $team->id)->findOrFail($recommendationId);
         try {
             $this->authorize('update', $recommendation);
@@ -157,12 +159,12 @@ class AIOptimizationDashboard extends Component
 
     public function acknowledgeAlert($alertId)
     {
-        $team = auth()->user()->currentTeam;
+        $team = Auth::user()->currentTeam;
         $alert = \App\Models\AIPredictiveAlert::where('team_id', $team->id)->findOrFail($alertId);
 
         $alert->update([
             'is_acknowledged'  => true,
-            'acknowledged_by'  => auth()->id(),
+            'acknowledged_by'  => Auth::id(),
             'acknowledged_at'  => now(),
         ]);
 
@@ -171,7 +173,7 @@ class AIOptimizationDashboard extends Component
 
     public function getOverviewDataProperty(): array
     {
-        $team = auth()->user()->currentTeam;
+        $team = Auth::user()->currentTeam;
 
         $allRecs     = \App\Models\AIRecommendation::where('team_id', $team->id)->get();
         $pending     = $allRecs->where('status', 'pending');
@@ -230,7 +232,7 @@ class AIOptimizationDashboard extends Component
 
     public function markInsightAsRead($insightId)
     {
-        $team = auth()->user()->currentTeam;
+        $team = Auth::user()->currentTeam;
         $insight = AIInsight::where('team_id', $team->id)->findOrFail($insightId);
         $this->authorize('update', $insight);
         $insight->markAsRead();
@@ -239,7 +241,7 @@ class AIOptimizationDashboard extends Component
 
     public function render()
     {
-        $team = auth()->user()->currentTeam;
+        $team = Auth::user()->currentTeam;
 
         // Get dashboard data
         $dashboardData = $this->aiService->getDashboardInsights($team);
