@@ -163,10 +163,10 @@ class FeedAttachmentService
         $name = ltrim($name, '.');
 
         // Allow only safe characters
-        $name = preg_replace('/[^a-zA-Z0-9._\-]/', '_', $name);
+        $name = preg_replace('/[^a-zA-Z0-9._\-]/', '_', $name) ?? $name;
 
         // Collapse consecutive underscores/dots for readability (optional)
-        $name = preg_replace('/_{2,}/', '_', $name);
+        $name = preg_replace('/_{2,}/', '_', $name) ?? $name;
 
         // Truncate
         $name = substr($name, 0, 255);

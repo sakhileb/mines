@@ -27,12 +27,22 @@ class ShiftTemplatePolicy
 
     public function update(User $user, ShiftTemplate $template): bool
     {
+        // Enforce team membership before checking role or ownership.
+        if ($user->current_team_id !== $template->team_id) {
+            return false;
+        }
+
         return $user->hasRole(['supervisor', 'manager'])
             || $template->created_by === $user->id;
     }
 
     public function delete(User $user, ShiftTemplate $template): bool
     {
+        // Enforce team membership before checking role or ownership.
+        if ($user->current_team_id !== $template->team_id) {
+            return false;
+        }
+
         return $user->hasRole(['supervisor', 'manager'])
             || $template->created_by === $user->id;
     }

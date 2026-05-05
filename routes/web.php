@@ -1,19 +1,42 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Response;
 use App\Models\Machine;
 use App\Models\Geofence;
 use App\Models\Report;
 use App\Http\Controllers\ReportController;
 
-// Include test routes for session/CSRF debugging (remove in production)
-if (config('app.debug')) {
+// Test session routes are restricted to non-production local environments only.
+if (app()->environment('local') && config('app.debug')) {
     require __DIR__.'/test-session.php';
 }
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Sitemap
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        ['loc' => url('/'), 'changefreq' => 'weekly', 'priority' => '1.0'],
+        ['loc' => route('login'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+        ['loc' => route('register'), 'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => route('terms.show'), 'changefreq' => 'yearly', 'priority' => '0.3'],
+        ['loc' => route('policy.show'), 'changefreq' => 'yearly', 'priority' => '0.3'],
+    ];
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+        . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($urls as $url) {
+        $xml .= "  <url>\n";
+        $xml .= "    <loc>" . e($url['loc']) . "</loc>\n";
+        $xml .= "    <changefreq>{$url['changefreq']}</changefreq>\n";
+        $xml .= "    <priority>{$url['priority']}</priority>\n";
+        $xml .= "  </url>\n";
+    }
+    $xml .= '</urlset>';
+    return Response::make($xml, 200, ['Content-Type' => 'application/xml']);
+})->name('sitemap');
 
 Route::middleware([
     'auth:sanctum',
@@ -75,24 +98,29 @@ Route::middleware([
         return view('reports.generate');
     })->name('report-generator');
 
-        // Signed report download route (uses signed URLs created in emails)
-        Route::get('/reports/{report}/download', [\App\Http\Controllers\ReportDownloadController::class, 'download'])
-            ->middleware(['auth', 'throttle:downloads'])
-            ->name('reports.signed-download');
+    // Signed report download route (uses signed URLs created in emails)
+    Route::get('/reports/{report}/download', [\App\Http\Controllers\ReportDownloadController::class, 'download'])
+        ->middleware(['auth', 'throttle:downloads'])
+        ->name('reports.signed-download');
 
-        // Signed mine plan download route (mirror reports signed-download)
-        Route::get('/mine-plans/{minePlan}/download', [\App\Http\Controllers\MinePlanDownloadController::class, '__invoke'])
-            ->middleware(['auth', 'throttle:downloads'])
-            ->name('mineplans.signed-download');
+    // Signed mine plan download route (mirror reports signed-download)
+    Route::get('/mine-plans/{minePlan}/download', [\App\Http\Controllers\MinePlanDownloadController::class, '__invoke'])
+        ->middleware(['auth', 'throttle:downloads'])
+        ->name('mineplans.signed-download');
+
+    // Reports view 2 (scope selectors) — must come BEFORE the {report} param route
+    Route::get('/reports/view-2', [App\Http\Controllers\ReportController::class, 'view2'])->name('reports.view2');
+    // Simple generate endpoint (GET form) — must come BEFORE the {report} param route
+    Route::get('/reports/generate/simple', [App\Http\Controllers\ReportController::class, 'generate'])->name('reports.generate');
 
     Route::get('/reports/{report}', function (Report $report) {
+        // Ensure the user belongs to the same team as this report.
+        abort_unless(
+            auth()->user()->current_team_id === $report->team_id,
+            403
+        );
         return view('reports.show', ['report' => $report]);
     })->name('reports.show');
-
-    // Reports view 2 (scope selectors)
-    Route::get('/reports/view-2', [ReportController::class, 'view2'])->name('reports.view2');
-    // Simple generate endpoint (GET form) — moved to avoid path conflict with Livewire generator
-    Route::get('/reports/generate/simple', [ReportController::class, 'generate'])->name('reports.generate');
 
     // Alerts
     Route::get('/alerts', App\Livewire\Alerts::class)
@@ -125,8 +153,13 @@ Route::middleware([
         return view('integrations.index');
     })->name('integrations');
 
-    Route::get('/integrations/{integration}', function () {
-        return view('integrations.show');
+    Route::get('/integrations/{integration}', function (App\Models\Integration $integration) {
+        // Verify the authenticated user belongs to the same team as this integration.
+        abort_unless(
+            auth()->user()->current_team_id === $integration->team_id,
+            403
+        );
+        return view('integrations.show', ['integration' => $integration]);
     })->name('integrations.show');
 
     // Billing & Subscriptions
@@ -147,12 +180,14 @@ Route::middleware([
         ->middleware('throttle:downloads')
         ->name('feed.attachment.serve');
 
-    // Feed admin panel (admins only)
+    // Feed admin panel — restricted to admin role.
     Route::get('/feed/admin', App\Livewire\FeedAdminPanel::class)
+        ->middleware('admin')
         ->name('feed.admin');
 
-    // WhatsApp migration dashboard (admins only)
+    // WhatsApp migration dashboard — restricted to admin role.
     Route::get('/feed/migration', App\Livewire\WhatsAppMigration::class)
+        ->middleware('admin')
         ->name('feed.migration');
 
     // Shift Templates management (admin/supervisor UI)
@@ -169,8 +204,9 @@ Route::middleware([
     })->name('team.settings');
 });
 
-// Stripe Webhooks (no auth required)
+// Stripe Webhooks (signature verified inside controller; rate limited by IP)
 Route::post('/webhooks/stripe', [App\Http\Controllers\WebhookController::class, 'handleStripe'])
+    ->middleware('throttle:webhooks')
     ->name('webhooks.stripe');
 
 // Public marketing/outer pages

@@ -1,4 +1,5 @@
 <x-app-layout>
+@php use Illuminate\Support\Facades\URL; @endphp
     <div class="space-y-6">
         <div class="flex items-center justify-between">
             <div>
@@ -66,18 +67,25 @@
             <!-- Actions -->
             <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 space-y-4">
                 <h3 class="text-lg font-semibold text-white">Actions</h3>
-                @if($report->file_path && $report->isAvailable())
-                    <a href="{{ Storage::url($report->file_path) }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition" download>
+                @if($report->isAvailable())
+                    @php
+                        $downloadUrl = URL::temporarySignedRoute(
+                            'reports.signed-download',
+                            now()->addMinutes(60),
+                            ['report' => $report->id]
+                        );
+                    @endphp
+                    <a href="{{ $downloadUrl }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/></svg>
                         Download
                     </a>
+                @elseif($report->status === 'pending')
+                    <div class="text-sm text-yellow-400">Report is being generated. Refresh this page to check progress.</div>
+                @elseif($report->status === 'failed')
+                    <div class="text-sm text-red-400">Report generation failed. Please try again.</div>
                 @else
                     <div class="text-sm text-slate-400">No downloadable file available yet.</div>
                 @endif
-
-                <div class="text-xs text-slate-400 border-t border-gray-700 pt-3">
-                    Stored path: {{ $report->file_path ?? 'N/A' }}
-                </div>
             </div>
         </div>
     </div>

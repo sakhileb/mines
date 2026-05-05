@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\Carbon $uploaded_at
  *
  * @property-read string $url            routable URL for serving or downloading this attachment
+ * @property-read \App\Models\FeedPost $post
+ * @property-read \App\Models\User|null $uploader
  */
 class FeedAttachment extends Model
 {

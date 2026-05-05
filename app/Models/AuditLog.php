@@ -43,7 +43,8 @@ class AuditLog extends Model
     public const FEED_POST_REJECTED = 'feed.post.rejected';
 
     // Feed attachments
-    public const FEED_ATTACHMENT_UPLOAD = 'feed.attachment.upload';
+    public const FEED_ATTACHMENT_UPLOAD  = 'feed.attachment.upload';
+    public const FEED_ATTACHMENT_DELETED = 'feed.attachment.deleted';
 
     // Fleet (machines)
     public const MACHINE_CREATED = 'fleet.machine.created';
@@ -55,6 +56,22 @@ class AuditLog extends Model
     public const MAINTENANCE_UPDATED   = 'maintenance.record.updated';
     public const MAINTENANCE_COMPLETED = 'maintenance.record.completed';
     public const MAINTENANCE_DELETED   = 'maintenance.record.deleted';
+
+    // Report lifecycle
+    public const REPORT_GENERATED = 'report.generated';
+    public const REPORT_DELETED   = 'report.deleted';
+    public const REPORT_DOWNLOAD  = 'report.download';
+
+    // File uploads / deletions
+    public const FILE_UPLOADED = 'file.uploaded';
+    public const FILE_DELETED  = 'file.deleted';
+
+    // Admin actions
+    public const ADMIN_USER_ROLE_CHANGED  = 'admin.user.role_changed';
+    public const ADMIN_USER_REMOVED       = 'admin.user.removed';
+    public const ADMIN_TEAM_SETTINGS      = 'admin.team.settings_changed';
+    public const ADMIN_INTEGRATION_SYNC   = 'admin.integration.synced';
+    public const ADMIN_IMPORT             = 'admin.data.imported';
 
     // Subscriptions
     public const SUBSCRIPTION_CREATED   = 'subscription.created';

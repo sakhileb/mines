@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Jobs\GenerateReportJob;
 use App\Models\Report;
 use App\Models\Machine;
 use Livewire\Component;
@@ -179,6 +180,8 @@ class ReportGenerator extends Component
                 'filters' => $filters,
             ]);
             
+            GenerateReportJob::dispatch($report);
+
             Log::info('User generated report', [
                 'user_id' => $user->id,
                 'report_id' => $report->id,

@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property \Carbon\Carbon|null $deleted_at
+ * @property-read \App\Models\FeedPost $post
+ * @property-read \App\Models\User $author
+ * @property-read \App\Models\FeedComment|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\FeedComment> $replies
  */
 class FeedComment extends Model
 {

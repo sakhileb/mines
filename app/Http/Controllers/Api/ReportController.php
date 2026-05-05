@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Jobs\GenerateReportJob;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Report API Controller
@@ -88,7 +90,7 @@ class ReportController extends Controller
 
         $report = Report::create($validated);
 
-        // TODO: Dispatch GenerateReportJob based on type
+        GenerateReportJob::dispatch($report);
 
         return response()->json([
             'data' => $report,

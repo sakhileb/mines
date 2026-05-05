@@ -30,7 +30,7 @@ class SendShiftDigest extends Command
 
     public function handle(): int
     {
-        $shift = strtoupper($this->option('shift') ?? $this->detectCompletedShift());
+        $shift = strtoupper((string) ($this->option('shift') ?? $this->detectCompletedShift()));
 
         if (! array_key_exists($shift, $this->shiftWindows)) {
             $this->error("Invalid shift '{$shift}'. Use A, B or C.");

@@ -26,7 +26,6 @@ class ForceHttps
         if (app()->environment('production')) {
             // If the request is not secure, redirect to HTTPS
             if (! $request->isSecure()) {
-                $secureUrl = 'https://' . $request->getHttpHost() . $request->getRequestUri();
                 return redirect()->secure($request->getRequestUri(), 301);
             }
         }

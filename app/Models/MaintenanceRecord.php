@@ -6,51 +6,53 @@ use App\Traits\HasTeamFilters;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * MaintenanceRecord Model
+ *
+ * @property int $id
+ * @property int $team_id
+ * @property int $machine_id
+ * @property int|null $maintenance_schedule_id
+ * @property string $work_order_number
+ * @property string $maintenance_type
+ * @property string $title
+ * @property string|null $description
+ * @property string|null $work_performed
+ * @property string $status
+ * @property string $priority
+ * @property \Carbon\Carbon $scheduled_date
+ * @property \Carbon\Carbon|null $started_at
+ * @property \Carbon\Carbon|null $completed_at
+ * @property int|null $assigned_to
+ * @property int|null $completed_by
+ * @property string|float $labor_hours
+ * @property string|float $labor_cost
+ * @property string|float $parts_cost
+ * @property string|float $total_cost
+ * @property array|null $parts_used
+ * @property array|null $fault_codes_cleared
+ * @property int|null $odometer_reading
+ * @property int|null $hour_meter_reading
+ * @property string|null $technician_notes
+ * @property array|null $attachments
+ * @property bool $machine_operational
+ * @property float|null $duration
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceRecord where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceRecord whereIn(string $column, array $values)
+ * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceRecord orderBy(string $column, string $direction = 'asc')
+ * @method static MaintenanceRecord|null find(mixed $id, array $columns = ['*'])
+ * @method static MaintenanceRecord findOrFail(mixed $id, array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ * @property-read \App\Models\Machine $machine
+ * @property-read \App\Models\MaintenanceSchedule|null $maintenanceSchedule
+ */
 class MaintenanceRecord extends Model
 {
     use HasFactory, HasTeamFilters;
-
-    /**
-     * MaintenanceRecord Model
-     *
-     * @property int $id
-     * @property int $team_id
-     * @property int $machine_id
-     * @property int|null $maintenance_schedule_id
-     * @property string $work_order_number
-     * @property string $maintenance_type
-     * @property string $title
-     * @property string|null $description
-     * @property string|null $work_performed
-     * @property string $status
-     * @property string $priority
-     * @property \Carbon\Carbon $scheduled_date
-     * @property \Carbon\Carbon|null $started_at
-     * @property \Carbon\Carbon|null $completed_at
-     * @property int|null $assigned_to
-     * @property int|null $completed_by
-     * @property string|float $labor_hours
-     * @property string|float $labor_cost
-     * @property string|float $parts_cost
-     * @property string|float $total_cost
-     * @property array|null $parts_used
-     * @property array|null $fault_codes_cleared
-     * @property int|null $odometer_reading
-     * @property int|null $hour_meter_reading
-     * @property string|null $technician_notes
-     * @property array|null $attachments
-     * @property bool $machine_operational
-     * @property float|null $duration
-     * @property \Carbon\Carbon $created_at
-     * @property \Carbon\Carbon $updated_at
-     *
-     * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceRecord where(string $column, mixed $operator = null, mixed $value = null)
-     * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceRecord whereIn(string $column, array $values)
-     * @method static \Illuminate\Database\Eloquent\Builder|MaintenanceRecord orderBy(string $column, string $direction = 'asc')
-     * @method static MaintenanceRecord|null find(mixed $id, array $columns = ['*'])
-     * @method static MaintenanceRecord findOrFail(mixed $id, array $columns = ['*'])
-     * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
-     */
 
     protected $fillable = [
         'team_id',

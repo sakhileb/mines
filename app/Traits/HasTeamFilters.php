@@ -31,6 +31,14 @@ trait HasTeamFilters
 
             if ($teamId) {
                 $builder->where('team_id', $teamId);
+                return;
+            }
+
+            // In an HTTP context with an authenticated session but no resolved team,
+            // the request must not silently return cross-tenant records.
+            // Apply an impossible condition so zero rows are returned rather than all rows.
+            if (! app()->runningInConsole() && auth()->check()) {
+                $builder->whereRaw('1 = 0');
             }
         });
     }

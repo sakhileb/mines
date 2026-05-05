@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ensure_team' => EnsureTeamContext::class,
             'cache.headers' => CacheControlHeaders::class,
+            'admin' => \App\Http\Middleware\EnsureAdmin::class,
         ]);
         
         // Force HTTPS, CSP and add security headers to all web requests

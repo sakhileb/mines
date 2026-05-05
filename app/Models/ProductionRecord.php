@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|\Carbon\Carbon $record_date
  * @property string $shift
  * @property string|float $quantity_produced
+ * @property string|float|null $system_quantity
  * @property string $unit
  * @property string|float $target_quantity
  * @property string|null $notes
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property array|null $metadata
  * @property float $variance_percentage
  * @property bool $is_above_target
+ * @property float|null $system_variance_percentage
  * @property \Carbon\Carbon|null $deleted_at
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at

@@ -121,6 +121,6 @@ class MentionParser
             '/@([\w.-]+)/',
             '<span class="text-blue-400 font-medium">@$1</span>',
             $escapedBody
-        );
+        ) ?? $escapedBody;
     }
 }

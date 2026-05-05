@@ -8,7 +8,10 @@
         <meta name="team-id" content="{{ Auth::user()?->current_team_id ?? Auth::user()?->team_id }}">
         @php($machines = $machines ?? [])
 
-        <title>{{ config('app.name', 'Mines') }}</title>
+        <title>@hasSection('title')@yield('title') | {{ config('app.name', 'Mines') }}@else{{ config('app.name', 'Mines') }}@endif</title>
+        <meta name="description" content="@yield('description', 'Mines mining operations management platform.')">
+        <meta name="robots" content="noindex, nofollow">
+        <link rel="canonical" href="{{ url()->current() }}">
 
         <!-- Favicon -->
         <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23f59e0b' rx='15'/><path d='M20 45 L20 30 L35 37 L35 52 L20 45 M35 52 L50 45 L50 60 L35 67 L35 52 M50 60 L65 53 L65 68 L50 75 L50 60 M35 37 L50 30 L50 45 L35 52 L35 37 M50 45 L65 38 L65 53 L50 60 L50 45 M50 30 L65 23 L80 30 L65 38 L50 30' fill='%231e293b' stroke='%231e293b' stroke-width='2'/></svg>">
@@ -217,6 +220,15 @@
                         @endisset
                     </div>
                 </main>
+
+                <!-- Footer -->
+                <footer class="bg-gray-900 border-t border-gray-800 py-3 px-6 text-center text-xs text-gray-500">
+                    &copy; {{ date('Y') }} {{ config('app.name', 'Mines') }}. All rights reserved.
+                    <span class="mx-2">&middot;</span>
+                    <a href="{{ route('policy.show') }}" class="hover:text-gray-300 transition-colors">Privacy Policy</a>
+                    <span class="mx-2">&middot;</span>
+                    <a href="{{ route('terms.show') }}" class="hover:text-gray-300 transition-colors">Terms of Service</a>
+                </footer>
             </div>
         </div>
 
@@ -276,5 +288,8 @@
         @stack('scripts')
         
         <!-- Alpine is bundled via Vite in resources/js/app.js; avoid double-loading CDN version -->
+
+        <!-- Cookie Consent -->
+        <x-cookie-consent />
     </body>
 </html>

@@ -18,24 +18,26 @@ class WebhookController extends Controller
         $payload = $request->getContent();
         $signature = $request->header('Stripe-Signature');
         
-        // Verify webhook signature if secret is configured
+        // Signature verification is mandatory — reject the request if the
+        // webhook secret has not been configured in the environment.
         $webhookSecret = config('services.stripe.webhook_secret');
-        
-        if ($webhookSecret) {
-            try {
-                $event = \Stripe\Webhook::constructEvent(
-                    $payload,
-                    $signature,
-                    $webhookSecret
-                );
-            } catch (\Exception $e) {
-                Log::error('Stripe webhook signature verification failed', [
-                    'error' => $e->getMessage(),
-                ]);
-                return response()->json(['error' => 'Invalid signature'], 400);
-            }
-        } else {
-            $event = json_decode($payload, true);
+
+        if (empty($webhookSecret)) {
+            Log::critical('Stripe webhook secret is not configured. Set STRIPE_WEBHOOK_SECRET in the environment.');
+            return response()->json(['error' => 'Webhook endpoint misconfigured'], 500);
+        }
+
+        try {
+            $event = \Stripe\Webhook::constructEvent(
+                $payload,
+                $signature,
+                $webhookSecret
+            );
+        } catch (\Exception $e) {
+            Log::error('Stripe webhook signature verification failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         Log::info('Stripe webhook received', [

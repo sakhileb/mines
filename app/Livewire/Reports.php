@@ -295,6 +295,10 @@ class Reports extends Component
         return response()->streamDownload(function () use ($data, $shift, $date) {
             $handle = fopen('php://output', 'w');
 
+            if ($handle === false) {
+                return;
+            }
+
             fputcsv($handle, ['Shift Report Summary']);
             fputcsv($handle, ['Shift', $shift, 'Date', $date]);
             fputcsv($handle, []);

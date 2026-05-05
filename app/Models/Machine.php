@@ -185,7 +185,11 @@ class Machine extends Model
      */
     public function activeEngineSession(): HasOne
     {
-        return $this->hasOne(EngineHourSession::class)->whereNull('ignition_off_at')->latestOfMany('ignition_on_at');
+        return $this->hasOne(EngineHourSession::class)
+            ->ofMany(
+                ['ignition_on_at' => 'max'],
+                fn ($q) => $q->whereNull('ignition_off_at')
+            );
     }
 
     /**

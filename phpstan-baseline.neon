@@ -136,9 +136,19 @@ parameters:
 			path: app/Console/Commands/ScanBladeUnescaped.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:url\\(\\)\\.$#"
+			message: "#^Cannot cast array\\|bool\\|float\\|int\\|string to string\\.$#"
 			count: 1
-			path: app/Console/Commands/VerifyS3Storage.php
+			path: app/Console/Commands/SendShiftDigest.php
+
+		-
+			message: "#^Method App\\\\Console\\\\Commands\\\\SendShiftDigest\\:\\:shiftTimeRange\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Console/Commands/SendShiftDigest.php
+
+		-
+			message: "#^Property App\\\\Console\\\\Commands\\\\SendShiftDigest\\:\\:\\$shiftWindows type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Console/Commands/SendShiftDigest.php
 
 		-
 			message: "#^Parameter \\#1 \\$name of static method Illuminate\\\\Support\\\\Facades\\\\Storage\\:\\:disk\\(\\) expects string\\|UnitEnum\\|null, array\\|bool\\|float\\|int\\|string given\\.$#"
@@ -229,6 +239,76 @@ parameters:
 			message: "#^Property App\\\\Events\\\\ComplianceViolationDetected\\:\\:\\$violation has no type specified\\.$#"
 			count: 1
 			path: app/Events/ComplianceViolationDetected.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedAcknowledgementUpdated\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedAcknowledgementUpdated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedAcknowledgementUpdated\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedAcknowledgementUpdated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedCommentCreated\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedCommentCreated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedCommentCreated\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedCommentCreated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedCommentDeleted\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedCommentDeleted.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedCommentDeleted\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedCommentDeleted.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedCommentUpdated\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedCommentUpdated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedCommentUpdated\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedCommentUpdated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedPostCreated\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedPostCreated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedPostCreated\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedPostCreated.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedPostLiked\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedPostLiked.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedPostLiked\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedPostLiked.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedPostStatusChanged\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedPostStatusChanged.php
+
+		-
+			message: "#^Method App\\\\Events\\\\FeedPostStatusChanged\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/FeedPostStatusChanged.php
 
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\GeofenceEntry\\:\\:\\$geofence\\.$#"
@@ -324,6 +404,16 @@ parameters:
 			message: "#^Property App\\\\Events\\\\MachineOffline\\:\\:\\$lastLocation type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Events/MachineOffline.php
+
+		-
+			message: "#^Method App\\\\Events\\\\MachineStatusChanged\\:\\:broadcastOn\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/MachineStatusChanged.php
+
+		-
+			message: "#^Method App\\\\Events\\\\MachineStatusChanged\\:\\:broadcastWith\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Events/MachineStatusChanged.php
 
 		-
 			message: "#^Method App\\\\Events\\\\MaintenanceAlertTriggered\\:\\:__construct\\(\\) has parameter \\$machine with no type specified\\.$#"
@@ -461,16 +551,6 @@ parameters:
 			path: app/Events/SensorStatusChanged.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:id\\(\\)\\.$#"
-			count: 2
-			path: app/Http/Controllers/Api/AlertController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/Api/AlertController.php
-
-		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Api\\\\AlertController\\:\\:acknowledge\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Http/Controllers/Api/AlertController.php
@@ -562,11 +642,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Illuminate\\\\Http\\\\Request\\:\\:\\$type\\.$#"
-			count: 1
-			path: app/Http/Controllers/Api/ComplianceReportController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:id\\(\\)\\.$#"
 			count: 1
 			path: app/Http/Controllers/Api/ComplianceReportController.php
 
@@ -766,11 +841,6 @@ parameters:
 			path: app/Http/Controllers/Api/FuelTransactionController.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/Api/GeofenceController.php
-
-		-
 			message: "#^Cannot access property \\$machine on stdClass\\|null\\.$#"
 			count: 1
 			path: app/Http/Controllers/Api/GeofenceController.php
@@ -833,11 +903,6 @@ parameters:
 		-
 			message: "#^Access to an undefined property Illuminate\\\\Http\\\\Request\\:\\:\\$provider\\.$#"
 			count: 3
-			path: app/Http/Controllers/Api/IntegrationController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 4
 			path: app/Http/Controllers/Api/IntegrationController.php
 
 		-
@@ -931,11 +996,6 @@ parameters:
 			path: app/Http/Controllers/Api/IoTSensorController.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/Api/MachineAssignmentController.php
-
-		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Api\\\\MachineAssignmentController\\:\\:available\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Http/Controllers/Api/MachineAssignmentController.php
@@ -944,11 +1004,6 @@ parameters:
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Api\\\\MachineAssignmentController\\:\\:history\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Http/Controllers/Api/MachineAssignmentController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/Api/MachineController.php
 
 		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Api\\\\MachineController\\:\\:alerts\\(\\) has no return type specified\\.$#"
@@ -1086,11 +1141,6 @@ parameters:
 			path: app/Http/Controllers/Api/NotificationController.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 16
-			path: app/Http/Controllers/Api/NotificationController.php
-
-		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Api\\\\NotificationController\\:\\:clear\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Http/Controllers/Api/NotificationController.php
@@ -1119,16 +1169,6 @@ parameters:
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Api\\\\NotificationController\\:\\:unread\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Http/Controllers/Api/NotificationController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:id\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/Api/ReportController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 6
-			path: app/Http/Controllers/Api/ReportController.php
 
 		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Api\\\\ReportController\\:\\:destroy\\(\\) has no return type specified\\.$#"
@@ -1166,26 +1206,6 @@ parameters:
 			path: app/Http/Controllers/Api/ReportController.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/MinePlanDownloadController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:download\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/MinePlanDownloadController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:mimeType\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/MinePlanDownloadController.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:temporaryUrl\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Controllers/MinePlanDownloadController.php
-
-		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\MinePlanDownloadController\\:\\:__invoke\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Http/Controllers/MinePlanDownloadController.php
@@ -1209,6 +1229,11 @@ parameters:
 			message: "#^Parameter \\#1 \\$name of static method Illuminate\\\\Support\\\\Facades\\\\Storage\\:\\:disk\\(\\) expects string\\|UnitEnum\\|null, array\\|string\\|null given\\.$#"
 			count: 3
 			path: app/Http/Controllers/MinePlanDownloadController.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\:\\:\\$currentTeam\\.$#"
+			count: 1
+			path: app/Http/Controllers/ReportController.php
 
 		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\ReportController\\:\\:generate\\(\\) has no return type specified\\.$#"
@@ -1246,11 +1271,6 @@ parameters:
 			path: app/Http/Middleware/EnforceDownloadRateLimit.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Http/Middleware/EnsureTeamContext.php
-
-		-
 			message: "#^Access to undefined constant Illuminate\\\\Http\\\\Request\\:\\:HEADER_X_FORWARDED_ALL\\.$#"
 			count: 1
 			path: app/Http/Middleware/TrustProxies.php
@@ -1284,6 +1304,136 @@ parameters:
 			message: "#^Property App\\\\Jobs\\\\AlertGenerationJob\\:\\:\\$backoff type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Jobs/AlertGenerationJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:buildReportHtml\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:generateCsv\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:generatePdf\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryData\\(\\) has parameter \\$filters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryDowntime\\(\\) has parameter \\$machineIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryDowntime\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryFleetUtilization\\(\\) has parameter \\$machineIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryFleetUtilization\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryFuelConsumption\\(\\) has parameter \\$machineIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryFuelConsumption\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryMaintenance\\(\\) has parameter \\$machineIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryMaintenance\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryProduction\\(\\) has parameter \\$machineIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryProduction\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryTireCondition\\(\\) has parameter \\$machineIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Method App\\\\Jobs\\\\GenerateReportJob\\:\\:queryTireCondition\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Parameter \\#5 \\$actorId of static method App\\\\Services\\\\AuditService\\:\\:log\\(\\) expects int\\|null, int\\|string\\|null given\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>engine_rpm\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>engine_temperature\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>fuel_level\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>idle_hours\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>name\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 6
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>operating_hours\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>registration_number\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 4
+			path: app/Jobs/GenerateReportJob.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>total_hours\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Jobs/GenerateReportJob.php
 
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\GeofenceEntry\\:\\:\\$machine\\.$#"
@@ -1401,14 +1551,19 @@ parameters:
 			path: app/Jobs/RouteSpeedMonitoringJob.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Database\\\\Query\\\\Builder\\:\\:with\\(\\)\\.$#"
+			message: "#^Method App\\\\Jobs\\\\RouteSpeedMonitoringJob\\:\\:createSpeedViolationAlert\\(\\) has parameter \\$metric with no type specified\\.$#"
 			count: 1
 			path: app/Jobs/RouteSpeedMonitoringJob.php
 
 		-
-			message: "#^Method App\\\\Jobs\\\\RouteSpeedMonitoringJob\\:\\:createSpeedViolationAlert\\(\\) has parameter \\$metric with no type specified\\.$#"
+			message: "#^Method App\\\\Jobs\\\\SendFeedNotificationJob\\:\\:__construct\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: app/Jobs/RouteSpeedMonitoringJob.php
+			path: app/Jobs/SendFeedNotificationJob.php
+
+		-
+			message: "#^Property App\\\\Jobs\\\\SendFeedNotificationJob\\:\\:\\$backoff type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Jobs/SendFeedNotificationJob.php
 
 		-
 			message: "#^Property App\\\\Jobs\\\\SyncIntegrationMachinesJob\\:\\:\\$backoff type has no value type specified in iterable type array\\.$#"
@@ -1451,9 +1606,44 @@ parameters:
 			path: app/Listeners/NotifyOnJobFailed.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
+			message: "#^Method App\\\\Listeners\\\\SendFeedCommentNotification\\:\\:applyCommentPreferences\\(\\) has parameter \\$userIds with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: app/Livewire/AIAnalytics.php
+			path: app/Listeners/SendFeedCommentNotification.php
+
+		-
+			message: "#^Method App\\\\Listeners\\\\SendFeedCommentNotification\\:\\:applyCommentPreferences\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Listeners/SendFeedCommentNotification.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>name\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Listeners/SendFeedCommentNotification.php
+
+		-
+			message: "#^Method App\\\\Listeners\\\\SendFeedPostNotification\\:\\:applyPreferences\\(\\) has parameter \\$userIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Listeners/SendFeedPostNotification.php
+
+		-
+			message: "#^Method App\\\\Listeners\\\\SendFeedPostNotification\\:\\:applyPreferences\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Listeners/SendFeedPostNotification.php
+
+		-
+			message: "#^Method App\\\\Listeners\\\\SendFeedPostNotification\\:\\:resolveRecipients\\(\\) has parameter \\$post with no type specified\\.$#"
+			count: 1
+			path: app/Listeners/SendFeedPostNotification.php
+
+		-
+			message: "#^Method App\\\\Listeners\\\\SendFeedPostNotification\\:\\:resolveRecipients\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Listeners/SendFeedPostNotification.php
+
+		-
+			message: "#^Using nullsafe property access on non\\-nullable type App\\\\Models\\\\User\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Listeners/SendFeedPostNotification.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\AIAnalytics\\:\\:render\\(\\) should return Illuminate\\\\View\\\\View but returns Illuminate\\\\Contracts\\\\View\\\\View\\.$#"
@@ -1471,16 +1661,6 @@ parameters:
 			path: app/Livewire/AIAnalytics.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:id\\(\\)\\.$#"
-			count: 2
-			path: app/Livewire/AINotifications.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 3
-			path: app/Livewire/AINotifications.php
-
-		-
 			message: "#^Method App\\\\Livewire\\\\AINotifications\\:\\:render\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/AINotifications.php
@@ -1491,8 +1671,18 @@ parameters:
 			path: app/Livewire/AINotifications.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 8
+			message: "#^Access to an undefined property App\\\\Livewire\\\\AIOptimizationDashboard\\:\\:\\$overviewData\\.$#"
+			count: 1
+			path: app/Livewire/AIOptimizationDashboard.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\AIOptimizationDashboard\\:\\:acknowledgeAlert\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/AIOptimizationDashboard.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\AIOptimizationDashboard\\:\\:acknowledgeAlert\\(\\) has parameter \\$alertId with no type specified\\.$#"
+			count: 1
 			path: app/Livewire/AIOptimizationDashboard.php
 
 		-
@@ -1517,6 +1707,11 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Livewire\\\\AIOptimizationDashboard\\:\\:dispatchBrowserEvent\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/AIOptimizationDashboard.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\AIOptimizationDashboard\\:\\:getOverviewDataProperty\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/AIOptimizationDashboard.php
 
@@ -1611,26 +1806,6 @@ parameters:
 			path: app/Livewire/AIOptimizationDashboard.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 8
-			path: app/Livewire/Alerts.php
-
-		-
-			message: "#^Cannot access property \\$current_team_id on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 2
-			path: app/Livewire/Alerts.php
-
-		-
-			message: "#^Cannot call method when\\(\\) on Illuminate\\\\Database\\\\Eloquent\\\\Builder\\|null\\.$#"
-			count: 3
-			path: app/Livewire/Alerts.php
-
-		-
-			message: "#^Cannot call method with\\(\\) on Illuminate\\\\Database\\\\Eloquent\\\\Builder\\|null\\.$#"
-			count: 1
-			path: app/Livewire/Alerts.php
-
-		-
 			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:acknowledgeAlert\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/Alerts.php
@@ -1696,12 +1871,37 @@ parameters:
 			path: app/Livewire/Alerts.php
 
 		-
+			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:getIncidentReports\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Alerts.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:getMachinesForIncidentForm\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: app/Livewire/Alerts.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:getMachinesForIncidentForm\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Collection but returns Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Support\\\\Collection\\<int, stdClass\\>\\.$#"
+			count: 1
+			path: app/Livewire/Alerts.php
+
+		-
 			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:getMineAreaManagersForAlert\\(\\) has parameter \\$alert with no type specified\\.$#"
 			count: 1
 			path: app/Livewire/Alerts.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:getMineAreaManagersForAlert\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Alerts.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:getMineAreasForIncidentForm\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: app/Livewire/Alerts.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Alerts\\:\\:getMineAreasForIncidentForm\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Collection but returns Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Support\\\\Collection\\<int, stdClass\\>\\.$#"
 			count: 1
 			path: app/Livewire/Alerts.php
 
@@ -1773,11 +1973,6 @@ parameters:
 		-
 			message: "#^Access to an undefined property App\\\\Livewire\\\\BillingPortal\\:\\:\\$userSelectedYearlyTotal\\.$#"
 			count: 1
-			path: app/Livewire/BillingPortal.php
-
-		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 6
 			path: app/Livewire/BillingPortal.php
 
 		-
@@ -1896,11 +2091,6 @@ parameters:
 			path: app/Livewire/BillingPortal.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 2
-			path: app/Livewire/Dashboard.php
-
-		-
 			message: "#^Method App\\\\Livewire\\\\Dashboard\\:\\:render\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/Dashboard.php
@@ -1936,17 +2126,117 @@ parameters:
 			path: app/Livewire/Documentation.php
 
 		-
-			message: "#^Call to an undefined method App\\\\Livewire\\\\Fleet\\:\\:dispatchBrowserEvent\\(\\)\\.$#"
-			count: 18
-			path: app/Livewire/Fleet.php
+			message: "#^Cannot call method hasRole\\(\\) on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
+			count: 3
+			path: app/Livewire/Feed.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 12
-			path: app/Livewire/Fleet.php
+			message: "#^Method App\\\\Livewire\\\\Feed\\:\\:getComments\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Feed\\:\\:getCurrentTeam\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Feed\\:\\:getCurrentUser\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Feed\\:\\:getMineAreas\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Feed\\:\\:getPosts\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Feed\\:\\:render\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Feed\\:\\:rules\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Parameter \\#3 \\$uploader of method App\\\\Services\\\\FeedAttachmentService\\:\\:store\\(\\) expects App\\\\Models\\\\User, Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null given\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\Feed\\:\\:\\$categoryTemplates type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\Feed\\:\\:\\$commentBody type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\Feed\\:\\:\\$composeAttachments has no type specified\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\Feed\\:\\:\\$composeMeta type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\Feed\\:\\:\\$editingComment type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\Feed\\:\\:\\$expandedComments type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\Feed\\:\\:\\$replyTo type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Feed.php
+
+		-
+			message: "#^Cannot call method hasRole\\(\\) on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
+			count: 1
+			path: app/Livewire/FeedAdminPanel.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\FeedAdminPanel\\:\\:render\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/FeedAdminPanel.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\FeedAdminPanel\\:\\:\\$activeShifts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/FeedAdminPanel.php
 
 		-
 			message: "#^Left side of && is always true\\.$#"
+			count: 1
+			path: app/Livewire/Fleet.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Fleet\\:\\:buildEngineHoursMap\\(\\) has parameter \\$machineIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Fleet.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Fleet\\:\\:buildEngineHoursMap\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Fleet.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Fleet\\:\\:buildTimingAnalytics\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/Fleet.php
 
@@ -1957,6 +2247,11 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Livewire\\\\Fleet\\:\\:confirmRejectRecommendation\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Fleet.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Fleet\\:\\:fleetUsage\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/Fleet.php
 
@@ -2016,13 +2311,13 @@ parameters:
 			path: app/Livewire/Fleet.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Machine\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:\\$name\\.$#"
+			message: "#^Using nullsafe property access \"\\?\\-\\>max_machines\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
 			count: 1
-			path: app/Livewire/FleetMovementReplay.php
+			path: app/Livewire/Fleet.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 5
+			message: "#^Access to an undefined property App\\\\Models\\\\Machine\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:\\$name\\.$#"
+			count: 1
 			path: app/Livewire/FleetMovementReplay.php
 
 		-
@@ -2216,16 +2511,6 @@ parameters:
 			path: app/Livewire/FuelManagement.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:id\\(\\)\\.$#"
-			count: 2
-			path: app/Livewire/FuelManagement.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 3
-			path: app/Livewire/FuelManagement.php
-
-		-
 			message: "#^Call to an undefined method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\:\\:lowFuel\\(\\)\\.$#"
 			count: 1
 			path: app/Livewire/FuelManagement.php
@@ -2386,11 +2671,6 @@ parameters:
 			path: app/Livewire/FuelManagement.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 2
-			path: app/Livewire/GeofenceDetail.php
-
-		-
 			message: "#^Method App\\\\Livewire\\\\GeofenceDetail\\:\\:mount\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/GeofenceDetail.php
@@ -2401,24 +2681,9 @@ parameters:
 			path: app/Livewire/GeofenceDetail.php
 
 		-
-			message: "#^Method Illuminate\\\\Database\\\\Query\\\\Builder\\:\\:select\\(\\) invoked with 2 parameters, 0\\-1 required\\.$#"
+			message: "#^Method App\\\\Models\\\\Machine\\:\\:select\\(\\) invoked with 2 parameters, 0\\-1 required\\.$#"
 			count: 1
 			path: app/Livewire/GeofenceDetail.php
-
-		-
-			message: "#^Call to an undefined method App\\\\Livewire\\\\GeofenceManager\\:\\:dispatchBrowserEvent\\(\\)\\.$#"
-			count: 3
-			path: app/Livewire/GeofenceManager.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Livewire/GeofenceManager.php
-
-		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 3
-			path: app/Livewire/GeofenceManager.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\GeofenceManager\\:\\:render\\(\\) has no return type specified\\.$#"
@@ -2434,11 +2699,6 @@ parameters:
 			message: "#^Property App\\\\Livewire\\\\GeofenceManager\\:\\:\\$listeners has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/GeofenceManager.php
-
-		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 1
-			path: app/Livewire/IntegrationManager.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\IntegrationManager\\:\\:closeAddModal\\(\\) has no return type specified\\.$#"
@@ -2541,16 +2801,6 @@ parameters:
 			path: app/Livewire/IntegrationManager.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 7
-			path: app/Livewire/LiveMap.php
-
-		-
-			message: "#^Cannot access property \\$current_team_id on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 2
-			path: app/Livewire/LiveMap.php
-
-		-
 			message: "#^Method App\\\\Livewire\\\\LiveMap\\:\\:getCurrentTeam\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/LiveMap.php
@@ -2566,12 +2816,27 @@ parameters:
 			path: app/Livewire/LiveMap.php
 
 		-
+			message: "#^Method App\\\\Livewire\\\\LiveMap\\:\\:getGeofencesWithType\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/LiveMap.php
+
+		-
 			message: "#^Method App\\\\Livewire\\\\LiveMap\\:\\:getMachines\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/LiveMap.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\LiveMap\\:\\:getMineAreas\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/LiveMap.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\LiveMap\\:\\:getRoutes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/LiveMap.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\LiveMap\\:\\:getTrafficPlanData\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/LiveMap.php
 
@@ -2592,7 +2857,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$callback of method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
-			count: 1
+			count: 2
 			path: app/Livewire/LiveMap.php
 
 		-
@@ -2602,13 +2867,8 @@ parameters:
 
 		-
 			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
-			count: 1
+			count: 2
 			path: app/Livewire/LiveMap.php
-
-		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 1
-			path: app/Livewire/MachineDetail.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\MachineDetail\\:\\:mount\\(\\) has no return type specified\\.$#"
@@ -2619,21 +2879,6 @@ parameters:
 			message: "#^Method App\\\\Livewire\\\\MachineDetail\\:\\:render\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/MachineDetail.php
-
-		-
-			message: "#^Call to an undefined method App\\\\Livewire\\\\MaintenanceDashboard\\:\\:dispatchBrowserEvent\\(\\)\\.$#"
-			count: 11
-			path: app/Livewire/MaintenanceDashboard.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:id\\(\\)\\.$#"
-			count: 5
-			path: app/Livewire/MaintenanceDashboard.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 5
-			path: app/Livewire/MaintenanceDashboard.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\MaintenanceDashboard\\:\\:bookMaintenance\\(\\) has no return type specified\\.$#"
@@ -2736,18 +2981,18 @@ parameters:
 			path: app/Livewire/MaintenanceDashboard.php
 
 		-
-			message: "#^Call to an undefined method App\\\\Livewire\\\\MineAreaDetail\\:\\:dispatchBrowserEvent\\(\\)\\.$#"
-			count: 15
-			path: app/Livewire/MineAreaDetail.php
-
-		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 15
-			path: app/Livewire/MineAreaDetail.php
-
-		-
 			message: "#^Cannot call method getClientOriginalExtension\\(\\) on Illuminate\\\\Http\\\\UploadedFile\\|null\\.$#"
 			count: 1
+			path: app/Livewire/MineAreaDetail.php
+
+		-
+			message: "#^Cannot call method sum\\(\\) on Illuminate\\\\Database\\\\Eloquent\\\\Model\\|Illuminate\\\\Support\\\\Collection\\<\\*NEVER\\*, \\*NEVER\\*\\>\\|stdClass\\.$#"
+			count: 1
+			path: app/Livewire/MineAreaDetail.php
+
+		-
+			message: "#^Cannot call method whereNotNull\\(\\) on Illuminate\\\\Database\\\\Eloquent\\\\Model\\|Illuminate\\\\Support\\\\Collection\\<\\*NEVER\\*, \\*NEVER\\*\\>\\|stdClass\\.$#"
+			count: 2
 			path: app/Livewire/MineAreaDetail.php
 
 		-
@@ -2767,6 +3012,16 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Livewire\\\\MineAreaDetail\\:\\:assignMachine\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/MineAreaDetail.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\MineAreaDetail\\:\\:buildComparisonData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 2
+			path: app/Livewire/MineAreaDetail.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\MineAreaDetail\\:\\:buildComparisonData\\(\\) should return array\\{has_system_data\\: bool, days\\: array, machines\\: array\\} but returns array\\{has_system_data\\: bool, rows\\: list\\<array\\{date\\: string, label\\: non\\-falsy\\-string, operator\\: float, system\\: float\\|null, variance_pct\\: float\\|null, has_system\\: bool\\}\\>, machines\\: Illuminate\\\\Support\\\\Collection\\<int, mixed\\>\\}\\.$#"
 			count: 1
 			path: app/Livewire/MineAreaDetail.php
 
@@ -2904,16 +3159,6 @@ parameters:
 			message: "#^Parameter \\#1 \\$file of method App\\\\Services\\\\FileUploadService\\:\\:storeMinePlan\\(\\) expects Illuminate\\\\Http\\\\UploadedFile, Illuminate\\\\Http\\\\UploadedFile\\|null given\\.$#"
 			count: 1
 			path: app/Livewire/MineAreaDetail.php
-
-		-
-			message: "#^Call to an undefined method App\\\\Livewire\\\\MineAreaManager\\:\\:dispatchBrowserEvent\\(\\)\\.$#"
-			count: 9
-			path: app/Livewire/MineAreaManager.php
-
-		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 4
-			path: app/Livewire/MineAreaManager.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\MineAreaManager\\:\\:clearBoundary\\(\\) has no return type specified\\.$#"
@@ -3056,6 +3301,11 @@ parameters:
 			path: app/Livewire/ProductionDashboard.php
 
 		-
+			message: "#^Access to an undefined property App\\\\Livewire\\\\ProductionDashboard\\:\\:\\$loadComparisonData\\.$#"
+			count: 1
+			path: app/Livewire/ProductionDashboard.php
+
+		-
 			message: "#^Access to an undefined property App\\\\Livewire\\\\ProductionDashboard\\:\\:\\$machines\\.$#"
 			count: 1
 			path: app/Livewire/ProductionDashboard.php
@@ -3068,6 +3318,11 @@ parameters:
 		-
 			message: "#^Access to an undefined property App\\\\Livewire\\\\ProductionDashboard\\:\\:\\$mineAreas\\.$#"
 			count: 2
+			path: app/Livewire/ProductionDashboard.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Livewire\\\\ProductionDashboard\\:\\:\\$productionChartData\\.$#"
+			count: 1
 			path: app/Livewire/ProductionDashboard.php
 
 		-
@@ -3092,11 +3347,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property App\\\\Livewire\\\\ProductionDashboard\\:\\:\\$trend\\.$#"
-			count: 2
-			path: app/Livewire/ProductionDashboard.php
-
-		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
 			count: 2
 			path: app/Livewire/ProductionDashboard.php
 
@@ -3146,6 +3396,11 @@ parameters:
 			path: app/Livewire/ProductionDashboard.php
 
 		-
+			message: "#^Method App\\\\Livewire\\\\ProductionDashboard\\:\\:getLoadComparisonDataProperty\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/ProductionDashboard.php
+
+		-
 			message: "#^Method App\\\\Livewire\\\\ProductionDashboard\\:\\:getMachinesProperty\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/ProductionDashboard.php
@@ -3157,6 +3412,11 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Livewire\\\\ProductionDashboard\\:\\:getMineAreasProperty\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/ProductionDashboard.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\ProductionDashboard\\:\\:getProductionChartDataProperty\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/ProductionDashboard.php
 
@@ -3251,14 +3511,14 @@ parameters:
 			path: app/Livewire/ProductionDashboard.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 3
-			path: app/Livewire/ReportGenerator.php
+			message: "#^Using nullsafe property access \"\\?\\-\\>machine_type\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Livewire/ProductionDashboard.php
 
 		-
-			message: "#^Cannot access property \\$id on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 3
-			path: app/Livewire/ReportGenerator.php
+			message: "#^Using nullsafe property access \"\\?\\-\\>name\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 2
+			path: app/Livewire/ProductionDashboard.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\ReportGenerator\\:\\:clearMachines\\(\\) has no return type specified\\.$#"
@@ -3351,21 +3611,6 @@ parameters:
 			path: app/Livewire/ReportGenerator.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 4
-			path: app/Livewire/Reports.php
-
-		-
-			message: "#^Cannot call method orderBy\\(\\) on Illuminate\\\\Database\\\\Eloquent\\\\Builder\\|null\\.$#"
-			count: 1
-			path: app/Livewire/Reports.php
-
-		-
-			message: "#^Cannot call method when\\(\\) on Illuminate\\\\Database\\\\Eloquent\\\\Builder\\|null\\.$#"
-			count: 5
-			path: app/Livewire/Reports.php
-
-		-
 			message: "#^Method App\\\\Livewire\\\\Reports\\:\\:cancelDelete\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/Reports.php
@@ -3411,7 +3656,32 @@ parameters:
 			path: app/Livewire/Reports.php
 
 		-
+			message: "#^Method App\\\\Livewire\\\\Reports\\:\\:exportShiftReportCsv\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Reports.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Reports\\:\\:getBreakdownData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Reports.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Reports\\:\\:getHistory\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Reports.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Reports\\:\\:getProductionData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Reports.php
+
+		-
 			message: "#^Method App\\\\Livewire\\\\Reports\\:\\:getReports\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/Reports.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\Reports\\:\\:getShiftReportData\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Livewire/Reports.php
 
@@ -3436,7 +3706,7 @@ parameters:
 			path: app/Livewire/Reports.php
 
 		-
-			message: "#^Method App\\\\Models\\\\Machine\\:\\:select\\(\\) invoked with 2 parameters, 0\\-1 required\\.$#"
+			message: "#^Method Illuminate\\\\Database\\\\Query\\\\Builder\\:\\:select\\(\\) invoked with 2 parameters, 0\\-1 required\\.$#"
 			count: 1
 			path: app/Livewire/Reports.php
 
@@ -3451,8 +3721,13 @@ parameters:
 			path: app/Livewire/Reports.php
 
 		-
-			message: "#^Cannot access property \\$currentTeam on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
-			count: 6
+			message: "#^Using nullsafe property access \"\\?\\-\\>name\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Livewire/Reports.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\RoutePlanning\\:\\:buildTrafficPlanSummary\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
 			path: app/Livewire/RoutePlanning.php
 
 		-
@@ -3542,7 +3817,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$callback of method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
-			count: 1
+			count: 2
 			path: app/Livewire/RoutePlanning.php
 
 		-
@@ -3577,13 +3852,8 @@ parameters:
 
 		-
 			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
-			count: 1
+			count: 2
 			path: app/Livewire/RoutePlanning.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 9
-			path: app/Livewire/Settings.php
 
 		-
 			message: "#^Method App\\\\Livewire\\\\Settings\\:\\:dispatchBrowserEvent\\(\\) has no return type specified\\.$#"
@@ -3681,6 +3951,11 @@ parameters:
 			path: app/Livewire/Settings.php
 
 		-
+			message: "#^Property App\\\\Livewire\\\\Settings\\:\\:\\$feedCategoryPrefs type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/Settings.php
+
+		-
 			message: "#^Property App\\\\Livewire\\\\Settings\\:\\:\\$rules has no type specified\\.$#"
 			count: 1
 			path: app/Livewire/Settings.php
@@ -3696,9 +3971,39 @@ parameters:
 			path: app/Livewire/Settings.php
 
 		-
+			message: "#^Cannot call method hasRole\\(\\) on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
+			count: 1
+			path: app/Livewire/ShiftTemplateManager.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\ShiftTemplateManager\\:\\:render\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/ShiftTemplateManager.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\ShiftTemplateManager\\:\\:rules\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/ShiftTemplateManager.php
+
+		-
+			message: "#^Property App\\\\Livewire\\\\ShiftTemplateManager\\:\\:\\$formRequired type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Livewire/ShiftTemplateManager.php
+
+		-
 			message: "#^Method App\\\\Livewire\\\\Sidebar\\:\\:render\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Livewire/Sidebar.php
+
+		-
+			message: "#^Cannot call method hasRole\\(\\) on Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable\\|null\\.$#"
+			count: 1
+			path: app/Livewire/WhatsAppMigration.php
+
+		-
+			message: "#^Method App\\\\Livewire\\\\WhatsAppMigration\\:\\:render\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Livewire/WhatsAppMigration.php
 
 		-
 			message: "#^Method App\\\\Logging\\\\RedactSensitiveData\\:\\:redactValue\\(\\) has parameter \\$additionalKeys with no value type specified in iterable type array\\.$#"
@@ -3724,6 +4029,21 @@ parameters:
 			message: "#^Property App\\\\Mail\\\\ReportReadyMail\\:\\:\\$report has no type specified\\.$#"
 			count: 1
 			path: app/Mail/ReportReadyMail.php
+
+		-
+			message: "#^Method App\\\\Mail\\\\ShiftDigestMail\\:\\:__construct\\(\\) has parameter \\$pendingApprovals with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Mail/ShiftDigestMail.php
+
+		-
+			message: "#^Method App\\\\Mail\\\\ShiftDigestMail\\:\\:__construct\\(\\) has parameter \\$stats with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Mail/ShiftDigestMail.php
+
+		-
+			message: "#^Method App\\\\Mail\\\\ShiftDigestMail\\:\\:__construct\\(\\) has parameter \\$topPosts with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Mail/ShiftDigestMail.php
 
 		-
 			message: "#^Method App\\\\Mail\\\\WelcomeMail\\:\\:build\\(\\) has no return type specified\\.$#"
@@ -3841,11 +4161,6 @@ parameters:
 			path: app/Models/AIAnalysisSession.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/AIAnalysisSession.php
-
-		-
 			message: "#^Class App\\\\Models\\\\AIAnalysisSession uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/AIAnalysisSession.php
@@ -3889,11 +4204,6 @@ parameters:
 			message: "#^Property App\\\\Models\\\\AIAnalysisSession\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/AIAnalysisSession.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/AIInsight.php
 
 		-
 			message: "#^Class App\\\\Models\\\\AIInsight uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
@@ -3956,11 +4266,6 @@ parameters:
 			path: app/Models/AIInsight.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/AILearningData.php
-
-		-
 			message: "#^Class App\\\\Models\\\\AILearningData uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/AILearningData.php
@@ -4002,11 +4307,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\AIPredictiveAlert\\:\\:\\$aiAgent\\.$#"
-			count: 1
-			path: app/Models/AIPredictiveAlert.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
 			count: 1
 			path: app/Models/AIPredictiveAlert.php
 
@@ -4078,11 +4378,6 @@ parameters:
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\AIRecommendation\\:\\:\\$status\\.$#"
 			count: 2
-			path: app/Models/AIRecommendation.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
 			path: app/Models/AIRecommendation.php
 
 		-
@@ -4221,11 +4516,6 @@ parameters:
 			path: app/Models/ActivityLog.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/AiRecommendationAction.php
-
-		-
 			message: "#^Class App\\\\Models\\\\AiRecommendationAction uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/AiRecommendationAction.php
@@ -4249,16 +4539,6 @@ parameters:
 			message: "#^Property App\\\\Models\\\\AiRecommendationAction\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/AiRecommendationAction.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:id\\(\\)\\.$#"
-			count: 2
-			path: app/Models/Alert.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/Alert.php
 
 		-
 			message: "#^Class App\\\\Models\\\\Alert has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
@@ -4396,6 +4676,26 @@ parameters:
 			path: app/Models/Alert.php
 
 		-
+			message: "#^Class App\\\\Models\\\\AuditLog has PHPDoc tag @property for property \\$meta with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/AuditLog.php
+
+		-
+			message: "#^Method App\\\\Models\\\\AuditLog\\:\\:actor\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/AuditLog.php
+
+		-
+			message: "#^Method App\\\\Models\\\\AuditLog\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/AuditLog.php
+
+		-
+			message: "#^Property App\\\\Models\\\\AuditLog\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/AuditLog.php
+
+		-
 			message: "#^Method App\\\\Models\\\\ComplianceReport\\:\\:generator\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Models/ComplianceReport.php
@@ -4476,11 +4776,6 @@ parameters:
 			path: app/Models/ComponentReplacement.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/ComponentReplacement.php
-
-		-
 			message: "#^Class App\\\\Models\\\\ComponentReplacement uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/ComponentReplacement.php
@@ -4551,9 +4846,269 @@ parameters:
 			path: app/Models/ComponentReplacement.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
+			message: "#^Method App\\\\Models\\\\DigestSubscription\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
-			path: app/Models/FuelAlert.php
+			path: app/Models/DigestSubscription.php
+
+		-
+			message: "#^Method App\\\\Models\\\\DigestSubscription\\:\\:user\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/DigestSubscription.php
+
+		-
+			message: "#^Property App\\\\Models\\\\DigestSubscription\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/DigestSubscription.php
+
+		-
+			message: "#^Class App\\\\Models\\\\EngineHourSession uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Method App\\\\Models\\\\EngineHourSession\\:\\:machine\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Method App\\\\Models\\\\EngineHourSession\\:\\:scopeRunning\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Method App\\\\Models\\\\EngineHourSession\\:\\:scopeRunning\\(\\) has parameter \\$query with no type specified\\.$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Method App\\\\Models\\\\EngineHourSession\\:\\:scopeToday\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Method App\\\\Models\\\\EngineHourSession\\:\\:scopeToday\\(\\) has parameter \\$query with no type specified\\.$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Method App\\\\Models\\\\EngineHourSession\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Property App\\\\Models\\\\EngineHourSession\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/EngineHourSession.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedAcknowledgement\\:\\:post\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedAcknowledgement.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedAcknowledgement\\:\\:user\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedAcknowledgement.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedAcknowledgement\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedAcknowledgement.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedApproval\\:\\:approver\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedApproval.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedApproval\\:\\:post\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedApproval.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedApproval\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedApproval.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedAttachment\\:\\:post\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedAttachment.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedAttachment\\:\\:uploader\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedAttachment.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedAttachment\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedAttachment.php
+
+		-
+			message: "#^Class App\\\\Models\\\\FeedAuditLog has PHPDoc tag @property for property \\$meta with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedAuditLog.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedAuditLog\\:\\:actor\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedAuditLog.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedAuditLog\\:\\:record\\(\\) has parameter \\$meta with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedAuditLog.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedAuditLog\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedAuditLog.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedAuditLog\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedAuditLog.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedComment\\:\\:author\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedComment.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedComment\\:\\:parent\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedComment.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedComment\\:\\:post\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedComment.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedComment\\:\\:replies\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedComment.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedComment\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedComment.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedLike\\:\\:post\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedLike.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedLike\\:\\:user\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedLike.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedLike\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedLike.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedMention\\:\\:mentionable\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedMention.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedMention\\:\\:mentionedBy\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedMention.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedMention\\:\\:mentionedUser\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedMention.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedMention\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedMention.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedMention\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedMention.php
+
+		-
+			message: "#^Class App\\\\Models\\\\FeedPost has PHPDoc tag @property for property \\$meta with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Class App\\\\Models\\\\FeedPost uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:acknowledgements\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:allComments\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:approval\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasOne does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:attachments\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:author\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:comments\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:likes\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:mineArea\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:scopeForTeam\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:scopeForTeam\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Method App\\\\Models\\\\FeedPost\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/FeedPost.php
+
+		-
+			message: "#^Property App\\\\Models\\\\FeedPost\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/FeedPost.php
 
 		-
 			message: "#^Class App\\\\Models\\\\FuelAlert has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
@@ -4686,11 +5241,6 @@ parameters:
 			path: app/Models/FuelBudget.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/FuelBudget.php
-
-		-
 			message: "#^Class App\\\\Models\\\\FuelBudget uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/FuelBudget.php
@@ -4781,11 +5331,6 @@ parameters:
 			path: app/Models/FuelConsumptionMetric.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/FuelConsumptionMetric.php
-
-		-
 			message: "#^Class App\\\\Models\\\\FuelConsumptionMetric uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/FuelConsumptionMetric.php
@@ -4867,11 +5412,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\FuelMonthlyAllocation\\:\\:\\$year\\.$#"
-			count: 1
-			path: app/Models/FuelMonthlyAllocation.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
 			count: 1
 			path: app/Models/FuelMonthlyAllocation.php
 
@@ -4967,11 +5507,6 @@ parameters:
 
 		-
 			message: "#^Binary operation \"/\" between float\\|string and float\\|string results in an error\\.$#"
-			count: 1
-			path: app/Models/FuelTank.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
 			count: 1
 			path: app/Models/FuelTank.php
 
@@ -5101,11 +5636,6 @@ parameters:
 			path: app/Models/FuelTransaction.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/FuelTransaction.php
-
-		-
 			message: "#^Class App\\\\Models\\\\FuelTransaction uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/FuelTransaction.php
@@ -5201,11 +5731,6 @@ parameters:
 			path: app/Models/FuelTransaction.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/Geofence.php
-
-		-
 			message: "#^Class App\\\\Models\\\\Geofence has PHPDoc tag @property for property \\$coordinates with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/Geofence.php
@@ -5289,11 +5814,6 @@ parameters:
 			message: "#^Property App\\\\Models\\\\Geofence\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/Geofence.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/GeofenceEntry.php
 
 		-
 			message: "#^Class App\\\\Models\\\\GeofenceEntry has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
@@ -5387,11 +5907,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\HealthMetric\\:\\:\\$deviation\\.$#"
-			count: 1
-			path: app/Models/HealthMetric.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
 			count: 1
 			path: app/Models/HealthMetric.php
 
@@ -5496,9 +6011,39 @@ parameters:
 			path: app/Models/HealthMetric.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
+			message: "#^Class App\\\\Models\\\\Incident uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
-			path: app/Models/Integration.php
+			path: app/Models/Incident.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Incident\\:\\:machine\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/Incident.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Incident\\:\\:mineArea\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/Incident.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Incident\\:\\:reportedBy\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/Incident.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Incident\\:\\:resolvedBy\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/Incident.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Incident\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/Incident.php
+
+		-
+			message: "#^Property App\\\\Models\\\\Incident\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/Incident.php
 
 		-
 			message: "#^Class App\\\\Models\\\\Integration has PHPDoc tag @property for property \\$config with no value type specified in iterable type array\\.$#"
@@ -5681,17 +6226,17 @@ parameters:
 			path: app/Models/IoTSensor.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/Machine.php
-
-		-
 			message: "#^Class App\\\\Models\\\\Machine uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/Machine.php
 
 		-
 			message: "#^Method App\\\\Models\\\\Machine\\:\\:activeAlerts\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/Machine.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Machine\\:\\:activeEngineSession\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasOne does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: app/Models/Machine.php
 
@@ -5707,6 +6252,11 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Machine\\:\\:assignedMachines\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/Machine.php
+
+		-
+			message: "#^Method App\\\\Models\\\\Machine\\:\\:engineHourSessions\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: app/Models/Machine.php
 
@@ -5931,11 +6481,6 @@ parameters:
 			path: app/Models/MachineHealthStatus.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/MachineHealthStatus.php
-
-		-
 			message: "#^Class App\\\\Models\\\\MachineHealthStatus uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
 			count: 1
 			path: app/Models/MachineHealthStatus.php
@@ -5994,11 +6539,6 @@ parameters:
 			message: "#^Property App\\\\Models\\\\MachineHealthStatus\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/MachineHealthStatus.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/MachineMetric.php
 
 		-
 			message: "#^Class App\\\\Models\\\\MachineMetric has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
@@ -6083,11 +6623,6 @@ parameters:
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\MaintenanceAlert\\:\\:\\$age_hours\\.$#"
 			count: 2
-			path: app/Models/MaintenanceAlert.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
 			path: app/Models/MaintenanceAlert.php
 
 		-
@@ -6226,17 +6761,37 @@ parameters:
 			path: app/Models/MaintenanceAlert.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\MaintenanceRecord\\:\\:\\$completed_at\\.$#"
+			message: "#^Class App\\\\Models\\\\MaintenanceRecord has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/MaintenanceRecord.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\MaintenanceRecord\\:\\:\\$started_at\\.$#"
+			message: "#^Class App\\\\Models\\\\MaintenanceRecord has PHPDoc tag @method for method find\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/MaintenanceRecord.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
+			message: "#^Class App\\\\Models\\\\MaintenanceRecord has PHPDoc tag @method for method findOrFail\\(\\) parameter \\#2 \\$columns with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
+			message: "#^Class App\\\\Models\\\\MaintenanceRecord has PHPDoc tag @method for method whereIn\\(\\) parameter \\#2 \\$values with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
+			message: "#^Class App\\\\Models\\\\MaintenanceRecord has PHPDoc tag @property for property \\$attachments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
+			message: "#^Class App\\\\Models\\\\MaintenanceRecord has PHPDoc tag @property for property \\$fault_codes_cleared with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
+			message: "#^Class App\\\\Models\\\\MaintenanceRecord has PHPDoc tag @property for property \\$parts_used with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/MaintenanceRecord.php
 
@@ -6306,6 +6861,26 @@ parameters:
 			path: app/Models/MaintenanceRecord.php
 
 		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\MaintenanceRecord\\:\\:all\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\MaintenanceRecord\\:\\:orderBy\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\MaintenanceRecord\\:\\:where\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\MaintenanceRecord\\:\\:whereIn\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/MaintenanceRecord.php
+
+		-
 			message: "#^Property App\\\\Models\\\\MaintenanceRecord\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/MaintenanceRecord.php
@@ -6318,11 +6893,6 @@ parameters:
 		-
 			message: "#^Access to an undefined property App\\\\Models\\\\Machine\\:\\:\\$operating_hours\\.$#"
 			count: 2
-			path: app/Models/MaintenanceSchedule.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
 			path: app/Models/MaintenanceSchedule.php
 
 		-
@@ -7316,11 +7886,6 @@ parameters:
 			path: app/Models/Report.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/Report.php
-
-		-
 			message: "#^Class App\\\\Models\\\\Report has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/Report.php
@@ -7491,11 +8056,6 @@ parameters:
 			path: app/Models/Role.php
 
 		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Auth\\\\Factory\\:\\:user\\(\\)\\.$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
 			message: "#^Class App\\\\Models\\\\Route has PHPDoc tag @property for property \\$metadata with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/Route.php
@@ -7557,11 +8117,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Models\\\\Route\\:\\:waypoints\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: app/Models/Route.php
-
-		-
-			message: "#^Method App\\\\Models\\\\Route\\:\\:waypoints\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany but returns Illuminate\\\\Database\\\\Query\\\\Builder\\.$#"
 			count: 1
 			path: app/Models/Route.php
 
@@ -7676,6 +8231,41 @@ parameters:
 			path: app/Models/Shift.php
 
 		-
+			message: "#^Class App\\\\Models\\\\ShiftTemplate has PHPDoc tag @property for property \\$required_fields with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/ShiftTemplate.php
+
+		-
+			message: "#^Method App\\\\Models\\\\ShiftTemplate\\:\\:creator\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/ShiftTemplate.php
+
+		-
+			message: "#^Method App\\\\Models\\\\ShiftTemplate\\:\\:scopeForTeam\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/ShiftTemplate.php
+
+		-
+			message: "#^Method App\\\\Models\\\\ShiftTemplate\\:\\:scopeForTeam\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/ShiftTemplate.php
+
+		-
+			message: "#^Method App\\\\Models\\\\ShiftTemplate\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/ShiftTemplate.php
+
+		-
+			message: "#^Method App\\\\Models\\\\ShiftTemplate\\:\\:withoutTeamFilter\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/ShiftTemplate.php
+
+		-
+			message: "#^Property App\\\\Models\\\\ShiftTemplate\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/ShiftTemplate.php
+
+		-
 			message: "#^Class App\\\\Models\\\\Subscription has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Models/Subscription.php
@@ -7756,7 +8346,17 @@ parameters:
 			path: app/Models/Subscription.php
 
 		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Subscription\\:\\:active\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
 			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Subscription\\:\\:all\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection but does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: "#^PHPDoc tag @method for method App\\\\Models\\\\Subscription\\:\\:onTrial\\(\\) return type contains generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: app/Models/Subscription.php
 
@@ -7876,6 +8476,11 @@ parameters:
 			path: app/Models/Team.php
 
 		-
+			message: "#^Method App\\\\Models\\\\Team\\:\\:mineAreas\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: app/Models/Team.php
+
+		-
 			message: "#^Method App\\\\Models\\\\Team\\:\\:owner\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\User\\> but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\User, \\$this\\(App\\\\Models\\\\Team\\)\\>\\.$#"
 			count: 1
 			path: app/Models/Team.php
@@ -7979,6 +8584,21 @@ parameters:
 			message: "#^Method App\\\\Models\\\\User\\:\\:roles\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: app/Models/User.php
+
+		-
+			message: "#^Method App\\\\Models\\\\UserFeedPreference\\:\\:team\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/UserFeedPreference.php
+
+		-
+			message: "#^Method App\\\\Models\\\\UserFeedPreference\\:\\:user\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
+			count: 1
+			path: app/Models/UserFeedPreference.php
+
+		-
+			message: "#^Property App\\\\Models\\\\UserFeedPreference\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Models/UserFeedPreference.php
 
 		-
 			message: "#^Class App\\\\Models\\\\Waypoint has PHPDoc tag @method for method all\\(\\) parameter \\#1 \\$columns with no value type specified in iterable type array\\.$#"
@@ -8246,6 +8866,36 @@ parameters:
 			path: app/Services/AI/MaintenancePredictorAgent.php
 
 		-
+			message: "#^Method App\\\\Services\\\\AI\\\\ProductionOptimizerAgent\\:\\:analyze\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/AI/ProductionOptimizerAgent.php
+
+		-
+			message: "#^Method App\\\\Services\\\\AI\\\\ProductionOptimizerAgent\\:\\:analyzeAreaPerformance\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/AI/ProductionOptimizerAgent.php
+
+		-
+			message: "#^Method App\\\\Services\\\\AI\\\\ProductionOptimizerAgent\\:\\:analyzeMachineEfficiency\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/AI/ProductionOptimizerAgent.php
+
+		-
+			message: "#^Method App\\\\Services\\\\AI\\\\ProductionOptimizerAgent\\:\\:analyzeShiftPerformance\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/AI/ProductionOptimizerAgent.php
+
+		-
+			message: "#^Method App\\\\Services\\\\AI\\\\ProductionOptimizerAgent\\:\\:analyzeWeekOverWeekTrend\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/AI/ProductionOptimizerAgent.php
+
+		-
+			message: "#^Using nullsafe property access \"\\?\\-\\>name\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: app/Services/AI/ProductionOptimizerAgent.php
+
+		-
 			message: "#^Method App\\\\Services\\\\AI\\\\RouteAdvisorAgent\\:\\:analyze\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: app/Services/AI/RouteAdvisorAgent.php
@@ -8259,6 +8909,11 @@ parameters:
 			message: "#^Parameter \\#1 \\$route of method App\\\\Services\\\\AI\\\\RouteAdvisorAgent\\:\\:analyzeRouteEfficiency\\(\\) expects App\\\\Models\\\\Route, Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
 			count: 1
 			path: app/Services/AI/RouteAdvisorAgent.php
+
+		-
+			message: "#^Method App\\\\Services\\\\AuditService\\:\\:log\\(\\) has parameter \\$meta with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/AuditService.php
 
 		-
 			message: "#^Method App\\\\Services\\\\AuthorizationService\\:\\:assignUserRole\\(\\) has no return type specified\\.$#"
@@ -8384,16 +9039,6 @@ parameters:
 			message: "#^Using nullsafe property access \"\\?\\-\\>permissions\" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#"
 			count: 1
 			path: app/Services/AuthorizationService.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:temporaryUrl\\(\\)\\.$#"
-			count: 1
-			path: app/Services/FileUploadService.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:url\\(\\)\\.$#"
-			count: 1
-			path: app/Services/FileUploadService.php
 
 		-
 			message: "#^Method App\\\\Services\\\\FileUploadService\\:\\:storeMinePlan\\(\\) return type has no value type specified in iterable type array\\.$#"
@@ -9896,11 +10541,6 @@ parameters:
 			path: app/Services/MaintenanceHealthService.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\MaintenanceRecord\\:\\:\\$machine_id\\.$#"
-			count: 1
-			path: app/Services/MaintenanceHealthService.php
-
-		-
 			message: "#^Method App\\\\Services\\\\MaintenanceHealthService\\:\\:checkSchedules\\(\\) should return array\\<int, App\\\\Models\\\\MaintenanceSchedule\\> but returns array\\<int, Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\.$#"
 			count: 1
 			path: app/Services/MaintenanceHealthService.php
@@ -9949,6 +10589,26 @@ parameters:
 			message: "#^Unable to resolve the template type TValue in call to function collect$#"
 			count: 2
 			path: app/Services/MaintenanceHealthService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\MentionParser\\:\\:extractHandles\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/MentionParser.php
+
+		-
+			message: "#^Method App\\\\Services\\\\MentionParser\\:\\:resolveUsers\\(\\) has parameter \\$handles with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: app/Services/MentionParser.php
+
+		-
+			message: "#^Method App\\\\Services\\\\MentionParser\\:\\:resolveUsers\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
+			count: 1
+			path: app/Services/MentionParser.php
+
+		-
+			message: "#^Offset 1 on array\\{list\\<string\\>, list\\<non\\-empty\\-string\\>\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: app/Services/MentionParser.php
 
 		-
 			message: "#^Call to function array_key_exists\\(\\) with 'coordinates' and non\\-empty\\-array will always evaluate to true\\.$#"

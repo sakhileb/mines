@@ -121,6 +121,17 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        Event::listen(\Illuminate\Auth\Events\Logout::class, function ($event) {
+            AuditService::log(
+                AuditLog::LOGOUT,
+                'User logged out',
+                $event->user,
+                ['guard' => $event->guard],
+                $event->user->id,
+                $event->user->current_team_id
+            );
+        });
+
         // Configure Sentry release/environment if present
         try {
             if (env('SENTRY_DSN')) {

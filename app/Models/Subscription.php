@@ -36,6 +36,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Subscription|null find(mixed $id, array $columns = ['*'])
  * @method static Subscription findOrFail(mixed $id, array $columns = ['*'])
  * @method static \Illuminate\Database\Eloquent\Collection all(array $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Builder|Subscription active()
+ * @method static \Illuminate\Database\Eloquent\Builder|Subscription onTrial()
  */
 class Subscription extends Model
 {

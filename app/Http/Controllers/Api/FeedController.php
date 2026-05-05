@@ -257,6 +257,10 @@ class FeedController extends Controller
 
         $file = $request->file('file');
 
+        if (! $file instanceof \Illuminate\Http\UploadedFile) {
+            return response()->json(['message' => 'Invalid file upload.'], 422);
+        }
+
         try {
             $attachment = app(\App\Services\FeedAttachmentService::class)
                 ->store($file, $post, $request->user());

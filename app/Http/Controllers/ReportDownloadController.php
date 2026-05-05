@@ -11,8 +11,8 @@ class ReportDownloadController
 {
     public function download(Request $request, Report $report)
     {
-        // Verify signed URL
-        if (! $request->hasValidSignature()) {
+        // Accept both permanent and temporary (expiring) signed URLs.
+        if (! $request->hasValidSignature() && ! $request->hasValidRelativeSignature()) {
             abort(403);
         }
 

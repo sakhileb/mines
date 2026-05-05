@@ -1,2 +1,17 @@
 User-agent: *
-Disallow:
+Disallow: /dashboard
+Disallow: /fleet
+Disallow: /shifts
+Disallow: /production
+Disallow: /maintenance
+Disallow: /safety
+Disallow: /reports
+Disallow: /feed
+Disallow: /settings
+Disallow: /admin
+Disallow: /api/
+Disallow: /livewire/
+Disallow: /_ignition/
+Disallow: /broadcasting/
+
+Sitemap: https://mines.infodot.co.za/sitemap.xml

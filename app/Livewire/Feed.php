@@ -342,7 +342,7 @@ class Feed extends Component
         $post->refresh();
 
         // Parse @mentions in comment
-        app(MentionParser::class)->parseSave($comment, $comment->body, Auth::id(), $post->team_id);
+        app(MentionParser::class)->parseSave($comment, $comment->body, (int) Auth::id(), (int) $post->team_id);
 
         FeedCommentCreated::dispatch($comment, $post);
 

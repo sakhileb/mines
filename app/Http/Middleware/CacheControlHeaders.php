@@ -39,7 +39,8 @@ class CacheControlHeaders
         $seconds = $durations[$duration] ?? $durations['short'];
 
         if ($seconds > 0) {
-            $response->headers->set('Cache-Control', "public, max-age={$seconds}");
+            // Use `private` to prevent CDN/proxy caching of authenticated responses.
+            $response->headers->set('Cache-Control', "private, max-age={$seconds}");
             $response->headers->set('Expires', gmdate('D, d M Y H:i:s', time() + $seconds) . ' GMT');
         } else {
             $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate');

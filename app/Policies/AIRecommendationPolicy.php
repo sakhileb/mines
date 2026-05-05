@@ -42,13 +42,14 @@ class AIRecommendationPolicy
             return true;
         }
 
-        // Allow any user on the same team to act (team members can manage recommendations),
-        // or users with the explicit permission. Admin/owner roles were handled above.
-        if ($user->current_team_id === $recommendation->team_id) {
+        // Only users with explicit permission or elevated roles may act on recommendations.
+        if ($user->current_team_id === $recommendation->team_id
+            && ($user->hasPermission('update_recommendations')
+                || $user->hasRole(['manager', 'fleet_manager', 'supervisor']))) {
             return true;
         }
 
-        return $user->hasPermission('update_recommendations');
+        return false;
     }
 
     /**

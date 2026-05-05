@@ -131,14 +131,14 @@ Route::middleware(['auth:sanctum', 'ensure_team', 'throttle:api'])->group(functi
         Route::get('/', [ReportController::class, 'index']);               // List reports
         Route::post('/', [ReportController::class, 'generate'])            // Generate report
             ->middleware('throttle:reports');
+        // Static sub-paths MUST be declared before /{report} to avoid param capture
+        Route::get('/templates', [ReportController::class, 'templates']);        // Get templates
+        Route::get('/stats', [ReportController::class, 'stats']);                // Get stats
         Route::get('/{report}', [ReportController::class, 'show']);        // Get single report
         Route::delete('/{report}', [ReportController::class, 'destroy']);  // Delete report
-
         // Report actions
         Route::get('/{report}/download', [ReportController::class, 'download'])
             ->middleware('throttle:downloads'); // Download file
-        Route::get('/templates', [ReportController::class, 'templates']);        // Get templates
-        Route::get('/stats', [ReportController::class, 'stats']);                // Get stats
     });
 
     /**

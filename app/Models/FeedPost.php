@@ -31,6 +31,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property \Carbon\Carbon|null $deleted_at
+ * @property-read \App\Models\User $author
+ * @property-read \App\Models\MineArea|null $mineArea
+ * @property-read \App\Models\Team $team
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\FeedComment> $comments
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\FeedAttachment> $attachments
+ * @property-read \App\Models\FeedApproval|null $approval
  */
 class FeedPost extends Model
 {

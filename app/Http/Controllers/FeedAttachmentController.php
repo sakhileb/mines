@@ -46,11 +46,13 @@ class FeedAttachmentController extends Controller
         // Redirect the browser to the original URL rather than proxying the byte stream.
         if ($attachment->storage_type === 's3') {
             abort_if(empty($attachment->file_url), 404, 'Legacy attachment URL is not available.');
-            return redirect($attachment->file_url);
+            return redirect((string) $attachment->file_url);
         }
 
         // ── DB-stored records ────────────────────────────────────────────────
         abort_if(is_null($attachment->file_data), 404, 'Attachment data not found.');
+
+        $fileData = (string) $attachment->file_data;
 
         // Determine appropriate Content-Disposition:
         // Images and audio are served inline (browser renders them);
@@ -62,9 +64,9 @@ class FeedAttachmentController extends Controller
         // preventing header injection via crafted filenames.
         $safeFilename = addcslashes($attachment->file_name ?? 'attachment', '"\\');
 
-        return response($attachment->file_data, 200, [
+        return response($fileData, 200, [
             'Content-Type'              => $attachment->file_type,
-            'Content-Length'            => strlen($attachment->file_data),
+            'Content-Length'            => strlen($fileData),
             'Content-Disposition'       => ($isInline ? 'inline' : 'attachment')
                                            . '; filename="' . $safeFilename . '"',
             'Cache-Control'             => 'private, max-age=3600, must-revalidate',
