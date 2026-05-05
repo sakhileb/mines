@@ -13,6 +13,7 @@ use App\Traits\BrowserEventBridge;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -147,8 +148,8 @@ class Reports extends Component
         }
 
         try {
-            if ($report->file_path && \Storage::exists($report->file_path)) {
-                \Storage::delete($report->file_path);
+            if ($report->file_path && Storage::exists($report->file_path)) {
+                Storage::delete($report->file_path);
             }
 
             $report->delete();
@@ -207,13 +208,13 @@ class Reports extends Component
         }
 
         if ($report->file_path && !str_contains($report->file_path, '..')) {
-            if (\Storage::exists($report->file_path)) {
+            if (Storage::exists($report->file_path)) {
                 Log::info('User downloaded report', [
                     'user_id' => Auth::id(),
                     'report_id' => $reportId,
                 ]);
 
-                return \Storage::download($report->file_path, $report->title . '.' . $report->format);
+                return Storage::download($report->file_path, $report->title . '.' . $report->format);
             }
         }
 

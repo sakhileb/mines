@@ -6,6 +6,7 @@ use App\Jobs\GenerateReportJob;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -29,7 +30,7 @@ class ReportController extends Controller
             'type' => 'nullable|string',
         ]);
 
-        $query = Report::where('team_id', auth()->user()->current_team_id);
+        $query = Report::where('team_id', Auth::user()->current_team_id);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -83,9 +84,9 @@ class ReportController extends Controller
             'filters' => 'nullable|json',
         ]);
 
-        $validated['team_id'] = auth()->user()->current_team_id;
+        $validated['team_id'] = Auth::user()->current_team_id;
         $validated['status'] = 'pending';
-        $validated['generated_by'] = auth()->id();
+        $validated['generated_by'] = Auth::id();
         $validated['format'] = $request->input('format', 'pdf');
 
         $report = Report::create($validated);
@@ -134,14 +135,16 @@ class ReportController extends Controller
 
         // Authorize was already called earlier; use Storage::download to serve safely and add security headers.
         $filename = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $report->title) . '.' . $report->format;
-        $mime = Storage::disk($disk)->mimeType($relative) ?? 'application/octet-stream';
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $adapter */
+        $adapter = Storage::disk($disk);
+        $mime = $adapter->mimeType($relative) ?? 'application/octet-stream';
 
         $securityHeaders = [
             'Content-Security-Policy' => "default-src 'none';",
             'X-Content-Type-Options' => 'nosniff',
         ];
 
-        return Storage::disk($disk)->download($relative, $filename, array_merge($securityHeaders, [
+        return $adapter->download($relative, $filename, array_merge($securityHeaders, [
             'Content-Type' => $mime,
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]));
@@ -231,14 +234,14 @@ class ReportController extends Controller
     public function stats()
     {
         $stats = [
-            'total' => Report::where('team_id', auth()->user()->current_team_id)->count(),
-            'pending' => Report::where('team_id', auth()->user()->current_team_id)
+            'total' => Report::where('team_id', Auth::user()->current_team_id)->count(),
+            'pending' => Report::where('team_id', Auth::user()->current_team_id)
                 ->where('status', 'pending')
                 ->count(),
-            'completed' => Report::where('team_id', auth()->user()->current_team_id)
+            'completed' => Report::where('team_id', Auth::user()->current_team_id)
                 ->where('status', 'completed')
                 ->count(),
-            'failed' => Report::where('team_id', auth()->user()->current_team_id)
+            'failed' => Report::where('team_id', Auth::user()->current_team_id)
                 ->where('status', 'failed')
                 ->count(),
         ];

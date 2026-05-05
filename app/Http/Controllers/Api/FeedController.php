@@ -16,6 +16,7 @@ use App\Models\AuditLog;
 use App\Services\MentionParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -53,10 +54,10 @@ class FeedController extends Controller
         $query = FeedPost::with(['author', 'mineArea', 'attachments', 'approval'])
             ->withCount([
                 'acknowledgements as user_has_acknowledged' => function ($q) {
-                    $q->where('user_id', auth()->id());
+                    $q->where('user_id', Auth::id());
                 },
                 'likes as user_has_liked' => function ($q) {
-                    $q->where('user_id', auth()->id());
+                    $q->where('user_id', Auth::id());
                 },
             ]);
 
@@ -139,8 +140,8 @@ class FeedController extends Controller
             $base['priority'] = 'critical';
         }
 
-        $base['team_id']   = auth()->user()->current_team_id;
-        $base['author_id'] = auth()->id();
+        $base['team_id']   = Auth::user()->current_team_id;
+        $base['author_id'] = Auth::id();
         $base['priority']  = $base['priority'] ?? 'normal';
 
         $post = FeedPost::create($base);
@@ -148,14 +149,14 @@ class FeedController extends Controller
         // Create a pending approval record for posts that require moderation
         FeedApproval::create([
             'post_id'     => $post->id,
-            'approver_id' => auth()->id(), // placeholder, updated when reviewed
+            'approver_id' => Auth::id(), // placeholder, updated when reviewed
             'status'      => 'pending',
         ]);
 
         $post->load('author', 'mineArea', 'attachments', 'approval');
 
         // Parse @mentions after post is created
-        app(MentionParser::class)->parseSave($post, $post->body, auth()->id(), $post->team_id);
+        app(MentionParser::class)->parseSave($post, $post->body, Auth::id(), $post->team_id);
 
         FeedPostCreated::dispatch($post);
 
@@ -199,7 +200,7 @@ class FeedController extends Controller
     {
         $this->authorize('view', $post);
 
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         $existing = FeedAcknowledgement::where('post_id', $post->id)
             ->where('user_id', $userId)
@@ -286,7 +287,7 @@ class FeedController extends Controller
     {
         $this->authorize('view', $post);
 
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         $like = FeedLike::where('post_id', $post->id)->where('user_id', $userId)->first();
 
@@ -336,12 +337,12 @@ class FeedController extends Controller
 
         $approval = $post->approval ?? FeedApproval::create([
             'post_id'     => $post->id,
-            'approver_id' => auth()->id(),
+            'approver_id' => Auth::id(),
             'status'      => 'pending',
         ]);
 
         $approval->update([
-            'approver_id' => auth()->id(),
+            'approver_id' => Auth::id(),
             'status'      => 'approved',
             'reason'      => null,
             'reviewed_at' => now(),
@@ -354,7 +355,7 @@ class FeedController extends Controller
             AuditLog::FEED_POST_APPROVED,
             "Approved feed post #{$post->id}",
             $post,
-            ['approver_id' => auth()->id()]
+            ['approver_id' => Auth::id()]
         );
 
         return response()->json(['data' => $approval]);
@@ -373,12 +374,12 @@ class FeedController extends Controller
 
         $approval = $post->approval ?? FeedApproval::create([
             'post_id'     => $post->id,
-            'approver_id' => auth()->id(),
+            'approver_id' => Auth::id(),
             'status'      => 'pending',
         ]);
 
         $approval->update([
-            'approver_id' => auth()->id(),
+            'approver_id' => Auth::id(),
             'status'      => 'rejected',
             'reason'      => $validated['reason'],
             'reviewed_at' => now(),
@@ -391,7 +392,7 @@ class FeedController extends Controller
             AuditLog::FEED_POST_REJECTED,
             "Rejected feed post #{$post->id}",
             $post,
-            ['approver_id' => auth()->id(), 'reason' => $validated['reason']]
+            ['approver_id' => Auth::id(), 'reason' => $validated['reason']]
         );
 
         return response()->json(['data' => $approval]);

@@ -44,17 +44,19 @@ class WebhookController extends Controller
             'type' => $event['type'] ?? 'unknown',
         ]);
 
+        /** @var array $eventData */
+        $eventData    = $event->toArray();
         $stripeService = new StripeService();
 
         // Handle different event types
         try {
-            $stripeObject = $event['data']['object'] ?? [];
+            $stripeObject = $eventData['data']['object'] ?? [];
             $stripeId     = $stripeObject['id'] ?? 'unknown';
             $customer     = $stripeObject['customer'] ?? null;
 
-            switch ($event['type']) {
+            switch ($eventData['type']) {
                 case 'customer.subscription.created':
-                    $stripeService->handleSubscriptionCreated($event);
+                    $stripeService->handleSubscriptionCreated($eventData);
                     AuditService::log(
                         AuditLog::SUBSCRIPTION_CREATED,
                         "Stripe subscription created: {$stripeId}",
@@ -64,7 +66,7 @@ class WebhookController extends Controller
                     break;
 
                 case 'customer.subscription.updated':
-                    $stripeService->handleSubscriptionUpdated($event);
+                    $stripeService->handleSubscriptionUpdated($eventData);
                     AuditService::log(
                         AuditLog::SUBSCRIPTION_UPDATED,
                         "Stripe subscription updated: {$stripeId}",
@@ -74,7 +76,7 @@ class WebhookController extends Controller
                     break;
 
                 case 'customer.subscription.deleted':
-                    $stripeService->handleSubscriptionUpdated($event);
+                    $stripeService->handleSubscriptionUpdated($eventData);
                     AuditService::log(
                         AuditLog::SUBSCRIPTION_CANCELLED,
                         "Stripe subscription cancelled: {$stripeId}",
@@ -84,28 +86,28 @@ class WebhookController extends Controller
                     break;
 
                 case 'payment_intent.succeeded':
-                    $stripeService->handlePaymentSucceeded($event);
+                    $stripeService->handlePaymentSucceeded($eventData);
                     break;
 
                 case 'payment_intent.payment_failed':
                     Log::warning('Payment failed', [
-                        'payment_intent' => $event['data']['object']['id'] ?? 'unknown',
+                        'payment_intent' => $eventData['data']['object']['id'] ?? 'unknown',
                     ]);
                     break;
 
                 case 'invoice.paid':
-                    $stripeService->handleInvoicePaid($event);
+                    $stripeService->handleInvoicePaid($eventData);
                     break;
 
                 case 'invoice.payment_failed':
                     Log::warning('Invoice payment failed', [
-                        'invoice' => $event['data']['object']['id'] ?? 'unknown',
+                        'invoice' => $eventData['data']['object']['id'] ?? 'unknown',
                     ]);
                     break;
 
                 default:
                     Log::info('Unhandled webhook event', [
-                        'type' => $event['type'],
+                        'type' => $eventData['type'],
                     ]);
             }
 

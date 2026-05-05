@@ -22,11 +22,13 @@ use App\Services\MentionParser;
 use App\Traits\RealtimeUpdates;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
 class Feed extends Component
 {
     use WithPagination, WithFileUploads, RealtimeUpdates;
@@ -85,6 +87,7 @@ class Feed extends Component
     {
         $this->initializeRealtimeUpdates();
         $this->subscribeToFeed();
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $this->composeShift = $this->detectCurrentShift();
         $this->composeMineAreaId = $user->currentTeam->mineAreas()->first()?->id;
@@ -520,12 +523,16 @@ class Feed extends Component
 
     public function canApprove(): bool
     {
-        return Auth::user()->hasRole(['admin', 'supervisor', 'manager', 'safety_officer']);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        return $user->hasRole(['admin', 'supervisor', 'manager', 'safety_officer']);
     }
 
     public function isAdmin(): bool
     {
-        return Auth::user()->hasRole('admin');
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        return $user->hasRole('admin');
     }
 
     // ── Admin: pin / unpin ────────────────────────────────────────────────────
@@ -633,6 +640,6 @@ class Feed extends Component
             'posts'     => $this->getPosts(),
             'mineAreas' => $this->getMineAreas(),
             'canApprove' => $this->canApprove(),
-        ])->layout('layouts.app');
+        ]);
     }
 }

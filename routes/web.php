@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Route;
 use App\Models\Machine;
 use App\Models\Geofence;
 use App\Models\Report;
@@ -116,7 +117,7 @@ Route::middleware([
     Route::get('/reports/{report}', function (Report $report) {
         // Ensure the user belongs to the same team as this report.
         abort_unless(
-            auth()->user()->current_team_id === $report->team_id,
+            Auth::user()->current_team_id === $report->team_id,
             403
         );
         return view('reports.show', ['report' => $report]);
@@ -156,7 +157,7 @@ Route::middleware([
     Route::get('/integrations/{integration}', function (App\Models\Integration $integration) {
         // Verify the authenticated user belongs to the same team as this integration.
         abort_unless(
-            auth()->user()->current_team_id === $integration->team_id,
+            Auth::user()->current_team_id === $integration->team_id,
             403
         );
         return view('integrations.show', ['integration' => $integration]);
